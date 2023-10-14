@@ -1,5 +1,5 @@
 <div align='center'>
-    <a><img src='https://github.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx/favicon.png' width='250px' height='250px' akt='maimaidx'></a>
+    <a><img src='https://raw.githubusercontent.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx/master/favicon.png' width='250px' height='250px' akt='maimaidx'></a>
 </div>
 
 <div align='center'>
@@ -63,4 +63,4 @@
 
 ## 指令
 
-![img](https://github.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx/nonebot_plugin_maimaidx/maimaidxhelp.png)
+![img](https://raw.githubusercontent.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx/master/nonebot_plugin_maimaidx/maimaidxhelp.png)
