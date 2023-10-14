@@ -10,6 +10,7 @@ import nonebot
 from nonebot import get_bot, on_command, on_endswith, on_message, on_regex, require
 from nonebot.adapters.onebot.v11 import (
     GROUP_ADMIN,
+    GROUP_OWNER,
     Bot,
     GroupMessageEvent,
     Message,
@@ -17,7 +18,6 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment,
     PrivateMessageEvent,
 )
-from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, Endswith, RegexGroup
 from nonebot.permission import SUPERUSER

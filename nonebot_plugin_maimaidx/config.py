@@ -19,13 +19,12 @@ maiconfig = Config.parse_obj(driver.config)
 vote_url: str = 'https://vote.yuzuai.xyz/'
 
 
+Root: Path = Path(__file__).parent
 # 路径文件
 if maiconfig.maimaidxpath:
-    Root: Path = Path(maiconfig.maimaidxpath).parent
+    static: Path = Path(maiconfig.maimaidxpath).parent
 else:
     raise ValueError('`nonebot-plugin-maimaidx` 插件未检测到静态文件夹 `static`，请根据 README 配置页说明进行下载静态文件')
-Root: Path = Path(maiconfig.maimaidxpath).parent
-static: Path = Root / 'static'
 alias_file: Path = static / 'music_alias.json'                  # 别名暂存文件
 local_alias_file: Path = static / 'local_music_alias.json'      # 本地别名文件
 music_file: Path = static / 'music_data.json'                   # 曲目暂存文件

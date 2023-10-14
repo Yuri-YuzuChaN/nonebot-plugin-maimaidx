@@ -1,5 +1,5 @@
 <div align='center'>
-    <a><img src='https://raw.githubusercontent.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx/master/favicon.png' width='250px' height='250px' akt='maimaidx'></a>
+    <a><img src='https://raw.githubusercontent.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx/master/favicon.png' width='200px' height='200px' akt='maimaidx'></a>
 </div>
 
 <div align='center'>
@@ -46,8 +46,8 @@
    ``` dotenv
    MAIMAIDXPATH=path.to.static
 
-   # 例如 windows 平台
-   MAIMAIDXPATH=C:\bot\static
+   # 例如 windows 平台，非 "管理员模式" 运行Bot尽量避免存放在C盘
+   MAIMAIDXPATH=D:\bot\static
    # 例如 linux 平台
    MAIMAIDXPATH=/root/static
    ```
