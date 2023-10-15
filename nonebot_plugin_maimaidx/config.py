@@ -22,7 +22,7 @@ vote_url: str = 'https://vote.yuzuai.xyz/'
 Root: Path = Path(__file__).parent
 # 路径文件
 if maiconfig.maimaidxpath:
-    static: Path = Path(maiconfig.maimaidxpath).parent
+    static: Path = Path(maiconfig.maimaidxpath)
 else:
     raise ValueError('`nonebot-plugin-maimaidx` 插件未检测到静态文件夹 `static`，请根据 README 配置页说明进行下载静态文件')
 alias_file: Path = static / 'music_alias.json'                  # 别名暂存文件
