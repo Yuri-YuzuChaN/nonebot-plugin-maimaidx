@@ -2,6 +2,7 @@ import asyncio
 import re
 from pathlib import Path
 from random import sample
+from re import Match
 from string import ascii_uppercase, digits
 from textwrap import dedent
 from typing import Optional, Tuple
@@ -19,7 +20,7 @@ from nonebot.adapters.onebot.v11 import (
     PrivateMessageEvent,
 )
 from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, Endswith, RegexGroup
+from nonebot.params import CommandArg, Endswith, RegexGroup, RegexMatched
 from nonebot.permission import SUPERUSER
 from nonebot.plugin import PluginMetadata
 
@@ -65,10 +66,10 @@ search_charter = on_command('谱师查歌', aliases={'search charter'}, priority
 random_song = on_regex(r'^[随来给]个((?:dx|sd|标准))?([绿黄红紫白]?)([0-9]+\+?)$', priority=5)
 mai_what = on_regex(r'.*mai.*什么', priority=5)
 search = on_command('查歌', aliases={'search'}, priority=5)  # 注意 on 响应器的注册顺序，search 应当优先于 search_* 之前注册
-query_chart = on_command('id', aliases={'Id', 'ID'}, priority=5)
+query_chart = on_regex(r'^id\s?([0-9]+)$', re.IGNORECASE, priority=5)
 mai_today = on_command('今日mai', aliases={'今日舞萌', '今日运势'}, priority=5)
 what_song = on_endswith(('是什么歌', '是啥歌'), priority=5)
-alias_song = on_endswith(('有什么别称', '有什么别名'), priority=5)
+alias_song = on_regex(r'^(id)?\s?(.+)\s?有什么别[名称]$', re.IGNORECASE, priority=5)
 alias_local_apply = on_command('添加本地别名', aliases={'添加本地别称'}, priority=5)
 alias_apply = on_command('添加别名', aliases={'增加别名', '增添别名', '添加别称'}, priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
 alias_agree = on_command('同意别名', aliases={'同意别称'}, priority=5)
@@ -320,19 +321,14 @@ async def _(args: Message = CommandArg()):
 
 
 @query_chart.handle()
-async def _(args: Message = CommandArg()):
-    id = args.extract_plain_text().strip()
-    if not id:
-        return
-    if id.isdigit():
-        music = mai.total_list.by_id(id)
-        if not music:
-            msg = f'未找到ID为[{id}]的乐曲'
-        else:
-            msg = await new_draw_music_info(music)
-        await query_chart.send(msg)
+async def _(match: Match[str] = RegexMatched()):
+    id = match.group(1)
+    music = mai.total_list.by_id(id)
+    if not music:
+        msg = f'未找到ID为[{id}]的乐曲'
     else:
-        await query_chart.send('仅允许使用id查询', reply_message=True)
+        msg = await new_draw_music_info(music)
+    await query_chart.send(msg)
 
 
 @mai_today.handle()
@@ -375,19 +371,26 @@ async def _(event: MessageEvent, end: str = Endswith()):
 
 
 @alias_song.handle()
-async def _(event: MessageEvent, end: str = Endswith()):
-    name = event.get_plaintext().lower()[0:-len(end)].strip()  # before 3.9
-
-    aliases = mai.total_alias_list.by_alias(name)
-    if not aliases:
-        if name.isdigit():
-            alias_id = mai.total_alias_list.by_id(name)
-            if not alias_id:
-                await alias_song.finish('未找到此歌曲\n可以使用 添加别名 指令给该乐曲添加别名', reply_message=True)
-            else:
-                aliases = alias_id
-        else:
+async def _(match: Match[str] = RegexMatched()):
+    findid = bool(match.group(1))
+    name = match.group(2)
+    if findid and name.isdigit():
+        alias_id = mai.total_alias_list.by_id(name)
+        if not alias_id:
             await alias_song.finish('未找到此歌曲\n可以使用 添加别名 指令给该乐曲添加别名', reply_message=True)
+        else:
+            aliases = alias_id
+    else:            
+        aliases = mai.total_alias_list.by_alias(name)
+        if not aliases:
+            if name.isdigit():
+                alias_id = mai.total_alias_list.by_id(name)
+                if not alias_id:
+                    await alias_song.finish('未找到此歌曲\n可以使用 添加别名 指令给该乐曲添加别名', reply_message=True)
+                else:
+                    aliases = alias_id
+            else:
+                await alias_song.finish('未找到此歌曲\n可以使用 添加别名 指令给该乐曲添加别名', reply_message=True)
     if len(aliases) != 1:
         msg = []
         for songs in aliases:

@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-maimaidx"
-version = "0.0.6"
+version = "0.0.7"
 authors = [
   { name="Yuri-YuzuChaN", email="806235364@qq.com" },
 ]
