@@ -53,7 +53,7 @@ from nonebot_plugin_apscheduler import scheduler
 
 
 def is_now_playing_guess_music(event: GroupMessageEvent) -> bool:
-    return event.group_id in guess.Group
+    return str(event.group_id) in guess.Group
 
 
 data_update = on_command('更新maimai数据', priority=5, permission=SUPERUSER)
@@ -76,21 +76,21 @@ alias_agree = on_command('同意别名', aliases={'同意别称'}, priority=5)
 alias_status = on_command('当前投票', aliases={'当前别名投票', '当前别称投票'}, priority=5)
 alias_on = on_command('开启别名推送', aliases={'开启别称推送'}, priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
 alias_off = on_command('关闭别名推送', aliases={'关闭别称推送'}, priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
-alias_global_switch = on_command('aliasswitch', aliases={'全局关闭别称推送', '全局开启别称推送'}, priority=5, permission=SUPERUSER)
+alias_global_switch = on_command('aliasswitch', aliases={'全局关闭别名推送', '全局开启别名推送'}, priority=5, permission=SUPERUSER)
 alias_update = on_command('aliasupdate', aliases={'更新别名库'}, priority=5, permission=SUPERUSER)
 score = on_command('分数线', priority=5)
 best50 = on_command('b50', aliases={'B50'}, priority=5)
 minfo = on_command('minfo', aliases={'minfo', 'Minfo', 'MINFO'}, priority=5)
 ginfo = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'}, priority=5)
 table_update = on_command('更新定数表', priority=5, permission=SUPERUSER)
-rating_table = on_endswith('定数表', priority=5)
-rating_table_pf = on_endswith('完成表', priority=5)
+rating_table = on_regex(r'([0-9]+\+?)定数表', priority=5)
+rating_table_pf = on_regex(r'([0-9]+\+?)完成表', priority=5)
 rise_score = on_regex(r'^我要在?([0-9]+\+?)?上([0-9]+)分\s?(.+)?', priority=5)
 plate_process = on_regex(r'^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽舞霸星宙祭祝])([極极将舞神者]舞?)进度\s?(.+)?', priority=5)
 level_process = on_regex(r'^([0-9]+\+?)\s?(.+)进度\s?(.+)?', priority=5)
 level_achievement_list = on_regex(r'^([0-9]+\+?)分数列表\s?([0-9]+)?\s?(.+)?', priority=5)
 rating_ranking = on_command('查看排名', aliases={'查看排行'}, priority=5)
-guess_music_start = on_command('猜歌', priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
+guess_music_start = on_command('猜歌', priority=5)
 guess_music_solve = on_message(rule=is_now_playing_guess_music, priority=5)
 guess_music_reset = on_command('重置猜歌', priority=5)
 guess_music_enable = on_command('开启猜歌', aliases={'开启mai猜歌'}, priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
@@ -150,7 +150,7 @@ async def _():
 
 @repo.handle()
 async def _():
-    await manual.finish('项目地址：https://github.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx\n求star，求宣传~', reply_message=True)
+    await repo.finish('项目地址：https://github.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx\n求star，求宣传~', reply_message=True)
 
 
 @search_base.handle()
@@ -184,7 +184,7 @@ async def _(args: Message = CommandArg()):
 
 @search_bpm.handle()
 async def _(event: MessageEvent, args: Message = CommandArg()):
-    if isinstance(event, GroupMessageEvent) and event.group_id in guess.Group:
+    if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
     args = args.extract_plain_text().strip().split()
     page = 1
@@ -210,7 +210,7 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
 @search_artist.handle()
 async def _(event: MessageEvent, args: Message = CommandArg()):
-    if isinstance(event, GroupMessageEvent) and event.group_id in guess.Group:
+    if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
     args = args.extract_plain_text().strip().split()
     page = 1
@@ -241,7 +241,7 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
 @search_charter.handle()
 async def _(event: MessageEvent, args: Message = CommandArg()):
-    if isinstance(event, GroupMessageEvent) and event.group_id in guess.Group:
+    if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
     args = args.extract_plain_text().strip().split()
     page = 1
@@ -503,7 +503,7 @@ async def _(event: GroupMessageEvent, arg: Message = CommandArg()):
 @alias_on.handle()
 @alias_off.handle()
 async def _(matcher: Matcher, event: GroupMessageEvent):
-    gid = event.group_id
+    gid = str(event.group_id)
     if type(matcher) is alias_on:
         msg = await alias.on(gid)
     elif type(matcher) is alias_off:
@@ -516,7 +516,7 @@ async def _(matcher: Matcher, event: GroupMessageEvent):
 
 @alias_global_switch.handle()
 async def _(event: PrivateMessageEvent):
-    if event.raw_message == '全局关闭别称推送':
+    if event.raw_message == '全局关闭别名推送':
         alias.alias_global_change(False)
         await alias_global_switch.send('已全局关闭maimai别名推送')
     elif event.raw_message == '全局开启别名推送':
@@ -722,8 +722,8 @@ async def _(event: PrivateMessageEvent):
 
 
 @rating_table.handle()
-async def _(args: Message = CommandArg()):
-    args = args.extract_plain_text().strip()
+async def _(match: Tuple = RegexGroup()):
+    args = match[0].strip()
     if args in levelList[:5]:
         await rating_table.send('只支持查询lv6-15的定数表', reply_message=True)
     elif args in levelList[5:]:
@@ -737,13 +737,13 @@ async def _(args: Message = CommandArg()):
 
 
 @rating_table_pf.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(event: MessageEvent, match: Tuple = RegexGroup()):
     qqid = event.user_id
-    args: str = args.extract_plain_text().strip()
+    args: str = match[0].strip()
     if args in levelList[:5]:
         await rating_table_pf.send('只支持查询lv6-15的完成表', reply_message=True)
     elif args in levelList[5:]:
-        img = await rating_table_draw({'qq': qqid}, args)
+        img = await rating_table_draw(qqid, args)
         await rating_table_pf.send(img, reply_message=True)
     # else:
     #     await rating_table_pf.send('无法识别的定数', reply_message=True)
@@ -869,22 +869,26 @@ async def _(event: GroupMessageEvent):
     )
     await asyncio.sleep(4)
     for cycle in range(7):
-        if event.group_id not in guess.config['enable'] or gid not in guess.Group or guess.Group[gid].end:
+        if str(event.group_id) not in guess.config['enable'] or gid not in guess.Group or guess.Group[gid].end:
             break
         if cycle < 6:
             await guess_music_start.send(f'{cycle + 1}/7 这首歌{guess.Group[gid].options[cycle]}')
             await asyncio.sleep(8)
         else:
-            await guess_music_start.send(f'''7/7 这首歌封面的一部分是：\n{MessageSegment.image(guess.Group[gid].img)}答案将在30秒后揭晓''')
+            await guess_music_start.send(
+                MessageSegment.text('7/7 这首歌封面的一部分是：\n') + 
+                MessageSegment.image(guess.Group[gid].img) + 
+                MessageSegment.text('答案将在30秒后揭晓')
+                )
             for _ in range(30):
                 await asyncio.sleep(1)
                 if gid in guess.Group:
-                    if event.group_id not in guess.config['enable'] or guess.Group[gid].end:
+                    if str(event.group_id) not in guess.config['enable'] or guess.Group[gid].end:
                         return
                 else:
                     return
             guess.Group[gid].end = True
-            answer = f'''答案是：\n{await new_draw_music_info(guess.Group[gid].music)}'''
+            answer = MessageSegment.text('答案是：\n') + await new_draw_music_info(guess.Group[gid].music)
             guess.end(gid)
             await guess_music_start.finish(answer)
 
@@ -897,7 +901,7 @@ async def _(event: GroupMessageEvent):
     ans = event.get_plaintext().strip()
     if ans.lower() in guess.Group[gid].answer:
         guess.Group[gid].end = True
-        answer = '猜对了，答案是：' + await draw_music_info_to_message_segment(guess.Group[gid].music)
+        answer = MessageSegment.text('猜对了，答案是：\n') + await draw_music_info_to_message_segment(guess.Group[gid].music)
         guess.end(gid)
         await guess_music_solve.finish(answer, reply_message=True)
 
@@ -916,7 +920,7 @@ async def _(event: GroupMessageEvent):
 @guess_music_enable.handle()
 @guess_music_disable.handle()
 async def _(matcher: Matcher, event: GroupMessageEvent):
-    gid = event.group_id
+    gid = str(event.group_id)
     if type(matcher) is guess_music_enable:
         msg = await guess.on(gid)
     elif type(matcher) is guess_music_disable:
