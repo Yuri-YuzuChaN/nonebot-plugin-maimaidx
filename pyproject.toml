@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-maimaidx"
-version = "0.0.7"
+version = "0.0.8"
 authors = [
   { name="Yuri-YuzuChaN", email="806235364@qq.com" },
 ]
@@ -27,9 +27,6 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx"
 "Bug Tracker" = "https://github.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx/issues"
-
-[tool.setuptools.packages.find]
-where = ["nonebot_plugin_maimaidx"]
 
 [tool.setuptools.package-data]
 "*" = ["maimaidxhelp.png"]
