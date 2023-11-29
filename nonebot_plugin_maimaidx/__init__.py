@@ -633,12 +633,13 @@ async def _(arg: Message = CommandArg()):
 
 
 @best50.handle()
-async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
-    qqid = get_at_qq(arg) or event.user_id
-    username = arg.extract_plain_text().split()
-    if _q := get_at_qq(arg):
-        qqid = _q
-    await matcher.finish(await generate(qqid, username), reply_message=True)
+async def _(event: MessageEvent, matcher: Matcher, args: Message = CommandArg()):
+    target = event.user_id
+    if qqid := get_at_qq(args):
+        target = qqid
+    elif username := args.extract_plain_text().strip():
+        target = username if not username.isdigit() else int(username)
+    await matcher.finish(await generate(target), reply_message=True)
 
 
 @minfo.handle()
