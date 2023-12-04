@@ -145,7 +145,9 @@ async def _(event: PrivateMessageEvent):
 
 @manual.handle()
 async def _():
-    await manual.finish(MessageSegment.image(f'file:///{Root / "maimaidxhelp.png"}'), reply_message=True)
+    with open(f'{Root}/maimaidxhelp.png', 'rb') as f:
+        help_image = f.read()
+        await manual.finish(MessageSegment.image(help_image), reply_message=True)
 
 
 @repo.handle()
