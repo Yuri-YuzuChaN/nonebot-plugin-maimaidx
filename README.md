@@ -35,8 +35,8 @@
     
 2. 安装 `PhantomJS`，前往 https://phantomjs.org/download.html 下载对应平台支持
 
-    > [!WARNING]
-    > 未配置 `PhantomJS` 支持的Bot，在使用 `ginfo` 指令时会被强制关闭 Bot 进程
+> [!WARNING]
+> 未配置 `PhantomJS` 支持的Bot，在使用 `ginfo` 指令时会被强制关闭 Bot 进程
 
 ## 配置
    
