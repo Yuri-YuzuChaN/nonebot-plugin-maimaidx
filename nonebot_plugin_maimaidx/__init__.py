@@ -7,6 +7,7 @@ from string import ascii_uppercase, digits
 from textwrap import dedent
 from typing import Optional, Tuple
 
+import aiofiles
 import nonebot
 from nonebot import get_bot, on_command, on_endswith, on_message, on_regex, require
 from nonebot.adapters.onebot.v11 import (
@@ -145,7 +146,9 @@ async def _(event: PrivateMessageEvent):
 
 @manual.handle()
 async def _():
-    await manual.finish(MessageSegment.image(f'file:///{Root / "maimaidxhelp.png"}'), reply_message=True)
+    async with aiofiles.open(Root / 'maimaidxhelp.png', 'rb') as f:
+        help_image = await f.read()
+    await manual.finish(MessageSegment.image(help_image), reply_message=True)
 
 
 @repo.handle()
