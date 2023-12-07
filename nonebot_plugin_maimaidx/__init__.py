@@ -2,7 +2,6 @@ import asyncio
 import re
 from pathlib import Path
 from random import sample
-from re import Match
 from string import ascii_uppercase, digits
 from textwrap import dedent
 from typing import Optional, Tuple
@@ -324,7 +323,7 @@ async def _(args: Message = CommandArg()):
 
 
 @query_chart.handle()
-async def _(match: Match[str] = RegexMatched()):
+async def _(match = RegexMatched()):
     id = match.group(1)
     music = mai.total_list.by_id(id)
     if not music:
@@ -374,7 +373,7 @@ async def _(event: MessageEvent, end: str = Endswith()):
 
 
 @alias_song.handle()
-async def _(match: Match[str] = RegexMatched()):
+async def _(match = RegexMatched()):
     findid = bool(match.group(1))
     name = match.group(2)
     if findid and name.isdigit():
