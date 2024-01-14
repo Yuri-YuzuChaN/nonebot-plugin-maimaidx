@@ -170,6 +170,7 @@ class DrawBest:
             plate = Image.open(maimaidir / 'UI_Plate_300101.png').resize((1420, 230))
         self._im.alpha_composite(plate, (390, 100))
         icon = Image.open(maimaidir / 'UI_Icon_309503.png').resize((214, 214))
+        self._im.alpha_composite(icon, (398, 108))
         if self.qqId:
             try:
                 async with httpx.AsyncClient() as client:
