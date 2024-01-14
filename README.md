@@ -15,6 +15,9 @@
 
 ## 重要更新
 
+**2024-01-14**
+
+此次更新新增一张图片，用于更新定数表，如觉得重新下载资源包麻烦，请使用[该链接](https://cloud.yuzuchan.moe/f/K9u9/top.png)下载图片，并将图片保存为文件名 `top.png` 存放在静态文件夹 `/static/mai/pic` 目录下
 
 ## 安装
 
@@ -40,7 +43,7 @@
 
 ## 配置
    
-1. 下载静态资源文件，将该压缩文件解压，且解压完为文件夹 `static` 。[下载链接](https://vote.yuzuai.xyz/download/static.zip) /  [下载节点2](https://share.yuzuai.xyz/d/aria/static.zip?sign=R9J9HEdOqoRwTpjkHBTsVIwJbmWqolxI5p-JQd1rvJ4=:0)
+1. 下载静态资源文件，将该压缩文件解压，且解压完为文件夹 `static` 。[下载链接](https://cloud.yuzuchan.moe/f/7Jfn/static.zip)
 2. 在 `.env` 文件中配置静态文件绝对路径 `MAIMAIDXPATH`
 
    ``` dotenv
