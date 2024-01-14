@@ -248,6 +248,8 @@ async def download_music_pictrue(id: Union[int, str]) -> Union[str, BytesIO]:
         id = int(id)
         if id > 10000 and id <= 11000:
             id -= 10000
+        if (file := coverdir / f'{id}.png').exists():
+            return file
         async with httpx.AsyncClient(timeout=60) as client:
             req = await client.get(f'https://www.diving-fish.com/covers/{id:05d}.png')
             if req.status_code == 200:
