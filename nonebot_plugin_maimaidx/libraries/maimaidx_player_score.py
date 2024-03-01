@@ -384,7 +384,7 @@ Master剩余{len(song_remain_master)}首
             else:
                 msg += '已经没有定数大于13.6的曲目了,加油清谱捏！\n'
         else:
-            msg += f'恭喜{appellation}完成{ver}{plan}！'
+            msg = f'已经没有剩余的的曲目了，恭喜{appellation}完成{ver}{plan}！'
     except UserNotFoundError as e:
         msg = str(e)
     except UserDisabledQueryError as e:
