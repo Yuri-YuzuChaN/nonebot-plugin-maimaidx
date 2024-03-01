@@ -241,17 +241,17 @@ class AliasList(List[Alias]):
         return alias_list
 
 
-async def download_music_pictrue(id: Union[int, str]) -> Union[str, BytesIO]:
+async def download_music_pictrue(songd_id: Union[int, str]) -> Union[str, BytesIO]:
     try:
-        if (file := coverdir / f'{id}.png').exists():
+        if (file := coverdir / f'{song_id}.png').exists():
             return file
-        id = int(id)
-        if id > 10000 and id <= 11000:
-            id -= 10000
-        if (file := coverdir / f'{id}.png').exists():
-            return file
+        song_id = int(song_id)
+        if len(str(song_id)) == 4 or (song_id > 10000 and song_id <= 11000):
+            for _id in [song_id + 10000, song_id - 10000]:
+                if (file := coverdir / f'{_id}.png').exists():
+                    return file
         async with httpx.AsyncClient(timeout=60) as client:
-            req = await client.get(f'https://www.diving-fish.com/covers/{id:05d}.png')
+            req = await client.get(f'https://www.diving-fish.com/covers/{songd_id:05d}.png')
             if req.status_code == 200:
                 return BytesIO(await req.read())
             else:
