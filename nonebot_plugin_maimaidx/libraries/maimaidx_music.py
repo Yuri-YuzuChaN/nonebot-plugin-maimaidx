@@ -241,7 +241,7 @@ class AliasList(List[Alias]):
         return alias_list
 
 
-async def download_music_pictrue(songd_id: Union[int, str]) -> Union[str, BytesIO]:
+async def download_music_pictrue(song_id: Union[int, str]) -> Union[str, BytesIO]:
     try:
         if (file := coverdir / f'{song_id}.png').exists():
             return file
@@ -251,7 +251,7 @@ async def download_music_pictrue(songd_id: Union[int, str]) -> Union[str, BytesI
                 if (file := coverdir / f'{_id}.png').exists():
                     return file
         async with httpx.AsyncClient(timeout=60) as client:
-            req = await client.get(f'https://www.diving-fish.com/covers/{songd_id:05d}.png')
+            req = await client.get(f'https://www.diving-fish.com/covers/{song_id:05d}.png')
             if req.status_code == 200:
                 return BytesIO(await req.read())
             else:
