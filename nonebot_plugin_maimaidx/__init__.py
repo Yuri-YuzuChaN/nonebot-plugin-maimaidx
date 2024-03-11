@@ -1,8 +1,6 @@
 import asyncio
 import re
 from pathlib import Path
-from random import sample
-from string import ascii_uppercase, digits
 from textwrap import dedent
 from typing import Optional, Tuple
 
@@ -361,14 +359,22 @@ async def _(event: MessageEvent, end: str = Endswith()):
 
     data = mai.total_alias_list.by_alias(name)
     if not data:
-        await what_song.finish('未找到此歌曲\n可以使用 添加别名 指令给该乐曲添加别名', reply_message=True)
+        obj = await maiApi.get_songs(name)
+        if not obj:
+            await what_song.finish(f'未找到别名为「{name}」的歌曲\n※ 可以使用「添加别名」指令给该乐曲添加别名\n※ 如果是歌名的一部分，请使用「查歌」指令查询哦。', reply_message=True)
+        msg = f'未找到别名为「{name}」的歌曲，但找到与此相同别名的投票：\n'
+        for _s in obj['status']:
+            msg += f'- {_s["Tag"]}.ID {_s["SongID"]}: {name}\n'
+        msg += f'※ 可以使用指令「同意别名 {_s["Tag"]}」进行投票'
+        await what_song.finish(msg, reply_message=True)
     if len(data) != 1:
         msg = f'找到{len(data)}个相同别名的曲目：\n'
         for songs in data:
-            msg += f'{songs.ID}：{songs.Name}\n'
+            msg += f'{songs.SongID}：{songs.Name}\n'
+        msg += '※ 请使用「id xxxxx」查询指定曲目'
         await what_song.finish(msg.strip(), reply_message=True)
 
-    music = mai.total_list.by_id(str(data[0].ID))
+    music = mai.total_list.by_id(str(data[0].SongID))
     await what_song.finish('您要找的是不是：' + await new_draw_music_info(music), reply_message=True)
 
 
@@ -379,7 +385,7 @@ async def _(match = RegexMatched()):
     if findid and name.isdigit():
         alias_id = mai.total_alias_list.by_id(name)
         if not alias_id:
-            await alias_song.finish('未找到此歌曲\n可以使用 添加别名 指令给该乐曲添加别名', reply_message=True)
+            await alias_song.finish('未找到此歌曲\n可以使用「添加别名」指令给该乐曲添加别名', reply_message=True)
         else:
             aliases = alias_id
     else:            
@@ -388,22 +394,22 @@ async def _(match = RegexMatched()):
             if name.isdigit():
                 alias_id = mai.total_alias_list.by_id(name)
                 if not alias_id:
-                    await alias_song.finish('未找到此歌曲\n可以使用 添加别名 指令给该乐曲添加别名', reply_message=True)
+                    await alias_song.finish('未找到此歌曲\n可以使用「添加别名」指令给该乐曲添加别名', reply_message=True)
                 else:
                     aliases = alias_id
             else:
-                await alias_song.finish('未找到此歌曲\n可以使用 添加别名 指令给该乐曲添加别名', reply_message=True)
+                await alias_song.finish('未找到此歌曲\n可以使用「添加别名」指令给该乐曲添加别名', reply_message=True)
     if len(aliases) != 1:
         msg = []
         for songs in aliases:
             alias_list = '\n'.join(songs.Alias)
-            msg.append(f'ID：{songs.ID}\n{alias_list}')
+            msg.append(f'ID：{songs.SongID}\n{alias_list}')
         await alias_song.finish(f'找到{len(aliases)}个相同别名的曲目：\n' + '\n======\n'.join(msg), reply_message=True)
 
     if len(aliases[0].Alias) == 1:
         await alias_song.finish('该曲目没有别名', reply_message=True)
 
-    msg = f'该曲目有以下别名：\nID：{aliases[0].ID}\n'
+    msg = f'该曲目有以下别名：\nID：{aliases[0].SongID}\n'
     msg += '\n'.join(aliases[0].Alias)
     await alias_song.finish(msg, reply_message=True)
 
@@ -417,7 +423,7 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
     if not mai.total_list.by_id(id_):
         await alias_local_apply.finish(f'未找到ID为 [{id_}] 的曲目', reply_message=True)
     server_exist = await maiApi.get_songs(id_)
-    if alias_name in server_exist[id_]:
+    if alias_name in server_exist['Alias']:
         await alias_local_apply.finish(f'该曲目的别名 <{alias_name}> 已存在别名服务器，不能重复添加别名，如果bot未生效，请联系BOT管理员使用指令 <更新别名库>')
     local_exist = mai.total_alias_list.by_id(id_)
     if local_exist and alias_name.lower() in local_exist[0].Alias:
@@ -439,18 +445,17 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
         id_, alias_name = args
         if not mai.total_list.by_id(id_):
             await alias_apply.finish(f'未找到ID为 [{id_}] 的曲目', reply_message=True)
-        isexist = await maiApi.get_songs(id_)
-        if alias_name in isexist[id_]:
+        isexist = await maiApi.get_songs_alias(id_)
+        if alias_name in isexist['Alias']:
             await alias_apply.finish(f'该曲目的别名 <{alias_name}> 已存在，不能重复添加别名，如果bot未生效，请联系BOT管理员使用指令 <更新别名库>', reply_message=True)
-        tag = ''.join(sample(ascii_uppercase + digits, 5))
-        status = await maiApi.post_alias(id_, alias_name, tag, event.user_id)
+        status = await maiApi.post_alias(id_, alias_name, event.user_id)
         if isinstance(status, str):
             await alias_apply.finish(status)
         msg = dedent(f'''\
             您已提交以下别名申请
             ID：{id_}
             别名：{alias_name}
-            现在可用使用唯一标签<{tag}>来进行投票，例如：同意别名 {tag}
+            现在可用使用唯一标签<{status['Tag']}>来进行投票，例如：同意别名 {status['Tag']}
             浏览{vote_url}查看详情
             ''') + await draw_music_info_to_message_segment(mai.total_list.by_id(id_))
     except ServerError as e:
@@ -467,12 +472,7 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
     try:
         tag = arg.extract_plain_text().strip().upper()
         status = await maiApi.post_agree_user(tag, event.user_id)
-        if 'content' in status:
-            await alias_agree.finish(status['content'], reply_message=True)
-        if 'error' in status:
-            await alias_agree.finish(status['error'], reply_message=True)
-        else:
-            await alias_agree.finish(str(status), reply_message=True)
+        await alias_agree.finish(status, reply_message=True)
     except ValueError as e:
         await alias_agree.send(str(e), reply_message=True)
 
@@ -486,12 +486,12 @@ async def _(event: GroupMessageEvent, arg: Message = CommandArg()):
             await alias_status.finish('未查询到正在进行的别名投票', reply_message=True)
         page = max(min(int(args), len(status) // SONGS_PER_PAGE + 1), 1) if args else 1
         result = []
-        for num, tag in enumerate(status):
+        for num, _s in enumerate(status):
             if (page - 1) * SONGS_PER_PAGE <= num < page * SONGS_PER_PAGE:
-                result.append(dedent(f'''{tag}：\
-                    - ID：{status[tag]['ID']}
-                    - 别名：{status[tag]['ApplyAlias']}
-                    - 票数：{status[tag]['Users']}/{status[tag]['Votes']}'''))
+                result.append(dedent(f'''{_s['Tag']}：\
+                    - ID：{_s['SongID']}
+                    - 别名：{_s['ApplyAlias']}
+                    - 票数：{_s['AgreeVotes']}/{_s['Votes']}'''))
         result.append(f'第{page}页，共{len(status) // SONGS_PER_PAGE + 1}页')
         msg = MessageSegment.image(image_to_base64(text_to_image('\n'.join(result))))
     except ServerError as e:
@@ -540,16 +540,16 @@ async def _(event: PrivateMessageEvent):
 
 
 async def alias_apply_status():
-    bot = get_bot()
+    bot: Bot = get_bot()
     try:
         if (status := await maiApi.get_alias_status()) and alias.config['global']:
             msg = ['检测到新的别名申请']
-            for tag in status:
-                if status[tag]['IsNew'] and (usernum := status[tag]['Users']) < (votes := status[tag]['Votes']):
-                    id_ = str(status[tag]['ID'])
-                    alias_name = status[tag]['ApplyAlias']
-                    music = mai.total_list.by_id(id_)
-                    msg.append(f'{tag}：\nID：{id_}\n标题：{music.title}\n别名：{alias_name}\n票数：{usernum}/{votes}')
+            for _s in status:
+                if _s['IsNew'] and (usernum := _s['AgreeVotes']) < (votes := _s['Votes']):
+                    song_id = str(_s['SongID'])
+                    alias_name = _s['ApplyAlias']
+                    music = mai.total_list.by_id(song_id)
+                    msg.append(f'{_s["Tag"]}：\nID：{song_id}\n标题：{music.title}\n别名：{alias_name}\n票数：{usernum}/{votes}')
             if len(msg) != 1:
                 for group in await bot.get_group_list():
                     gid = group['group_id']
@@ -564,11 +564,11 @@ async def alias_apply_status():
         if end := await maiApi.get_alias_end():
             if alias.config['global']:
                 msg2 = ['以下是已成功添加别名的曲目']
-                for ta in end:
-                    id_ = str(end[ta]['ID'])
-                    alias_name = end[ta]['ApplyAlias']
-                    music = mai.total_list.by_id(id_)
-                    msg2.append(f'标题：{music.title}\nID：{id_}\n别名：{alias_name}')
+                for _e in end:
+                    song_id = str(_e['SongID'])
+                    alias_name = _e['ApplyAlias']
+                    music = mai.total_list.by_id(song_id)
+                    msg2.append(f'ID：{song_id}\n标题：{music.title}\n别名：{alias_name}')
                 if len(msg2) != 1:
                     for group in await bot.get_group_list():
                         gid = group['group_id']
@@ -661,10 +661,10 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
         elif len(aliases) != 1:
             msg = '找到相同别名的曲目，请使用以下ID查询：\n'
             for songs in aliases:
-                msg += f'{songs.ID}：{songs.Name}\n'
+                msg += f'{songs.SongID}：{songs.Name}\n'
             await minfo.finish(msg.strip(), reply_message=True)
         else:
-            songs = str(aliases[0].ID)
+            songs = str(aliases[0].SongID)
 
     if maiApi.token:
         pic = await music_play_data_dev(qqid, songs)
@@ -697,10 +697,10 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
         elif len(alias) != 1:
             msg = '找到相同别名的曲目，请使用以下ID查询：\n'
             for songs in alias:
-                msg += f'{songs.ID}：{songs.Name}\n'
+                msg += f'{songs.SongID}：{songs.Name}\n'
             await ginfo.finish(msg.strip(), reply_message=True)
         else:
-            id = str(alias[0].ID)
+            id = str(alias[0].SongID)
     music = mai.total_list.by_id(id)
     if not music.stats:
         await ginfo.finish('该乐曲还没有统计信息', reply_message=True)
