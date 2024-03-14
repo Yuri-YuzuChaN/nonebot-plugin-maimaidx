@@ -733,7 +733,9 @@ async def _(match: Tuple = RegexGroup()):
             img = ratingdir / '14.png'
         else:
             img = ratingdir / f'{args}.png'
-        await rating_table.send(MessageSegment.image(f'''file:///{img}'''))
+        async with aiofiles.open(img, 'rb') as f:
+            rating_table_img = await f.read()
+        await rating_table.send(MessageSegment.image(rating_table_img))
     else:
         await rating_table.send('无法识别的定数', reply_message=True)
 
