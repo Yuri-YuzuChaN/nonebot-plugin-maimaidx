@@ -29,7 +29,7 @@ from .libraries.maimaidx_best_50 import *
 from .libraries.maimaidx_music import alias, guess, mai, update_local_alias
 from .libraries.maimaidx_music_info import *
 from .libraries.maimaidx_player_score import *
-from .libraries.tool import hash
+from .libraries.tool import hash, read_image
 
 __plugin_meta__ = PluginMetadata(
     name='nonebot-plugin-maimaidx',
@@ -143,9 +143,7 @@ async def _(event: PrivateMessageEvent):
 
 @manual.handle()
 async def _():
-    async with aiofiles.open(Root / 'maimaidxhelp.png', 'rb') as f:
-        help_image = await f.read()
-    await manual.finish(MessageSegment.image(help_image), reply_message=True)
+    await manual.finish(MessageSegment.image(await read_image(Root / 'maimaidxhelp.png')), reply_message=True)
 
 
 @repo.handle()
@@ -733,7 +731,7 @@ async def _(match: Tuple = RegexGroup()):
             img = ratingdir / '14.png'
         else:
             img = ratingdir / f'{args}.png'
-        await rating_table.send(MessageSegment.image(f'''file:///{img}'''))
+        await rating_table.send(MessageSegment.image(await read_image(img)))
     else:
         await rating_table.send('无法识别的定数', reply_message=True)
 
