@@ -40,12 +40,12 @@ class Data(BaseModel):
 
 class UserInfo(BaseModel):
 
-    additional_rating: Optional[int]
-    charts: Optional[Data]
-    nickname: Optional[str]
-    plate: Optional[str] = None
-    rating: Optional[int]
-    username: Optional[str]
+    username: str
+    rating: int
+    additional_rating: int
+    nickname: str
+    plate: str
+    charts: Data
 
 
 class DrawBest:
@@ -95,7 +95,7 @@ class DrawBest:
         return f'UI_DNM_DaniPlate_{num}.png'
 
 
-    async def whiledraw(self, data: List[ChartInfo], type: bool) -> Image.Image:
+    async def whiledraw(self, data: List[ChartInfo], type: bool) -> None:
         # y为第一排纵向坐标，dy为各排间距
         y = 430 if type else 1670
         dy = 170
@@ -323,7 +323,7 @@ def generateAchievementList(ds: float):
     _achievementList.append(100.5)
     return _achievementList
 
-async def generate(qqid: Optional[int] = None, username: Optional[str] = None) -> str:
+async def generate(qqid: Optional[int] = None, username: Optional[str] = None) -> Union[str, MessageSegment]:
     try:
         if username:
             qqid = None

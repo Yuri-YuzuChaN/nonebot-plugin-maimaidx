@@ -18,7 +18,7 @@ async def draw_music_info_to_message_segment(music: Music) -> MessageSegment:
     return MessageSegment.image(await draw_music_info(music))
 
 
-async def draw_music_info(music: Music) -> MessageSegment:
+async def draw_music_info(music: Music) -> str:
     """
     旧的谱面详情
     """
@@ -217,7 +217,7 @@ async def music_play_data_dev(qqid: int, songs: str) -> Union[str, MessageSegmen
     return msg
 
 
-async def new_draw_music_info(music: Music) -> str:
+async def new_draw_music_info(music: Music) -> MessageSegment:
     """
     新的查看谱面
     """
@@ -341,7 +341,7 @@ async def update_rating_table() -> str:
         return f'定数表更新失败，Error: {e}'
 
 
-async def rating_table_draw(qqid: int, rating: str) -> str:
+async def rating_table_draw(qqid: int, rating: str) -> Union[str, MessageSegment]:
     try:
         version = list(set(_v for _v in plate_to_version.values()))
         data = await maiApi.query_user('plate', qqid=qqid, version=version)

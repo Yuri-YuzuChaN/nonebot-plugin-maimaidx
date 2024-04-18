@@ -14,7 +14,7 @@ class MaimaiAPI:
     def __init__(self) -> None:
         """封装Api"""
     
-    def load_token(self) -> str:
+    def load_token(self) -> None:
         self.token = maiconfig.maimaidxtoken
         self.headers = {'developer-token': self.token}
     

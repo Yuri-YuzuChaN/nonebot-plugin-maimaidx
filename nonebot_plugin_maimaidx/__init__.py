@@ -95,7 +95,7 @@ guess_music_enable = on_command('开启猜歌', aliases={'开启mai猜歌'}, pri
 guess_music_disable = on_command('关闭猜歌', aliases={'关闭mai猜歌'}, priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
 
 
-def song_level(ds1: float, ds2: float, stats1: str = None, stats2: str = None) -> list:
+def song_level(ds1: float, ds2: float, stats1: Optional[str] = None, stats2: Optional[str] = None) -> list:
     result = []
     music_data = mai.total_list.filter(ds=(ds1, ds2))
     if stats1:
@@ -152,8 +152,8 @@ async def _():
 
 
 @search_base.handle()
-async def _(args: Message = CommandArg()):
-    args = args.extract_plain_text().strip().split()
+async def _(arg: Message = CommandArg()):
+    args = arg.extract_plain_text().strip().split()
     if len(args) > 4 or len(args) == 0:
         await search_base.finish('命令格式为\n定数查歌 <定数>\n定数查歌 <定数下限> <定数上限>', reply_message=True)
     if len(args) == 1:
@@ -181,10 +181,10 @@ async def _(args: Message = CommandArg()):
 
 
 @search_bpm.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(event: MessageEvent, arg: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
-    args = args.extract_plain_text().strip().split()
+    args = arg.extract_plain_text().strip().split()
     page = 1
     if len(args) == 1:
         music_data = mai.total_list.filter(bpm=int(args[0]))
@@ -207,10 +207,10 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
 
 @search_artist.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(event: MessageEvent, arg: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
-    args = args.extract_plain_text().strip().split()
+    args = arg.extract_plain_text().strip().split()
     page = 1
     if len(args) == 1:
         name: str = args[0]
@@ -238,10 +238,10 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
 
 @search_charter.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(event: MessageEvent, arg: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
-    args = args.extract_plain_text().strip().split()
+    args = arg.extract_plain_text().strip().split()
     page = 1
     if len(args) == 1:
         name: str = args[0]
@@ -584,8 +584,8 @@ async def alias_apply_status():
         log.error(str(e))
 
 @score.handle()
-async def _(arg: Message = CommandArg()):
-    arg = arg.extract_plain_text().strip()
+async def _(arg_: Message = CommandArg()):
+    arg = arg_.extract_plain_text().strip()
     args = arg.split()
     if args and args[0] == '帮助':
         msg = dedent('''\

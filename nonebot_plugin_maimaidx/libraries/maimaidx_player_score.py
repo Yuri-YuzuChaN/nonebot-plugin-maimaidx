@@ -128,7 +128,7 @@ async def music_global_data(music: Music, level_index: int) -> Union[str, Messag
     return msg
 
 
-async def rise_score_data(qqid: int, username: Optional[str], rating: str, score: str, nickname: Optional[str] = None) -> str:
+async def rise_score_data(qqid: int, username: Optional[str], rating: str, score: str, nickname: Optional[str] = None) -> Union[str, MessageSegment]:
     """
     上分数据
     
@@ -395,7 +395,7 @@ Master剩余{len(song_remain_master)}首
     return msg
 
 
-async def level_process_data(qqid: int, username: Optional[str], rating: str, rank: str, nickname: Optional[str]) -> str:
+async def level_process_data(qqid: int, username: Optional[str], rating: str, rank: str, nickname: Optional[str]) -> Union[str, MessageSegment]:
     """
     查看谱面等级进度
     
@@ -476,7 +476,7 @@ async def level_process_data(qqid: int, username: Optional[str], rating: str, ra
     return msg
 
 
-async def level_achievement_list_data(qqid: int, username: Optional[str], rating: str, page: Optional[str], nickname: Optional[str]) -> str:
+async def level_achievement_list_data(qqid: int, username: Optional[str], rating: str, page: Optional[str], nickname: Optional[str]) -> MessageSegment:
     """
     查看分数列表
     
@@ -518,7 +518,7 @@ async def level_achievement_list_data(qqid: int, username: Optional[str], rating
     return MessageSegment.image(image_to_base64(text_to_image(msg.strip())))
 
 
-async def rating_ranking_data(name: Optional[str], page: Optional[int]) -> str:
+async def rating_ranking_data(name: Optional[str], page: int) -> Union[str, MessageSegment]:
     """
     查看查分器排行榜
     
