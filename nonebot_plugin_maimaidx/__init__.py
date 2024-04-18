@@ -635,7 +635,7 @@ async def _(arg: Message = CommandArg()):
 @best50.handle()
 async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
     qqid = get_at_qq(arg) or event.user_id
-    username = arg.extract_plain_text().split()
+    username = arg.extract_plain_text().strip()
     if _q := get_at_qq(arg):
         qqid = _q
     await matcher.finish(await generate(qqid, username), reply_message=True)
