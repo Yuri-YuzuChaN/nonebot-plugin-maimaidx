@@ -516,11 +516,11 @@ async def _(matcher: Matcher, event: GroupMessageEvent):
 
 @alias_global_switch.handle()
 async def _(event: PrivateMessageEvent):
-    if event.raw_message == '全局关闭别名推送':
-        alias.alias_global_change(False)
+    if '关闭' in event.raw_message:
+        await alias.alias_global_change(False)
         await alias_global_switch.send('已全局关闭maimai别名推送')
-    elif event.raw_message == '全局开启别名推送':
-        alias.alias_global_change(True)
+    elif '开启' in event.raw_message:
+        await alias.alias_global_change(True)
         await alias_global_switch.send('已全局开启maimai别名推送')
     else:
         return
