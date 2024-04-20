@@ -219,21 +219,21 @@ def search_charts(checker: List[Chart], elem: str, diff: List[int]):
 
 class Alias(BaseModel):
 
-    SongID: Optional[int] = None
-    Name: Optional[str] = None
-    Alias: Optional[List[str]] = None
+    SongID: int
+    Name: str
+    Alias: List[str]
 
 
 class AliasList(List[Alias]):
 
-    def by_id(self, music_id: int) -> Optional[List[Alias]]:
+    def by_id(self, music_id: int) -> List[Alias]:
         alias_music = []
         for music in self:
             if music.SongID == int(music_id):
                 alias_music.append(music)
         return alias_music
     
-    def by_alias(self, music_alias: str) -> Optional[List[Alias]]:
+    def by_alias(self, music_alias: str) -> List[Alias]:
         alias_list = []
         for music in self:
             if music_alias in music.Alias:
@@ -314,13 +314,13 @@ async def get_music_list() -> MusicList:
     except FileNotFoundError:
         log.error(f'未找到文件，请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/chart_stats" 将内容保存为 "music_chart.json" 存放在 "static" 目录下并重启bot')
 
-    total_list: MusicList = MusicList(music_data)
-    for num, music in enumerate(total_list):
+    total_list: MusicList = MusicList()
+    for music in music_data:
         if music['id'] in chart_stats['charts']:
             _stats = [_data if _data else None for _data in chart_stats['charts'][music['id']]] if {} in chart_stats['charts'][music['id']] else chart_stats['charts'][music['id']]
         else:
             _stats = None
-        total_list[num] = Music(stats=_stats, **total_list[num])
+        total_list.append(Music(stats=_stats, **music))
 
     return total_list
 
@@ -356,9 +356,7 @@ async def get_music_alias_list() -> AliasList:
         if (song_id := str(_a['SongID'])) in local_alias_data:
             _a['Alias'].extend(local_alias_data[song_id])
     
-    total_alias_list = AliasList(alias_data)
-    for _ in range(len(total_alias_list)):
-        total_alias_list[_] = Alias(**alias_data[_])
+    total_alias_list = AliasList([Alias(**alias) for alias in alias_data])
 
     return total_alias_list
 
