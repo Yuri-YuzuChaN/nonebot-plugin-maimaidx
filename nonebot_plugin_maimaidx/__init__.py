@@ -700,9 +700,10 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
         else:
             id = str(alias[0].SongID)
     music = mai.total_list.by_id(id)
+    assert music
     if not music.stats:
         await ginfo.finish('该乐曲还没有统计信息', reply_message=True)
-    if len(music.ds) == 4 and level_index == 4:
+    if len(music.stats) <= level_index:
         await ginfo.finish('该乐曲没有这个等级', reply_message=True)
     if not music.stats[level_index]:
         await ginfo.finish('该等级没有统计信息', reply_message=True)

@@ -34,8 +34,8 @@ class ChartInfo(BaseModel):
 
 class Data(BaseModel):
 
-    sd: Optional[List[ChartInfo]] = None
-    dx: Optional[List[ChartInfo]] = None
+    sd: List[ChartInfo]
+    dx: List[ChartInfo]
 
 
 class UserInfo(BaseModel):
@@ -131,7 +131,7 @@ class DrawBest:
             for _ in range(dxnum):
                 self._im.alpha_composite(self.dxstar[dxtype], (x + DXSTAR_DEST[dxnum] + 20 * _, y + 74))
 
-            self._tb.draw(x + 40, y + 148, 20, info.song_id, anchor='mm')
+            self._tb.draw(x + 40, y + 148, 20, str(info.song_id), anchor='mm')
             title = info.title
             if coloumWidth(title) > 18:
                 title = changeColumnWidth(title, 17) + '...'
@@ -205,7 +205,7 @@ class DrawBest:
         return self._im.resize((1760, 1920))
 
 
-def dxScore(dx: int) -> Tuple[int, int]:
+def dxScore(dx: float) -> Tuple[int, int]:
     """
     返回值为 `Tuple`： `(星星种类，数量)`
     """
@@ -257,7 +257,7 @@ def changeColumnWidth(s: str, len: int) -> str:
     return ''.join(sList)
 
 
-def computeRa(ds: float, achievement: float, israte: bool = False) -> Union[int, Tuple[int, str]]:
+def computeRa(ds: float, achievement: float) -> Tuple[int, str]:
     if achievement < 50:
         baseRa = 7.0
         rate = 'D'
@@ -300,25 +300,20 @@ def computeRa(ds: float, achievement: float, israte: bool = False) -> Union[int,
     else:
         baseRa = 22.4
         rate = 'SSSp'
-    
-    if israte:
-        data = (math.floor(ds * (min(100.5, achievement) / 100) * baseRa), rate)
-    else:
-        data = math.floor(ds * (min(100.5, achievement) / 100) * baseRa)
 
-    return data
+    return (math.floor(ds * (min(100.5, achievement) / 100) * baseRa), rate)
 
-def generateAchievementList(ds: float):
+def generateAchievementList(ds: float) -> List[float]:
     _achievementList = []
     for index, acc in enumerate(achievementList):
         if index == len(achievementList) - 1:
             continue
         _achievementList.append(acc)
-        c_acc = (computeRa(ds, achievementList[index]) + 1) / ds / BaseRaSpp[index + 1] * 100
+        c_acc = (computeRa(ds, achievementList[index])[0] + 1) / ds / BaseRaSpp[index + 1] * 100
         c_acc = math.ceil(c_acc * 10000) / 10000
         while c_acc < achievementList[index + 1]:
             _achievementList.append(c_acc)
-            c_acc = (computeRa(ds, c_acc + 0.0001) + 1) / ds / BaseRaSpp[index + 1] * 100
+            c_acc = (computeRa(ds, c_acc + 0.0001)[0] + 1) / ds / BaseRaSpp[index + 1] * 100
             c_acc = math.ceil(c_acc * 10000) / 10000
     _achievementList.append(100.5)
     return _achievementList
