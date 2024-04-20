@@ -87,5 +87,11 @@ category: Dict[str, str] = {
     'niconico & VOCALOID': 'niconico',
     '东方Project': 'touhou',
     '其他游戏': 'game',
-    '音击&中二节奏': 'ongeki'
+    '音击&中二节奏': 'ongeki',
+    'POPSアニメ': 'anime',
+    'maimai': 'maimai',
+    'niconicoボーカロイド': 'niconico',
+    '東方Project': 'touhou',
+    'ゲームバラエティ': 'game',
+    'オンゲキCHUNITHM': 'ongeki'
 }

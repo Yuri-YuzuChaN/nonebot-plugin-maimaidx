@@ -18,7 +18,7 @@ from nonebot.adapters.onebot.v11 import (
     PrivateMessageEvent,
 )
 from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, Endswith, RegexGroup, RegexMatched
+from nonebot.params import CommandArg, Endswith, RegexMatched
 from nonebot.permission import SUPERUSER
 from nonebot.plugin import PluginMetadata
 
@@ -270,17 +270,17 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
 
 
 @random_song.handle()
-async def _(match: Tuple = RegexGroup()):
+async def _(match = RegexMatched()):
     try:
-        diff = match[0]
+        diff = match.group(1)
         if diff == 'dx':
             tp = ['DX']
         elif diff == 'sd' or diff == '标准':
             tp = ['SD']
         else:
             tp = ['SD', 'DX']
-        level = match[2]
-        if match[1] == '':
+        level = match.group(3)
+        if match.group(2) == '':
             music_data = mai.total_list.filter(level=level, type=tp)
         else:
             music_data = mai.total_list.filter(level=level, diff=['绿黄红紫白'.index(match[1])], type=tp)
@@ -722,8 +722,8 @@ async def _(event: PrivateMessageEvent):
 
 
 @rating_table.handle()
-async def _(match: Tuple = RegexGroup()):
-    args = match[0].strip()
+async def _(match = RegexMatched()):
+    args = match.group(1).strip()
     if args in levelList[:5]:
         await rating_table.send('只支持查询lv6-15的定数表', reply_message=True)
     elif args in levelList[5:]:
@@ -737,9 +737,9 @@ async def _(match: Tuple = RegexGroup()):
 
 
 @rating_table_pf.handle()
-async def _(event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(event: MessageEvent, match = RegexMatched()):
     qqid = event.user_id
-    args: str = match[0].strip()
+    args: str = match.group(1).strip()
     if args in levelList[:5]:
         await rating_table_pf.send('只支持查询lv6-15的完成表', reply_message=True)
     elif args in levelList[5:]:
@@ -750,19 +750,19 @@ async def _(event: MessageEvent, match: Tuple = RegexGroup()):
 
 
 @rise_score.handle()  # 慎用，垃圾代码非常吃机器性能
-async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
     nickname = ''
     username = None
     
-    rating = match[0]
-    score = match[1]
+    rating = match.group(1)
+    score = match.group(2)
     
     if rating and rating not in levelList:
         await rise_score.finish('无此等级', reply_message=True)
-    elif match[2]:
-        nickname = match[2]
-        username = match[2].strip()
+    elif match.group(3):
+        nickname = match.group(3)
+        username = match.group(3).strip()
 
     if qqid != event.user_id:
         nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
@@ -772,18 +772,18 @@ async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
 
 
 @plate_process.handle()
-async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
     nickname = ''
     username = None
     
-    ver = match[0]
-    plan = match[1]
+    ver = match.group(1)
+    plan = match.group(2)
     if f'{ver}{plan}' == '真将':
         await plate_process.finish('真系没有真将哦', reply_message=True)
-    elif match[2]:
-        nickname = match[2]
-        username = match[2].strip()
+    elif match.group(3):
+        nickname = match.group(3)
+        username = match.group(3).strip()
 
     if qqid != event.user_id:
         nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
@@ -793,13 +793,13 @@ async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
 
 
 @level_process.handle()
-async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
     nickname = ''
     username = None
     
-    rating = match[0]
-    rank = match[1]
+    rating = match.group(1)
+    rank = match.group(2)
     
     if rating not in levelList:
         await level_process.finish('无此等级', reply_message=True)
@@ -807,9 +807,9 @@ async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
         await level_process.finish('无此评价等级', reply_message=True)
     if levelList.index(rating) < 11 or (rank.lower() in scoreRank and scoreRank.index(rank.lower()) < 8):
         await level_process.finish('兄啊，有点志向好不好', reply_message=True)
-    elif match[2]:
-        nickname = match[2]
-        username =  match[2].strip()
+    elif match.group(3):
+        nickname = match.group(3)
+        username =  match.group(3).strip()
 
     if qqid != event.user_id:
         nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
@@ -819,19 +819,19 @@ async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
 
 
 @level_achievement_list.handle()
-async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
     nickname = ''
     username = None
     
-    rating = match[0]
-    page = match[1]
+    rating = match.group(1)
+    page = match.group(2)
     
     if rating not in levelList:
         await level_achievement_list.finish('无此等级', reply_message=True)
-    elif match[2]:
-        nickname = match[2]
-        username = match[2].strip()
+    elif match.group(3):
+        nickname = match.group(3)
+        username = match.group(3).strip()
 
     if qqid != event.user_id:
         nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']

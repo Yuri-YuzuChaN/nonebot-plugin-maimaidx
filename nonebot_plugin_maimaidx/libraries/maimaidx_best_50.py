@@ -1,7 +1,7 @@
 import math
 import traceback
 from io import BytesIO
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, overload
 
 import httpx
 from nonebot.adapters.onebot.v11 import MessageSegment
@@ -256,7 +256,10 @@ def changeColumnWidth(s: str, len: int) -> str:
             sList.append(ch)
     return ''.join(sList)
 
-
+@overload
+def computeRa(ds: float, achievement: float) -> int: ...
+@overload
+def computeRa(ds: float, achievement: float, israte: bool = False) -> Tuple[int, str]: ...
 def computeRa(ds: float, achievement: float, israte: bool = False) -> Union[int, Tuple[int, str]]:
     if achievement < 50:
         baseRa = 7.0
