@@ -20,8 +20,8 @@ class ChartInfo(BaseModel):
     achievements: float
     ds: float
     dxScore: int
-    fc: Optional[str] = ''
-    fs: Optional[str] = ''
+    fc: str
+    fs: str
     level: str
     level_index: int
     level_label: str
@@ -257,7 +257,7 @@ def changeColumnWidth(s: str, len: int) -> str:
     return ''.join(sList)
 
 
-def computeRa(ds: float, achievement: float) -> Tuple[int, str]:
+def computeRa(ds: float, achievement: float, israte: bool = False) -> Union[int, Tuple[int, str]]:
     if achievement < 50:
         baseRa = 7.0
         rate = 'D'
@@ -301,7 +301,12 @@ def computeRa(ds: float, achievement: float) -> Tuple[int, str]:
         baseRa = 22.4
         rate = 'SSSp'
 
-    return (math.floor(ds * (min(100.5, achievement) / 100) * baseRa), rate)
+    if israte:
+        data = (math.floor(ds * (min(100.5, achievement) / 100) * baseRa), rate)
+    else:
+        data = math.floor(ds * (min(100.5, achievement) / 100) * baseRa)
+
+    return data
 
 def generateAchievementList(ds: float) -> List[float]:
     _achievementList = []
@@ -309,11 +314,11 @@ def generateAchievementList(ds: float) -> List[float]:
         if index == len(achievementList) - 1:
             continue
         _achievementList.append(acc)
-        c_acc = (computeRa(ds, achievementList[index])[0] + 1) / ds / BaseRaSpp[index + 1] * 100
+        c_acc = (computeRa(ds, achievementList[index]) + 1) / ds / BaseRaSpp[index + 1] * 100
         c_acc = math.ceil(c_acc * 10000) / 10000
         while c_acc < achievementList[index + 1]:
             _achievementList.append(c_acc)
-            c_acc = (computeRa(ds, c_acc + 0.0001)[0] + 1) / ds / BaseRaSpp[index + 1] * 100
+            c_acc = (computeRa(ds, c_acc + 0.0001) + 1) / ds / BaseRaSpp[index + 1] * 100
             c_acc = math.ceil(c_acc * 10000) / 10000
     _achievementList.append(100.5)
     return _achievementList

@@ -75,7 +75,6 @@ async def music_play_data(qqid: int, songs: str) -> Union[str, MessageSegment, N
         
         player_data.sort(key=lambda a: a['level_index'])
         music = mai.total_list.by_id(songs)
-        assert music
 
         im = Image.open(maimaidir / 'info_bg.png').convert('RGBA')
         
@@ -102,7 +101,7 @@ async def music_play_data(qqid: int, songs: str) -> Union[str, MessageSegment, N
         for _data in player_data:
             ds: float = music.ds[_data['level_index']]
             lv: int = _data['level_index']
-            ra, rate = computeRa(ds, _data['achievements'])
+            ra, rate = computeRa(ds, _data['achievements'], israte=True)
 
             rank = Image.open(maimaidir / f'UI_TTR_Rank_{rate}.png').resize((120, 57))
             im.alpha_composite(rank, (430, 515 + y * lv))
@@ -179,7 +178,7 @@ async def music_play_data_dev(qqid: int, songs: str) -> Union[str, MessageSegmen
             ds: float = _data['ds']
             lv: int = _data['level_index']
             dxscore = _data['dxScore']
-            ra, rate = computeRa(ds, _data['achievements'])
+            ra, rate = computeRa(ds, _data['achievements'], israte=True)
 
             rank = Image.open(maimaidir / f'UI_TTR_Rank_{rate}.png').resize((120, 57))
             im.alpha_composite(rank, (358, 518 + y * lv))
@@ -382,7 +381,7 @@ async def rating_table_draw(qqid: int, rating: str) -> Union[str, MessageSegment
                 else:
                     x += 85
                 if music.id in fromid and music.lv in fromid[music.id]:
-                    ra, rate = computeRa(music.ds, fromid[music.id][music.lv]['achievements'])
+                    ra, rate = computeRa(music.ds, fromid[music.id][music.lv]['achievements'], israte=True)
                     im.alpha_composite(b2, (x + 2, y - 18))
                     rank = Image.open(maimaidir / f'UI_TTR_Rank_{rate}.png').resize((78, 36))
                     im.alpha_composite(rank, (x, y))
