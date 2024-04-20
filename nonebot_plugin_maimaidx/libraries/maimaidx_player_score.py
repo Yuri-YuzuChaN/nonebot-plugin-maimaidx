@@ -1,6 +1,6 @@
 import time
 import traceback
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 import pyecharts.options as opts
 from nonebot.adapters.onebot.v11 import MessageSegment
@@ -128,7 +128,7 @@ async def music_global_data(music: Music, level_index: int) -> Union[str, Messag
     return msg
 
 
-async def rise_score_data(qqid: int, username: Optional[str], rating: str, score: str, nickname: Optional[str] = None) -> str:
+async def rise_score_data(qqid: int, username: Optional[str], rating: str, score: str, nickname: Optional[str] = None) -> Union[str, MessageSegment]:
     """
     上分数据
     
@@ -143,8 +143,8 @@ async def rise_score_data(qqid: int, username: Optional[str], rating: str, score
         sd_ra_lowest = 999
         player_dx_list = []
         player_sd_list = []
-        music_dx_list: List[List[Union[Music, str, float, int]]] = []
-        music_sd_list: List[List[Union[Music, str, float, int]]] = []
+        music_dx_list: List[Tuple[Music, str, float, float, str, int]] = []
+        music_sd_list: List[Tuple[Music, str, float, float, str, int]] = []
 
         player_data = await maiApi.query_user('player', qqid=qqid, username=username)
 
@@ -171,20 +171,20 @@ async def rise_score_data(qqid: int, username: Optional[str], rating: str, score
                         if [int(music.id), i] in player_dx_id_list:
                             player_ra = player_dx_list[player_dx_id_list.index([int(music.id), i])][2]
                             if music_ra - player_ra == int(score) and [int(music.id), i, music_ra] not in player_dx_list:
-                                music_dx_list.append([music, diffs[i], ds, achievement, scoreRank[index_score + 1].upper(), music_ra])
+                                music_dx_list.append((music, diffs[i], ds, achievement, scoreRank[index_score + 1].upper(), music_ra))
                         else:
                             if music_ra - dx_ra_lowest == int(score) and [int(music.id), i, music_ra] not in player_dx_list:
-                                music_dx_list.append([music, diffs[i], ds, achievement, scoreRank[index_score + 1].upper(), music_ra])
+                                music_dx_list.append((music, diffs[i], ds, achievement, scoreRank[index_score + 1].upper(), music_ra))
                     else:
                         music_ra = computeRa(ds, achievement)
                         if music_ra < sd_ra_lowest: continue
                         if [int(music.id), i] in player_sd_id_list:
                             player_ra = player_sd_list[player_sd_id_list.index([int(music.id), i])][2]
                             if music_ra - player_ra == int(score) and [int(music.id), i, music_ra] not in player_sd_list:
-                                music_sd_list.append([music, diffs[i], ds, achievement, scoreRank[index_score + 1].upper(), music_ra])
+                                music_sd_list.append((music, diffs[i], ds, achievement, scoreRank[index_score + 1].upper(), music_ra))
                         else:
                             if music_ra - sd_ra_lowest == int(score) and [int(music.id), i, music_ra] not in player_sd_list:
-                                music_sd_list.append([music, diffs[i], ds, achievement, scoreRank[index_score + 1].upper(), music_ra])
+                                music_sd_list.append((music, diffs[i], ds, achievement, scoreRank[index_score + 1].upper(), music_ra))
 
         if len(music_dx_list) == 0 and len(music_sd_list) == 0:
             return '没有找到这样的乐曲'
@@ -395,7 +395,7 @@ Master剩余{len(song_remain_master)}首
     return msg
 
 
-async def level_process_data(qqid: int, username: Optional[str], rating: str, rank: str, nickname: Optional[str]) -> str:
+async def level_process_data(qqid: int, username: Optional[str], rating: str, rank: str, nickname: Optional[str]) -> Union[str, MessageSegment]:
     """
     查看谱面等级进度
     
@@ -476,7 +476,7 @@ async def level_process_data(qqid: int, username: Optional[str], rating: str, ra
     return msg
 
 
-async def level_achievement_list_data(qqid: int, username: Optional[str], rating: str, page: Optional[str], nickname: Optional[str]) -> str:
+async def level_achievement_list_data(qqid: int, username: Optional[str], rating: str, page_str: Optional[str], nickname: Optional[str]) -> MessageSegment:
     """
     查看分数列表
     
@@ -495,7 +495,7 @@ async def level_achievement_list_data(qqid: int, username: Optional[str], rating
             if song['level'] == rating:
                 song_list.append(song)
 
-        page = max(min(int(page), len(song_list) // SONGS_PER_PAGE + 1), 1) if page else 1
+        page = max(min(int(page_str), len(song_list) // SONGS_PER_PAGE + 1), 1) if page_str else 1
 
         appellation = nickname if nickname else '您'
 
@@ -518,7 +518,7 @@ async def level_achievement_list_data(qqid: int, username: Optional[str], rating
     return MessageSegment.image(image_to_base64(text_to_image(msg.strip())))
 
 
-async def rating_ranking_data(name: Optional[str], page: Optional[int]) -> str:
+async def rating_ranking_data(name: Optional[str], page: int) -> Union[str, MessageSegment]:
     """
     查看查分器排行榜
     

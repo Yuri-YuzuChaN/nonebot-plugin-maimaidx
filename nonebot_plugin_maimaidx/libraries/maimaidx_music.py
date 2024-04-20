@@ -36,19 +36,19 @@ Notes2 = namedtuple('Notes', ['tap', 'hold', 'slide', 'touch', 'brk'])
 
 class Chart(BaseModel):
 
-    notes: Optional[Union[Notes1, Notes2]]
-    charter: Optional[str] = None
+    notes: Union[Notes1, Notes2]
+    charter: str
 
 
 class BasicInfo(BaseModel):
 
-    title: Optional[str]
-    artist: Optional[str]
-    genre: Optional[str]
-    bpm: Optional[int]
-    release_date: Optional[str]
-    version: Optional[str] = Field(alias='from')
-    is_new: Optional[bool]
+    title: str
+    artist: str
+    genre: str
+    bpm: int
+    release_date: str
+    version: str = Field(alias='from')
+    is_new: bool
 
 
 def cross(checker: Union[List[str], List[float]], elem: Optional[Union[str, float, List[str], List[float], Tuple[float, float]]], diff: List[int]) -> Tuple[bool, List[int]]:
@@ -84,7 +84,7 @@ def cross(checker: Union[List[str], List[float]], elem: Optional[Union[str, floa
 
 
 def in_or_equal(checker: Union[str, int], elem: Optional[Union[str, float, List[str], List[float], Tuple[float, float]]]) -> bool:
-    if elem is Ellipsis:
+    if not elem or elem is Ellipsis:
         return True
     if isinstance(elem, List):
         return checker in elem
@@ -96,14 +96,14 @@ def in_or_equal(checker: Union[str, int], elem: Optional[Union[str, float, List[
 
 class Music(BaseModel):
 
-    id: Optional[str] = None
-    title: Optional[str] = None
-    type: Optional[str] = None
-    ds: Optional[List[float]] = []
-    level: Optional[List[str]] = []
-    cids: Optional[List[int]] = []
-    charts: Optional[List[Chart]] = []
-    basic_info: Optional[BasicInfo] = None
+    id: str
+    title: str
+    type: str
+    ds: List[float]
+    level: List[str]
+    cids: List[int]
+    charts: List[Chart]
+    basic_info: BasicInfo
     stats: Optional[List[Optional[Stats]]] = []
     diff: Optional[List[int]] = []
 
@@ -130,7 +130,7 @@ class MusicList(List[Music]):
                 return music
         return None
     
-    def by_level(self, level: Union[str, List[str]], byid: bool = False) -> Optional[Union[List[Music], List[str]]]:
+    def by_level(self, level: Union[str, List[str]], byid: bool = False) -> Union[List[Music], List[str]]:
         levelList = []             
         if isinstance(level, str):
             levelList = [music.id if byid else music for music in self if level in music.level]
@@ -219,21 +219,21 @@ def search_charts(checker: List[Chart], elem: str, diff: List[int]):
 
 class Alias(BaseModel):
 
-    SongID: Optional[int] = None
-    Name: Optional[str] = None
-    Alias: Optional[List[str]] = None
+    SongID: int
+    Name: str
+    Alias: List[str]
 
 
 class AliasList(List[Alias]):
 
-    def by_id(self, music_id: int) -> Optional[List[Alias]]:
+    def by_id(self, music_id: int) -> List[Alias]:
         alias_music = []
         for music in self:
             if music.SongID == int(music_id):
                 alias_music.append(music)
         return alias_music
     
-    def by_alias(self, music_alias: str) -> Optional[List[Alias]]:
+    def by_alias(self, music_alias: str) -> List[Alias]:
         alias_list = []
         for music in self:
             if music_alias in music.Alias:
@@ -241,7 +241,7 @@ class AliasList(List[Alias]):
         return alias_list
 
 
-async def download_music_pictrue(song_id: Union[int, str]) -> Union[str, BytesIO]:
+async def download_music_pictrue(song_id: Union[int, str]) -> Union[Path, BytesIO]:
     try:
         if (file := coverdir / f'{song_id}.png').exists():
             return file
@@ -260,13 +260,13 @@ async def download_music_pictrue(song_id: Union[int, str]) -> Union[str, BytesIO
         return coverdir / '11000.png'
 
 
-async def openfile(file: str) -> Union[dict, list]:
+async def openfile(file: Path) -> Union[dict, list]:
     async with aiofiles.open(file, 'r', encoding='utf-8') as f:
         data = json.loads(await f.read())
     return data
 
 
-async def writefile(file: str, data: Any) -> bool:
+async def writefile(file: Path, data: Any) -> bool:
     async with aiofiles.open(file, 'w', encoding='utf-8') as f:
         await f.write(json.dumps(data, ensure_ascii=False, indent=4))
     return True
@@ -314,13 +314,13 @@ async def get_music_list() -> MusicList:
     except FileNotFoundError:
         log.error(f'未找到文件，请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/chart_stats" 将内容保存为 "music_chart.json" 存放在 "static" 目录下并重启bot')
 
-    total_list: MusicList = MusicList(music_data)
-    for num, music in enumerate(total_list):
+    total_list: MusicList = MusicList()
+    for music in music_data:
         if music['id'] in chart_stats['charts']:
             _stats = [_data if _data else None for _data in chart_stats['charts'][music['id']]] if {} in chart_stats['charts'][music['id']] else chart_stats['charts'][music['id']]
         else:
             _stats = None
-        total_list[num] = Music(stats=_stats, **total_list[num])
+        total_list.append(Music(stats=_stats, **music))
 
     return total_list
 
@@ -356,9 +356,7 @@ async def get_music_alias_list() -> AliasList:
         if (song_id := str(_a['SongID'])) in local_alias_data:
             _a['Alias'].extend(local_alias_data[song_id])
     
-    total_alias_list = AliasList(alias_data)
-    for _ in range(len(total_alias_list)):
-        total_alias_list[_] = Alias(**alias_data[_])
+    total_alias_list = AliasList([Alias(**alias) for alias in alias_data])
 
     return total_alias_list
 
@@ -382,20 +380,21 @@ async def update_local_alias(id: str, alias_name: str) -> bool:
 
 class MaiMusic:
 
-    total_list: Optional[MusicList]
+    total_list: MusicList
 
     def __init__(self) -> None:
         """
         封装所有曲目信息以及猜歌数据，便于更新
         """
+        self.total_list = MusicList()
 
-    async def get_music(self) -> MusicList:
+    async def get_music(self) -> None:
         """
         获取所有曲目数据
         """
         self.total_list = await get_music_list()
 
-    async def get_music_alias(self) -> AliasList:
+    async def get_music_alias(self) -> None:
         """
         获取所有曲目别名
         """

@@ -1,5 +1,6 @@
 import base64
 from io import BytesIO
+from pathlib import Path
 from typing import Tuple
 
 import numpy as np
@@ -10,7 +11,7 @@ from ..config import SIYUAN
 
 class DrawText:
 
-    def __init__(self, image: ImageDraw.ImageDraw, font: str) -> None:
+    def __init__(self, image: ImageDraw.ImageDraw, font: Path) -> None:
         self._img = image
         self._font = str(font)
 

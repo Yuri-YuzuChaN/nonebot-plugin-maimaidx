@@ -1,7 +1,7 @@
 import math
 import traceback
 from io import BytesIO
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, overload
 
 import httpx
 from nonebot.adapters.onebot.v11 import MessageSegment
@@ -20,8 +20,8 @@ class ChartInfo(BaseModel):
     achievements: float
     ds: float
     dxScore: int
-    fc: Optional[str] = ''
-    fs: Optional[str] = ''
+    fc: str
+    fs: str
     level: str
     level_index: int
     level_label: str
@@ -34,18 +34,18 @@ class ChartInfo(BaseModel):
 
 class Data(BaseModel):
 
-    sd: Optional[List[ChartInfo]] = None
-    dx: Optional[List[ChartInfo]] = None
+    sd: List[ChartInfo]
+    dx: List[ChartInfo]
 
 
 class UserInfo(BaseModel):
 
-    additional_rating: Optional[int]
-    charts: Optional[Data]
-    nickname: Optional[str]
-    plate: Optional[str] = None
-    rating: Optional[int]
-    username: Optional[str]
+    username: str
+    rating: int
+    additional_rating: int
+    nickname: str
+    plate: str
+    charts: Data
 
 
 class DrawBest:
@@ -95,7 +95,7 @@ class DrawBest:
         return f'UI_DNM_DaniPlate_{num}.png'
 
 
-    async def whiledraw(self, data: List[ChartInfo], type: bool) -> Image.Image:
+    async def whiledraw(self, data: List[ChartInfo], type: bool) -> None:
         # y为第一排纵向坐标，dy为各排间距
         y = 430 if type else 1670
         dy = 170
@@ -131,7 +131,7 @@ class DrawBest:
             for _ in range(dxnum):
                 self._im.alpha_composite(self.dxstar[dxtype], (x + DXSTAR_DEST[dxnum] + 20 * _, y + 74))
 
-            self._tb.draw(x + 40, y + 148, 20, info.song_id, anchor='mm')
+            self._tb.draw(x + 40, y + 148, 20, str(info.song_id), anchor='mm')
             title = info.title
             if coloumWidth(title) > 18:
                 title = changeColumnWidth(title, 17) + '...'
@@ -205,7 +205,7 @@ class DrawBest:
         return self._im.resize((1760, 1920))
 
 
-def dxScore(dx: int) -> Tuple[int, int]:
+def dxScore(dx: float) -> Tuple[int, int]:
     """
     返回值为 `Tuple`： `(星星种类，数量)`
     """
@@ -256,7 +256,10 @@ def changeColumnWidth(s: str, len: int) -> str:
             sList.append(ch)
     return ''.join(sList)
 
-
+@overload
+def computeRa(ds: float, achievement: float) -> int: ...
+@overload
+def computeRa(ds: float, achievement: float, israte: bool = False) -> Tuple[int, str]: ...
 def computeRa(ds: float, achievement: float, israte: bool = False) -> Union[int, Tuple[int, str]]:
     if achievement < 50:
         baseRa = 7.0
@@ -300,7 +303,7 @@ def computeRa(ds: float, achievement: float, israte: bool = False) -> Union[int,
     else:
         baseRa = 22.4
         rate = 'SSSp'
-    
+
     if israte:
         data = (math.floor(ds * (min(100.5, achievement) / 100) * baseRa), rate)
     else:
@@ -308,7 +311,7 @@ def computeRa(ds: float, achievement: float, israte: bool = False) -> Union[int,
 
     return data
 
-def generateAchievementList(ds: float):
+def generateAchievementList(ds: float) -> List[float]:
     _achievementList = []
     for index, acc in enumerate(achievementList):
         if index == len(achievementList) - 1:
@@ -323,7 +326,7 @@ def generateAchievementList(ds: float):
     _achievementList.append(100.5)
     return _achievementList
 
-async def generate(qqid: Optional[int] = None, username: Optional[str] = None) -> str:
+async def generate(qqid: Optional[int] = None, username: Optional[str] = None) -> Union[str, MessageSegment]:
     try:
         if username:
             qqid = None

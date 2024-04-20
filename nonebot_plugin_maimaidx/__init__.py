@@ -18,7 +18,7 @@ from nonebot.adapters.onebot.v11 import (
     PrivateMessageEvent,
 )
 from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, Endswith, RegexGroup, RegexMatched
+from nonebot.params import CommandArg, Endswith, RegexMatched
 from nonebot.permission import SUPERUSER
 from nonebot.plugin import PluginMetadata
 
@@ -95,7 +95,7 @@ guess_music_enable = on_command('开启猜歌', aliases={'开启mai猜歌'}, pri
 guess_music_disable = on_command('关闭猜歌', aliases={'关闭mai猜歌'}, priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
 
 
-def song_level(ds1: float, ds2: float, stats1: str = None, stats2: str = None) -> list:
+def song_level(ds1: float, ds2: float, stats1: Optional[str] = None, stats2: Optional[str] = None) -> list:
     result = []
     music_data = mai.total_list.filter(ds=(ds1, ds2))
     if stats1:
@@ -152,8 +152,8 @@ async def _():
 
 
 @search_base.handle()
-async def _(args: Message = CommandArg()):
-    args = args.extract_plain_text().strip().split()
+async def _(arg: Message = CommandArg()):
+    args = arg.extract_plain_text().strip().split()
     if len(args) > 4 or len(args) == 0:
         await search_base.finish('命令格式为\n定数查歌 <定数>\n定数查歌 <定数下限> <定数上限>', reply_message=True)
     if len(args) == 1:
@@ -181,10 +181,10 @@ async def _(args: Message = CommandArg()):
 
 
 @search_bpm.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(event: MessageEvent, arg: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
-    args = args.extract_plain_text().strip().split()
+    args = arg.extract_plain_text().strip().split()
     page = 1
     if len(args) == 1:
         music_data = mai.total_list.filter(bpm=int(args[0]))
@@ -207,10 +207,10 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
 
 @search_artist.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(event: MessageEvent, arg: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
-    args = args.extract_plain_text().strip().split()
+    args = arg.extract_plain_text().strip().split()
     page = 1
     if len(args) == 1:
         name: str = args[0]
@@ -238,10 +238,10 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
 
 @search_charter.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
+async def _(event: MessageEvent, arg: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent) and str(event.group_id) in guess.Group:
         await search_bpm.finish('本群正在猜歌，不要作弊哦~', reply_message=True)
-    args = args.extract_plain_text().strip().split()
+    args = arg.extract_plain_text().strip().split()
     page = 1
     if len(args) == 1:
         name: str = args[0]
@@ -270,17 +270,17 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
 
 
 @random_song.handle()
-async def _(match: Tuple = RegexGroup()):
+async def _(match = RegexMatched()):
     try:
-        diff = match[0]
+        diff = match.group(1)
         if diff == 'dx':
             tp = ['DX']
         elif diff == 'sd' or diff == '标准':
             tp = ['SD']
         else:
             tp = ['SD', 'DX']
-        level = match[2]
-        if match[1] == '':
+        level = match.group(3)
+        if match.group(2) == '':
             music_data = mai.total_list.filter(level=level, type=tp)
         else:
             music_data = mai.total_list.filter(level=level, diff=['绿黄红紫白'.index(match[1])], type=tp)
@@ -516,11 +516,11 @@ async def _(matcher: Matcher, event: GroupMessageEvent):
 
 @alias_global_switch.handle()
 async def _(event: PrivateMessageEvent):
-    if event.raw_message == '全局关闭别名推送':
-        alias.alias_global_change(False)
+    if '关闭' in event.raw_message:
+        await alias.alias_global_change(False)
         await alias_global_switch.send('已全局关闭maimai别名推送')
-    elif event.raw_message == '全局开启别名推送':
-        alias.alias_global_change(True)
+    elif '开启' in event.raw_message:
+        await alias.alias_global_change(True)
         await alias_global_switch.send('已全局开启maimai别名推送')
     else:
         return
@@ -584,8 +584,8 @@ async def alias_apply_status():
         log.error(str(e))
 
 @score.handle()
-async def _(arg: Message = CommandArg()):
-    arg = arg.extract_plain_text().strip()
+async def _(arg_: Message = CommandArg()):
+    arg = arg_.extract_plain_text().strip()
     args = arg.split()
     if args and args[0] == '帮助':
         msg = dedent('''\
@@ -635,7 +635,7 @@ async def _(arg: Message = CommandArg()):
 @best50.handle()
 async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
     qqid = get_at_qq(arg) or event.user_id
-    username = arg.extract_plain_text().split()
+    username = arg.extract_plain_text().strip()
     if _q := get_at_qq(arg):
         qqid = _q
     await matcher.finish(await generate(qqid, username), reply_message=True)
@@ -702,7 +702,7 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
     music = mai.total_list.by_id(id)
     if not music.stats:
         await ginfo.finish('该乐曲还没有统计信息', reply_message=True)
-    if len(music.ds) == 4 and level_index == 4:
+    if len(music.stats) <= level_index:
         await ginfo.finish('该乐曲没有这个等级', reply_message=True)
     if not music.stats[level_index]:
         await ginfo.finish('该等级没有统计信息', reply_message=True)
@@ -722,8 +722,8 @@ async def _(event: PrivateMessageEvent):
 
 
 @rating_table.handle()
-async def _(match: Tuple = RegexGroup()):
-    args = match[0].strip()
+async def _(match = RegexMatched()):
+    args = match.group(1).strip()
     if args in levelList[:5]:
         await rating_table.send('只支持查询lv6-15的定数表', reply_message=True)
     elif args in levelList[5:]:
@@ -737,9 +737,9 @@ async def _(match: Tuple = RegexGroup()):
 
 
 @rating_table_pf.handle()
-async def _(event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(event: MessageEvent, match = RegexMatched()):
     qqid = event.user_id
-    args: str = match[0].strip()
+    args: str = match.group(1).strip()
     if args in levelList[:5]:
         await rating_table_pf.send('只支持查询lv6-15的完成表', reply_message=True)
     elif args in levelList[5:]:
@@ -750,19 +750,19 @@ async def _(event: MessageEvent, match: Tuple = RegexGroup()):
 
 
 @rise_score.handle()  # 慎用，垃圾代码非常吃机器性能
-async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
     nickname = ''
     username = None
     
-    rating = match[0]
-    score = match[1]
+    rating = match.group(1)
+    score = match.group(2)
     
     if rating and rating not in levelList:
         await rise_score.finish('无此等级', reply_message=True)
-    elif match[2]:
-        nickname = match[2]
-        username = match[2].strip()
+    elif match.group(3):
+        nickname = match.group(3)
+        username = match.group(3).strip()
 
     if qqid != event.user_id:
         nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
@@ -772,18 +772,18 @@ async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
 
 
 @plate_process.handle()
-async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
     nickname = ''
     username = None
     
-    ver = match[0]
-    plan = match[1]
+    ver = match.group(1)
+    plan = match.group(2)
     if f'{ver}{plan}' == '真将':
         await plate_process.finish('真系没有真将哦', reply_message=True)
-    elif match[2]:
-        nickname = match[2]
-        username = match[2].strip()
+    elif match.group(3):
+        nickname = match.group(3)
+        username = match.group(3).strip()
 
     if qqid != event.user_id:
         nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
@@ -793,13 +793,13 @@ async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
 
 
 @level_process.handle()
-async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
     nickname = ''
     username = None
     
-    rating = match[0]
-    rank = match[1]
+    rating = match.group(1)
+    rank = match.group(2)
     
     if rating not in levelList:
         await level_process.finish('无此等级', reply_message=True)
@@ -807,9 +807,9 @@ async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
         await level_process.finish('无此评价等级', reply_message=True)
     if levelList.index(rating) < 11 or (rank.lower() in scoreRank and scoreRank.index(rank.lower()) < 8):
         await level_process.finish('兄啊，有点志向好不好', reply_message=True)
-    elif match[2]:
-        nickname = match[2]
-        username =  match[2].strip()
+    elif match.group(3):
+        nickname = match.group(3)
+        username =  match.group(3).strip()
 
     if qqid != event.user_id:
         nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
@@ -819,19 +819,19 @@ async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
 
 
 @level_achievement_list.handle()
-async def _(bot: Bot, event: MessageEvent, match: Tuple = RegexGroup()):
+async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
     nickname = ''
     username = None
     
-    rating = match[0]
-    page = match[1]
+    rating = match.group(1)
+    page = match.group(2)
     
     if rating not in levelList:
         await level_achievement_list.finish('无此等级', reply_message=True)
-    elif match[2]:
-        nickname = match[2]
-        username = match[2].strip()
+    elif match.group(3):
+        nickname = match.group(3)
+        username = match.group(3).strip()
 
     if qqid != event.user_id:
         nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
