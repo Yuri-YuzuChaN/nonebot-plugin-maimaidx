@@ -39,7 +39,7 @@
 
 ## 配置
    
-1. 下载静态资源文件，将该压缩文件解压，且解压完为文件夹 `static` 。[下载链接](https://cloud.yuzuchan.moe/f/JjHN/static.zip)
+1. 下载静态资源文件，将该压缩文件解压，且解压完为文件夹 `static` 。[下载链接](https://cloud.yuzuchan.moe/f/DjSw/static.zip)
 2. 在 `.env` 文件中配置静态文件绝对路径 `MAIMAIDXPATH`
 
    ``` dotenv
