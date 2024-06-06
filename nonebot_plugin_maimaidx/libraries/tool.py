@@ -1,6 +1,10 @@
+import base64
+import json
 import time
-import aiofiles
 from pathlib import Path
+from typing import Any, Union
+
+import aiofiles
 
 
 def hash(qq: int):
@@ -8,21 +12,14 @@ def hash(qq: int):
         time.strftime("%m", time.localtime(time.time()))) + 77
     return (days * qq) >> 8
 
-def render_forward_msg(msg_list: list, uid: int=10001, name: str='maimaiDX'):
-    forward_msg = []
-    for msg in msg_list:
-        forward_msg.append({
-            "type": "node",
-            "data": {
-                "name": str(name),
-                "uin": str(uid),
-                "content": msg
-            }
-        })
-    return forward_msg
+
+async def openfile(file: Path) -> Union[dict, list]:
+    async with aiofiles.open(file, 'r', encoding='utf-8') as f:
+        data = json.loads(await f.read())
+    return data
 
 
-async def read_image(file: Path) -> bytes:
-    async with aiofiles.open(file, 'rb') as f:
-        img = await f.read()
-    return img
+async def writefile(file: Path, data: Any) -> bool:
+    async with aiofiles.open(file, 'w', encoding='utf-8') as f:
+        await f.write(json.dumps(data, ensure_ascii=False, indent=4))
+    return True
