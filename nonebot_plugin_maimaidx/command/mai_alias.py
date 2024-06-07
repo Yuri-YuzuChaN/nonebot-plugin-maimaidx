@@ -53,7 +53,7 @@ async def _(event: MessageEvent, arg: Message = CommandArg()):
     _id, alias_name = args
     if not mai.total_list.by_id(_id):
         await alias_local_apply.finish(f'未找到ID为「{_id}」的曲目', reply_message=True)
-    server_exist = await maiApi.get_songs(_id)
+    server_exist = await maiApi.get_songs_alias(_id)
     if alias_name in server_exist['Alias']:
         await alias_local_apply.finish(f'该曲目的别名「{alias_name}」已存在别名服务器，不能重复添加别名，如果bot未生效，请联系BOT管理员使用指令「更新别名库」')
     local_exist = mai.total_alias_list.by_id(_id)
