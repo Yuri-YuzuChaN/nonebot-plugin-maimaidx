@@ -20,6 +20,7 @@ def is_now_playing_guess_music(event: GroupMessageEvent) -> bool:
     return str(event.group_id) in guess.Group
 
 guess_music_start   = on_command('猜歌', priority=5)
+guess_music_pic     = on_command('猜曲绘', priority=5)
 guess_music_solve   = on_message(rule=is_now_playing_guess_music, priority=5)
 guess_music_reset   = on_command('重置猜歌', priority=5)
 guess_music_switch  = on_endswith('mai猜歌', priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
@@ -31,7 +32,7 @@ async def _(event: GroupMessageEvent):
     if gid not in guess.config['enable']:
         await guess_music_start.finish('该群已关闭猜歌功能，开启请输入 开启mai猜歌', reply_message=True)
     if gid in guess.Group:
-        await guess_music_start.finish('该群已有正在进行的猜歌', reply_message=True)
+        await guess_music_start.finish('该群已有正在进行的猜歌或猜曲绘', reply_message=True)
     await guess.start(gid)
     await guess_music_start.send(dedent(''' \
         我将从热门乐曲中选择一首歌，每隔8秒描述它的特征，
@@ -64,6 +65,32 @@ async def _(event: GroupMessageEvent):
             await guess_music_start.finish(answer)
 
 
+@guess_music_pic.handle()
+async def _(event: GroupMessageEvent):
+    gid = str(event.group_id)
+    if gid not in guess.config['enable']:
+        await guess_music_pic.finish('该群已关闭猜歌功能，开启请输入 开启mai猜歌', reply_message=True)
+    if gid in guess.Group:
+        await guess_music_pic.finish('该群已有正在进行的猜歌或猜曲绘', reply_message=True)
+    await guess.startpic(gid)
+    await guess_music_pic.send(
+        MessageSegment.text('以下裁切图片是哪首谱面的曲绘：\n') +
+        MessageSegment.image(guess.Group[gid].img) +
+        MessageSegment.text('请在30s内输入答案')
+    )
+    for _ in range(30):
+        await asyncio.sleep(1)
+        if gid in guess.Group:
+            if gid not in guess.config['enable'] or guess.Group[gid].end:
+                return
+        else:
+            return
+    guess.Group[gid].end = True
+    answer = MessageSegment.text('答案是：\n') + await draw_music_info(guess.Group[gid].music)
+    guess.end(gid)
+    await guess_music_pic.finish(answer)
+
+
 @guess_music_solve.handle()
 async def _(event: GroupMessageEvent):
     gid = str(event.group_id)
@@ -92,6 +119,7 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent, arg: Message = CommandArg()):
     gid = str(event.group_id)
     args = arg.extract_plain_text().strip()
+    await guess_music_switch.send(args+gid, reply_message=True)
     if args == '开启':
         msg = await guess.on(gid)
     elif args == '关闭':
