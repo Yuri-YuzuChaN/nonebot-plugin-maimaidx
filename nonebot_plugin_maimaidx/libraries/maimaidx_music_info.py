@@ -335,7 +335,7 @@ async def draw_plate_table(qqid: int, version: str, plan: str) -> Union[str, Mes
         music = mai.total_list.by_version(ver)
         plate_num = len(music)
         obj = await maiApi.query_user('plate', qqid=qqid, version=ver)
-        playerdata: List[PlayInfoDefault] = list(filter(lambda x: x.song_id not in ignore_music, [PlayInfoDefault(**v, ds=mai.total_list.by_id(str(v['id'])).ds[v['level_index']]) for v in obj['verlist']]))
+        playerdata: List[PlayInfoDefault] = list(filter(lambda x: str(x.song_id) not in ignore_music, [PlayInfoDefault(**v, ds=mai.total_list.by_id(str(v['id'])).ds[v['level_index']]) for v in obj['verlist']]))
         newdata = sorted(list(filter(lambda x: x.level_index == 3, playerdata)), key=lambda x: x.level_index,reverse=True)
         ra: Dict[str, Dict[str, Optional[PlayInfoDefault]]] = {}
         """
