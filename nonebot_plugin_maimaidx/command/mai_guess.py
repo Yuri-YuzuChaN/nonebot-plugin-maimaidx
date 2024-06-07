@@ -9,6 +9,7 @@ from nonebot.adapters.onebot.v11 import (
     Message,
 )
 from nonebot.params import CommandArg
+from nonebot.matcher import Matcher
 
 from ..libraries.maimaidx_music import guess
 from ..libraries.maimaidx_music_info import *
@@ -23,7 +24,8 @@ guess_music_start   = on_command('猜歌', priority=5)
 guess_music_pic     = on_command('猜曲绘', priority=5)
 guess_music_solve   = on_message(rule=is_now_playing_guess_music, priority=5)
 guess_music_reset   = on_command('重置猜歌', priority=5)
-guess_music_switch  = on_endswith('mai猜歌', priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
+guess_music_enable  = on_command('开启mai猜歌', priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
+guess_music_disable = on_command('关闭mai猜歌', priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
 
 
 @guess_music_start.handle()
@@ -115,15 +117,14 @@ async def _(event: GroupMessageEvent):
     await guess_music_reset.send(msg, reply_message=True)
 
 
-@guess_music_switch.handle()
-async def _(event: GroupMessageEvent, arg: Message = CommandArg()):
+@guess_music_enable.handle()
+@guess_music_disable.handle()
+async def _(matcher: Matcher, event: GroupMessageEvent):
     gid = str(event.group_id)
-    args = arg.extract_plain_text().strip()
-    await guess_music_switch.send(args+gid, reply_message=True)
-    if args == '开启':
+    if type(matcher) is guess_music_enable:
         msg = await guess.on(gid)
-    elif args == '关闭':
+    elif type(matcher) is guess_music_disable:
         msg = await guess.off(gid)
     else:
         raise ValueError('matcher type error')
-    await guess_music_switch.finish(msg, reply_message=True)
+    await guess_music_enable.finish(msg, reply_message=True)
