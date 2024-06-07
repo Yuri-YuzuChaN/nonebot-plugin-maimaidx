@@ -408,7 +408,7 @@ class Guess:
         """结束猜歌"""
         del self.Group[gid]
 
-    async def on(self, gid: int) -> str:
+    async def on(self, gid: str) -> str:
         """开启猜歌"""
         if gid not in self.config['enable']:
             self.config['enable'].append(gid)
@@ -417,7 +417,7 @@ class Guess:
         await writefile(guess_file, self.config)
         return '群猜歌功能已开启'
 
-    async def off(self, gid: int) -> str:
+    async def off(self, gid: str) -> str:
         """关闭猜歌"""
         if gid not in self.config['disable']:
             self.config['disable'].append(gid)
