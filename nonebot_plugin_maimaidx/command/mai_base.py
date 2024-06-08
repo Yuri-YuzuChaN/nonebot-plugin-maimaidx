@@ -14,7 +14,7 @@ maimaidxhelp    = on_command('帮助maimaiDX', aliases={'帮助maimaidx'}, prior
 maimaidxrepo    = on_command('项目地址maimaiDX', aliases={'项目地址maimaidx'}, priority=5)
 update_data     = on_command('更新maimai数据', permission=SUPERUSER, priority=5)
 mai_today       = on_command('今日mai', aliases={'今日舞萌', '今日运势'}, priority=5)
-mai_what        = on_regex(r'.*mai.*什么(推分|上分|加分)?', priority=5)
+mai_what        = on_regex(r'.*mai.*什么(.+)?', priority=5)
 random_song     = on_regex(r'^[随来给]个((?:dx|sd|标准))?([绿黄红紫白]?)([0-9]+\+?)$', priority=5)
 rating_ranking  = on_command('查看排名', aliases={'查看排行'}, priority=5)
 
