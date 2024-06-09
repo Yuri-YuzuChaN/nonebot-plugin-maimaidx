@@ -58,6 +58,7 @@ async def _(args: Message = CommandArg()):
 @search_base.handle()
 async def _(args: Message = CommandArg()):
     args = args.extract_plain_text().strip().split()
+    page = 1
     if len(args) > 4 or len(args) == 0:
         await search_base.finish('命令格式为\n定数查歌 <定数>\n定数查歌 <定数下限> <定数上限>', reply_message=True)
     if len(args) == 1:
