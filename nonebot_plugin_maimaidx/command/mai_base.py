@@ -54,9 +54,10 @@ async def _(event: MessageEvent):
             msg += f'忌 {wm_list[i]}\n'
     music = mai.total_list[h % len(mai.total_list)]
     ds = '/'.join([str(_) for _ in music.ds])
-    msg += f'{maiconfig.botName} Bot提醒您：打机时不要大力拍打或滑动哦\n今日推荐歌曲：'
+    msg += f'{maiconfig.botName} Bot提醒您：打机时不要大力拍打或滑动哦\n今日推荐歌曲：\n'
+    msg += f'ID.{music.id} - {music.title}'
     msg += MessageSegment.image(image_to_base64(Image.open(await maiApi.download_music_pictrue(music.id))))
-    msg += f'ID.{music.id} - {ds}'
+    msg += ds
     await mai_today.finish(msg, reply_message=True)
 
 
