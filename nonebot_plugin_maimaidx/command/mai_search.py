@@ -204,7 +204,11 @@ async def _(event: MessageEvent, end: str = Endswith()):
             await search_alias_song.finish(msg.strip(), reply_message=True)
         else:
             music = mai.total_list.by_id(str(alias_data[0].SongID))
-            await search_alias_song.finish('您要找的是不是：' + (await draw_music_info(music, event.user_id)), reply_message=True)
+            if music:
+                msg = '您要找的是不是：' + (await draw_music_info(music, event.user_id))
+            else:
+                msg = f'未找到别名为「{name}」的歌曲\n※ 可以使用「添加别名」指令给该乐曲添加别名\n※ 如果是歌名的一部分，请使用「查歌」指令查询哦。'
+            await search_alias_song.finish(msg, reply_message=True)
     # id
     if name.isdigit() and (music := mai.total_list.by_id(name)):
         await search_alias_song.finish('您要找的是不是：' + (await draw_music_info(music, event.user_id)), reply_message=True)

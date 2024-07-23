@@ -81,7 +81,6 @@ async def _(match = RegexMatched()):
 @rise_score.handle()
 async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
-    nickname = ''
     username = None
     
     rating = match.group(1)
@@ -90,20 +89,17 @@ async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     if rating and rating not in levelList:
         await rise_score.finish('无此等级', reply_message=True)
     elif match.group(3):
-        nickname = match.group(3)
         username = match.group(3).strip()
+    if username:
+        qqid = None
 
-    if qqid != event.user_id:
-        nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
-
-    data = await rise_score_data(qqid, username, rating, score, nickname)
+    data = await rise_score_data(qqid, username, rating, score)
     await rise_score.finish(data, reply_message=True)
 
 
 @plate_process.handle()
 async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     qqid = get_at_qq(event.get_message()) or event.user_id
-    nickname = ''
     username = None
     
     ver = match.group(1)
@@ -111,13 +107,11 @@ async def _(bot: Bot, event: MessageEvent, match = RegexMatched()):
     if f'{ver}{plan}' == '真将':
         await plate_process.finish('真系没有真将哦', reply_message=True)
     elif match.group(3):
-        nickname = match.group(3)
         username = match.group(3).strip()
+    if username:
+        qqid = None
 
-    if qqid != event.user_id:
-        nickname = (await bot.get_stranger_info(user_id=qqid))['nickname']
-
-    data = await player_plate_data(qqid, username, ver, plan, nickname)
+    data = await player_plate_data(qqid, username, ver, plan)
     await plate_process.finish(data, reply_message=True)
 
 
@@ -130,7 +124,6 @@ async def _(event: MessageEvent, match = RegexMatched()):
     category = match.group(3)
     page = match.group(4)
     username = match.group(5)
-    
     if level not in levelList:
         await level_process.finish('无此等级', reply_message=True)
     if plan.lower() not in scoreRank + comboRank + syncRank:
