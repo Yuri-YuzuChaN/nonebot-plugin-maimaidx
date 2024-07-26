@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-maimaidx"
-version = "1.0.11"
+version = "1.0.12"
 authors = [
   { name="Yuri-YuzuChaN", email="806235364@qq.com" },
 ]
@@ -19,7 +19,7 @@ dependencies = [
     "aiofiles<24.0.0,>=23.2.1",
     "httpx<1.0.0,>=0.23.1",
     "pillow<11.0.0,>=10.0.0",
-    "pydantic<2.0.0,>=1.10.13",
+    "pydantic<3.0.0,>=1.10.13",
     "pyecharts<3.0.0,>=2.0.0",
     "snapshot_phantomjs<1.0.0,>=0.0.1"
 ]

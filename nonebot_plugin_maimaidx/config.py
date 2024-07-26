@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from nonebot import get_driver
+from nonebot import get_driver, get_plugin_config
 from pydantic import BaseModel
 
 driver = get_driver()
@@ -13,7 +13,7 @@ class Config(BaseModel):
     maimaidxpath: str
     botName: str = list(driver.config.nickname)[0] if driver.config.nickname else 'Sakura'
 
-maiconfig = Config.parse_obj(driver.config)
+maiconfig = get_plugin_config(Config)
 
 vote_url: str = 'https://www.yuzuchan.moe/vote'
 
