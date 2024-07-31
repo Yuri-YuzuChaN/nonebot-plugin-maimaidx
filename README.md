@@ -49,25 +49,29 @@
 ## 配置
    
 1. 下载静态资源文件，将该压缩文件解压，且解压完为文件夹 `static`
-   - [私人云盘](https://share.yuzuchan.moe/d/aria/Resource.zip?sign=LOqwqDVm95dYnkEDYKX2E-VGj0xc_JxrsFnuR1BcvtI=:0)
-   - [onedrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzuchan_yuzuai_onmicrosoft_com/EaS3jPYdMwxGiU3V_V64nRIBk6QA5Gdhs2TkJQ2bLssxbw?e=Mm6cWY)
+
+    - [私人云盘](https://share.yuzuchan.moe/d/aria/Resource.zip?sign=LOqwqDVm95dYnkEDYKX2E-VGj0xc_JxrsFnuR1BcvtI=:0)
+    - [onedrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzuchan_yuzuai_onmicrosoft_com/EaS3jPYdMwxGiU3V_V64nRIBk6QA5Gdhs2TkJQ2bLssxbw?e=Mm6cWY)
 
 2. 在 `.env` 文件中配置静态文件绝对路径 `MAIMAIDXPATH`
 
-   ``` dotenv
-   MAIMAIDXPATH=path.to.static
+    ``` dotenv
+    MAIMAIDXPATH=path.to.static
 
-   # 例如 windows 平台，非 "管理员模式" 运行Bot尽量避免存放在C盘
-   MAIMAIDXPATH=D:\bot\static
-   # 例如 linux 平台
-   MAIMAIDXPATH=/root/static
-   ```
+    # 例如 windows 平台，非 "管理员模式" 运行Bot尽量避免存放在C盘
+    MAIMAIDXPATH=D:\bot\static
+    # 例如 linux 平台
+    MAIMAIDXPATH=/root/static
+    ```
 
-3. 可选，如果拥有 `diving-fish 查分器` 的开发者 `Token`，在 `.env` 文件夹中配置 `MAIMAIDXTOKEN`
+3. 在 `.env` 文件夹中配置 `MAIMAIDXTOKEN`
    
-   ``` dotenv
-   MAIMAIDXTOKEN=MAIMAITOKEN
-   ```
+    ``` dotenv
+    # 如果没有 `diving-fish 查分器` 的开发者 `Token`，请直接留空
+    MAIMAIDXTOKEN=
+    # 如果有请填入 `Token`
+    MAIMAIDXTOKEN=MAIMAITOKEN
+    ```
 
 > [!NOTE]
 > 插件带有别名更新推送功能，如果不需要请私聊Bot使用 `全局关闭别名推送` 指令关闭所有群组推送
