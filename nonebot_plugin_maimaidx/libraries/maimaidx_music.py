@@ -275,6 +275,7 @@ async def get_music_alias_list() -> AliasList:
         local_alias_data: Dict[str, Dict[str, Union[str, List[str]]]] = await openfile(local_alias_file)
     else:
         local_alias_data = {}
+    alias_data: List[Dict[str, Union[int, str, List[str]]]] = []
     try:
         alias_data = await maiApi.get_alias()
         await writefile(alias_file, alias_data)
@@ -295,7 +296,7 @@ async def get_music_alias_list() -> AliasList:
             raise ValueError
 
     total_alias_list = AliasList()
-    for _a in alias_data:
+    for _a in filter(lambda x: mai.total_list.by_id(x['SongID']), alias_data):
         if (song_id := str(_a['SongID'])) in local_alias_data:
             _a['Alias'].extend(local_alias_data[song_id])
         total_alias_list.append(Alias(**_a))

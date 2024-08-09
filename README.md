@@ -20,9 +20,8 @@
 1. 更新部分牌子完成表和 `SyncPlay` 图片，下载更新图片包 `Update.zip` 解压，将 `static` 复制并覆盖。**如果怕缺少图片请进行[使用方法第二步](#使用方法)**
    - [私人云盘](https://share.yuzuchan.moe/d/aria/Update.zip?sign=PFnIZpgyB_HptU-hHIQ-S_qhuuGTNDlmEEtmaEpmJlA=:0)
    - [onedrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzuchan_yuzuai_onmicrosoft_com/EcFTIQemNF9NlNQj8RZSdhABiV64tFi-X8-8a7JKxfEKJQ?e=P5nPnx)
-2. 修复 `新增机厅` 指令 `id` 未增加的问题
-3. 修复 `牌子进度` 指令 `sync` 未匹配的问题
-4. 修复 `别名查歌` 指令查询到已删除的曲目时发生错误的问题
+2. 修复 `牌子进度` 指令 `sync` 未匹配的问题
+3. 修复 `别名查歌` 指令查询到已删除的曲目时发生错误的问题
 
 ## 安装
 
