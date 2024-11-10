@@ -183,7 +183,7 @@ async def player_plate_data(qqid: int, username: Optional[str], ver: str, plan: 
         song_remain_difficult = []
         
         if ver in ['霸', '舞']:
-            version = list(set(_v for _v in list(plate_to_version.values())[:-9]))
+            version = list(set(_v for _v in list(plate_to_version.values())[:-10]))
         elif ver == '真':
             version = list(set(_v for _v in list(plate_to_version.values())[0:2]))
         elif ver == '华':
