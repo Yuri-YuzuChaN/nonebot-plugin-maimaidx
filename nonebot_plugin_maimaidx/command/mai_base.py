@@ -108,7 +108,7 @@ async def _(match = RegexMatched()):
         if match.group(2) == '':
             music_data = mai.total_list.filter(level=level, type=tp)
         else:
-            music_data = mai.total_list.filter(level=level, diff=['绿黄红紫白'.index(match[1])], type=tp)
+            music_data = mai.total_list.filter(level=level, diff=['绿黄红紫白'.index(match.group(2))], type=tp)
         if len(music_data) == 0:
             msg = '没有这样的乐曲哦。'
         else:
