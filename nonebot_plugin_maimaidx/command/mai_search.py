@@ -18,20 +18,12 @@ search_alias_song   = on_endswith(('是什么歌', '是啥歌'), priority=5)
 query_chart         = on_regex(r'^id\s?([0-9]+)$', re.IGNORECASE, priority=5)
 
 
-def song_level(ds1: float, ds2: float, stats1: str = None, stats2: str = None) -> list:
+def song_level(ds1: float, ds2: float) -> list:
     result = []
     music_data = mai.total_list.filter(ds=(ds1, ds2))
-    if stats1:
-        if stats2:
-            stats1 = stats1 + ' ' + stats2
-            stats1 = stats1.title()
-        for music in sorted(music_data, key=lambda x: int(x.id)):
-            for i in music.diff:
-                result.append((music.id, music.title, music.ds[i], diffs[i], music.level[i]))
-    else:
-        for music in sorted(music_data, key=lambda x: int(x.id)):
-            for i in music.diff:
-                result.append((music.id, music.title, music.ds[i], diffs[i], music.level[i]))
+    for music in sorted(music_data, key=lambda x: int(x.id)):
+        for i in music.diff:
+            result.append((music.id, music.title, music.ds[i], diffs[i], music.level[i]))
     return result
 
 
@@ -59,22 +51,28 @@ async def _(args: Message = CommandArg()):
 async def _(args: Message = CommandArg()):
     args = args.extract_plain_text().strip().split()
     page = 1
-    if len(args) > 4 or len(args) == 0:
-        await search_base.finish('命令格式为\n定数查歌 <定数>\n定数查歌 <定数下限> <定数上限>', reply_message=True)
+    if len(args) > 3 or len(args) == 0:
+        await search_base.finish('命令格式为\n定数查歌 <定数> (<页数>)\n定数查歌 <定数下限> <定数上限> (<页数>)', reply_message=True)
     if len(args) == 1:
         result = song_level(float(args[0]), float(args[0]))
     elif len(args) == 2:
         try:
             result = song_level(float(args[0]), float(args[1]))
+            if not result:
+                raise
         except:
-            result = song_level(float(args[0]), float(args[0]), str(args[1]))
+            page = int(args[1]) if args[1].isdigit() else 1
+            result = song_level(float(args[0]), float(args[0]))
     elif len(args) == 3:
         try:
-            result = song_level(float(args[0]), float(args[1]), str(args[2]))
+            page = int(args[2]) if args[2].isdigit() else 1
+            result = song_level(float(args[0]), float(args[1]))
         except:
-            result = song_level(float(args[0]), float(args[0]), str(args[1]), str(args[2]))
+            page = int(args[2]) if args[2].isdigit() else 1
+            result = song_level(float(args[0]), float(args[0]))
     else:
-        result = song_level(float(args[0]), float(args[1]), str(args[2]), str(args[3]))
+        result = song_level(float(args[0]), float(args[1]))
+        page = int(args[2]) if args[2].isdigit() else 1
     if not result:
         await search_base.finish('没有找到这样的乐曲。', reply_message=True)
     msg = ''
