@@ -15,14 +15,6 @@
 
 ## 重要更新
 
-**2024-07-23**
-
-1. 更新部分牌子完成表和 `SyncPlay` 图片，下载更新图片包 `Update.zip` 解压，将 `static` 复制并覆盖。**如果怕缺少图片请进行[使用方法第二步](#使用方法)**
-   - [私人云盘](https://share.yuzuchan.moe/d/aria/Update.zip?sign=PFnIZpgyB_HptU-hHIQ-S_qhuuGTNDlmEEtmaEpmJlA=:0)
-   - [onedrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzuchan_yuzuai_onmicrosoft_com/EcFTIQemNF9NlNQj8RZSdhABiV64tFi-X8-8a7JKxfEKJQ?e=P5nPnx)
-2. 修复 `牌子进度` 指令 `sync` 未匹配的问题
-3. 修复 `别名查歌` 指令查询到已删除的曲目时发生错误的问题
-
 ## 安装
 
 1. 安装 `nonebot-plugin-maimaidx`
@@ -71,6 +63,9 @@
     # 如果有请填入 `Token`
     MAIMAIDXTOKEN=MAIMAITOKEN
     ```
+
+> [!NOTE]
+> 安装完插件需要使用定数表或完成表指令时，需私聊Bot使用 `更新定数表` 和 `更新完成表` 进行生成
 
 > [!NOTE]
 > 插件带有别名更新推送功能，如果不需要请私聊Bot使用 `全局关闭别名推送` 指令关闭所有群组推送
