@@ -11,10 +11,10 @@ from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
 from ..libraries.maimaidx_update_plate import *
 
-best50  = on_command('b50', aliases={'B50'}, priority=5)
-minfo   = on_command('minfo', aliases={'minfo', 'Minfo', 'MINFO', 'info', 'Info', 'INFO'}, priority=5)
-ginfo   = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'}, priority=5)
-score   = on_command('分数线', priority=5)
+best50  = on_command('b50', aliases={'B50'})
+minfo   = on_command('minfo', aliases={'minfo', 'Minfo', 'MINFO', 'info', 'Info', 'INFO'})
+ginfo   = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'})
+score   = on_command('分数线')
 
 
 def get_at_qq(message: Message) -> Optional[int]:

@@ -9,13 +9,13 @@ from ..libraries.maimaidx_music import guess
 from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_update_plate import *
 
-search_music        = on_command('查歌', aliases={'search'}, priority=5)
-search_base         = on_command('定数查歌', aliases={'search base'}, priority=5)
-search_bpm          = on_command('bpm查歌', aliases={'search bpm'}, priority=5)
-search_artist       = on_command('曲师查歌', aliases={'search artist'}, priority=5)
-search_charter      = on_command('谱师查歌', aliases={'search charter'}, priority=5)
-search_alias_song   = on_endswith(('是什么歌', '是啥歌'), priority=5)
-query_chart         = on_regex(r'^id\s?([0-9]+)$', re.IGNORECASE, priority=5)
+search_music        = on_command('查歌', aliases={'search'})
+search_base         = on_command('定数查歌', aliases={'search base'})
+search_bpm          = on_command('bpm查歌', aliases={'search bpm'})
+search_artist       = on_command('曲师查歌', aliases={'search artist'})
+search_charter      = on_command('谱师查歌', aliases={'search charter'})
+search_alias_song   = on_endswith(('是什么歌', '是啥歌'))
+query_chart         = on_regex(r'^id\s?([0-9]+)$', re.IGNORECASE)
 
 
 def song_level(ds1: float, ds2: float) -> list:

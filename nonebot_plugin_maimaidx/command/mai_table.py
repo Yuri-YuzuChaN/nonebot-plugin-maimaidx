@@ -9,15 +9,15 @@ from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
 from ..libraries.maimaidx_update_plate import *
 
-update_table            = on_fullmatch('更新定数表', priority=5, permission=SUPERUSER)
-update_plate            = on_fullmatch('更新完成表', priority=5, permission=SUPERUSER)
-rating_table_pfm        = on_regex(r'^([0-9]+\+?)(([apfcp]+|\+)+)?完成表$', re.IGNORECASE, priority=5)
-plate_table_pfm         = on_regex(r'^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽煌舞霸星宙祭祝双])([極极将舞神者]舞?)完成表$', priority=5)
-rating_table            = on_regex(r'([0-9]+\+?)定数表', priority=5)
-rise_score              = on_regex(r'^我要在?([0-9]+\+?)?上([0-9]+)分\s?(.+)?', priority=5)
-plate_process           = on_regex(r'^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽煌舞霸星宙祭祝双])([極极将舞神者]舞?)进度\s?(.+)?', priority=5)
-level_process           = on_regex(r'^([0-9]+\+?)\s?([abcdsfxp\+]+)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?(.+)?', re.IGNORECASE, priority=5)
-level_achievement_list  = on_regex(r'^([0-9]+\.?[0-9]?\+?)\s?分数列表\s?([0-9]+)?\s?(.+)?', priority=5)
+update_table            = on_fullmatch('更新定数表', permission=SUPERUSER)
+update_plate            = on_fullmatch('更新完成表', permission=SUPERUSER)
+rating_table_pfm        = on_regex(r'^([0-9]+\+?)(([apfcp]+|\+)+)?完成表$', re.IGNORECASE)
+plate_table_pfm         = on_regex(r'^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽煌舞霸星宙祭祝双])([極极将舞神者]舞?)完成表$')
+rating_table            = on_regex(r'([0-9]+\+?)定数表')
+rise_score              = on_regex(r'^我要在?([0-9]+\+?)?上([0-9]+)分\s?(.+)?')
+plate_process           = on_regex(r'^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽煌舞霸星宙祭祝双])([極极将舞神者]舞?)进度\s?(.+)?')
+level_process           = on_regex(r'^([0-9]+\+?)\s?([abcdsfxp\+]+)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?(.+)?', re.IGNORECASE)
+level_achievement_list  = on_regex(r'^([0-9]+\.?[0-9]?\+?)\s?分数列表\s?([0-9]+)?\s?(.+)?')
 
 
 def get_at_qq(message: Message) -> Optional[int]:

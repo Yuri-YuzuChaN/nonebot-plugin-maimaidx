@@ -1,14 +1,13 @@
 import asyncio
 from textwrap import dedent
 
-from nonebot import on_command, on_endswith, on_message
+from nonebot import on_command, on_message
+from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11 import (
     GROUP_ADMIN,
     GROUP_OWNER,
-    GroupMessageEvent,
-    Message,
+    GroupMessageEvent
 )
-from nonebot.params import CommandArg
 from nonebot.matcher import Matcher
 
 from ..libraries.maimaidx_music import guess
@@ -20,12 +19,12 @@ from ..libraries.maimaidx_update_plate import *
 def is_now_playing_guess_music(event: GroupMessageEvent) -> bool:
     return str(event.group_id) in guess.Group
 
-guess_music_start   = on_command('猜歌', priority=5)
-guess_music_pic     = on_command('猜曲绘', priority=5)
-guess_music_solve   = on_message(rule=is_now_playing_guess_music, priority=5)
-guess_music_reset   = on_command('重置猜歌', priority=5)
-guess_music_enable  = on_command('开启mai猜歌', priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
-guess_music_disable = on_command('关闭mai猜歌', priority=5, permission=GROUP_ADMIN | GROUP_OWNER)
+guess_music_start   = on_command('猜歌')
+guess_music_pic     = on_command('猜曲绘')
+guess_music_solve   = on_message(rule=is_now_playing_guess_music)
+guess_music_reset   = on_command('重置猜歌')
+guess_music_enable  = on_command('开启mai猜歌', permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN)
+guess_music_disable = on_command('关闭mai猜歌', permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN)
 
 
 @guess_music_start.handle()
