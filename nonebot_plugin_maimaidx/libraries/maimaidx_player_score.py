@@ -494,7 +494,7 @@ async def level_process_data(
                     _p = music[song_id]
                 if (plannum == 0 and info.achievements >= planlist[plannum]) \
                         or (plannum == 1 and info.fc and combo_rank.index(info.fc) >= planlist[plannum]) \
-                        or (plannum == 2 and info.fs and (sync_rank.index(info.fs) >= planlist[plannum] if info.fs and info.fs in sync_rank else sync_rank_p.index(info.fs) >= planlist[plannum])):
+                        or (plannum == 2 and info.fs and (sync_rank.index(info.fs) >= planlist[plannum] if info.fs and info.fs in sync_rank else sync_rank_p.index(info.fs) > planlist[plannum])):
                     _p.completed = info
                 else:
                     _p.unfinished = info
