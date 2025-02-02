@@ -89,11 +89,11 @@ plate_to_version: Dict[str, str] = {
     '華': 'maimai でらっくす PLUS',
     '华': 'maimai でらっくす PLUS',
     '爽': 'maimai でらっくす Splash',
-    '煌': 'maimai でらっくす Splash PLUS',
+    '煌': 'maimai でらっくす Splash',
     '宙': 'maimai でらっくす UNiVERSE',
-    '星': 'maimai でらっくす UNiVERSE PLUS',
+    '星': 'maimai でらっくす UNiVERSE',
     '祭': 'maimai でらっくす FESTiVAL',
-    '祝': 'maimai でらっくす FESTiVAL PLUS',
+    '祝': 'maimai でらっくす FESTiVAL',
     '双': 'maimai でらっくす BUDDiES'
 }
 platecn = {
