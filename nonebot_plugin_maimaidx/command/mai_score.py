@@ -1,12 +1,9 @@
 import re
-from textwrap import dedent
 
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Message, MessageEvent
-from nonebot.matcher import Matcher
-from nonebot.params import CommandArg
+from nonebot.adapters.onebot.v11 import GroupMessageEvent, Message, MessageEvent
+from nonebot.params import CommandArg, Depends
 
-from ..libraries.image import to_bytes_io
 from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
 from ..libraries.maimaidx_update_plate import *
@@ -17,50 +14,58 @@ ginfo   = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'})
 score   = on_command('分数线')
 
 
-def get_at_qq(message: Message) -> Optional[int]:
+def get_at_qq(message: GroupMessageEvent) -> Optional[int]:
     for item in message:
         if isinstance(item, MessageSegment) and item.type == 'at' and item.data['qq'] != 'all':
             return int(item.data['qq'])
+    return None
 
 
 @best50.handle()
-async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
-    qqid = get_at_qq(arg) or event.user_id
-    username = arg.extract_plain_text().split()
-    if _q := get_at_qq(arg):
-        qqid = _q
-    await matcher.finish(await generate(qqid, username), reply_message=True)
+async def _(
+    event: MessageEvent, 
+    message: Message = CommandArg(), 
+    user_id: Optional[int] = Depends(get_at_qq)
+):
+    qqid = user_id or event.user_id
+    username = message.extract_plain_text()
+    await best50.finish(await generate(qqid, username), reply_message=True)
 
 
 @minfo.handle()
-async def _(event: MessageEvent, arg: Message = CommandArg()):
-    qqid = get_at_qq(arg) or event.user_id
-    args = arg.extract_plain_text().strip()
+async def _(
+    event: MessageEvent, 
+    message: Message = CommandArg(), 
+    user_id: Optional[int] = Depends(get_at_qq)
+):
+    qqid = user_id or event.user_id
+    args = message.extract_plain_text().strip()
     if not args:
         await minfo.finish('请输入曲目id或曲名', reply_message=True)
 
     if mai.total_list.by_id(args):
-        songs = args
+        music_id = args
     elif by_t := mai.total_list.by_title(args):
-        songs = by_t.id
+        music_id = by_t.id
     else:
         aliases = mai.total_alias_list.by_alias(args)
         if not aliases:
-            await minfo.finish('未找到曲目', reply_message=True)
+            await minfo.finish('未找到曲目')
         elif len(aliases) != 1:
             msg = '找到相同别名的曲目，请使用以下ID查询：\n'
-            for songs in aliases:
-                msg += f'{songs.SongID}：{songs.Name}\n'
-            await minfo.finish(msg.strip(), reply_message=True)
+            for music_id in aliases:
+                msg += f'{music_id.SongID}：{music_id.Name}\n'
+            await minfo.finish(msg.strip())
         else:
-            songs = str(aliases[0].SongID)
-    pic = await music_play_data(qqid, songs)
+            music_id = str(aliases[0].SongID)
+    
+    pic = await draw_music_play_data(qqid, music_id)
     await minfo.finish(pic, reply_message=True)
 
 
 @ginfo.handle()
-async def _(arg: Message = CommandArg()):
-    args = arg.extract_plain_text().strip()
+async def _(message: Message = CommandArg()):
+    args = message.extract_plain_text().strip()
     if not args:
         await ginfo.finish('请输入曲目id或曲名', reply_message=True)
     if args[0] not in '绿黄红紫白':
@@ -85,6 +90,7 @@ async def _(arg: Message = CommandArg()):
             await ginfo.finish(msg.strip(), reply_message=True)
         else:
             id = str(alias[0].SongID)
+    
     music = mai.total_list.by_id(id)
     if not music.stats:
         await ginfo.finish('该乐曲还没有统计信息', reply_message=True)
@@ -98,14 +104,13 @@ async def _(arg: Message = CommandArg()):
         拟合难度：{stats.fit_diff:.2f}
         平均达成率：{stats.avg:.2f}%
         平均 DX 分数：{stats.avg_dx:.1f}
-        谱面成绩标准差：{stats.std_dev:.2f}
-        ''')
+        谱面成绩标准差：{stats.std_dev:.2f}''')
     await ginfo.finish(data, reply_message=True)
 
 
 @score.handle()
-async def _(arg: Message = CommandArg()):
-    _args = arg.extract_plain_text().strip()
+async def _(message: Message = CommandArg()):
+    _args = message.extract_plain_text().strip()
     args = _args.split()
     if args and args[0] == '帮助':
         msg = dedent('''\
@@ -115,12 +120,12 @@ async def _(arg: Message = CommandArg()):
             命令将返回分数线允许的 TAP GREAT 容错以及 BREAK 50落等价的 TAP GREAT 数。
             以下为 TAP GREAT 的对应表：
             GREAT/GOOD/MISS
-            TAP\t1/2.5/5
-            HOLD\t2/5/10
-            SLIDE\t3/7.5/15
-            TOUCH\t1/2.5/5
-            BREAK\t5/12.5/25(外加200落)''')
-        await score.finish(MessageSegment.image(to_bytes_io(msg)), reply_message=True)
+            TAP    1/2.5/5
+            HOLD   2/5/10
+            SLIDE  3/7.5/15
+            TOUCH  1/2.5/5
+            BREAK  5/12.5/25(外加200落)''')
+        await score.finish(MessageSegment.image(text_to_bytes_io(msg)), reply_message=True)
     else:
         try:
             result = re.search(r'([绿黄红紫白])\s?([0-9]+)', _args)
@@ -146,7 +151,7 @@ async def _(arg: Message = CommandArg()):
                 {music.title} {level_labels2[level_index]}
                 分数线 {line}% 允许的最多 TAP GREAT 数量为 {(total_score * reduce / 10000):.2f}(每个-{10000 / total_score:.4f}%),
                 BREAK 50落(一共{brk}个)等价于 {(break_50_reduce / 100):.3f} 个 TAP GREAT(-{break_50_reduce / total_score * 100:.4f}%)''')
-            await score.finish(MessageSegment.image(to_bytes_io(msg)), reply_message=True)
+            await score.finish(MessageSegment.image(text_to_bytes_io(msg)), reply_message=True)
         except (AttributeError, ValueError) as e:
             log.exception(e)
             await score.finish('格式错误，输入“分数线 帮助”以查看帮助信息', reply_message=True)

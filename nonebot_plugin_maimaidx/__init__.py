@@ -24,14 +24,20 @@ sub_plugins = nonebot.load_plugins(
 
 @driver.on_startup
 async def get_music():
-    """bot启动时开始获取所有数据"""
-    maiApi.load_token()
+    """
+    bot启动时开始获取所有数据
+    """
+    if maiconfig.maimaidxproberproxy:
+        log.info('正在使用代理服务器访问查分器')
+    if maiconfig.maimaidxaliasproxy:
+        log.info('正在使用代理服务器访问别名服务器')
+    maiApi.load_token_proxy()
     log.info('正在获取maimai所有曲目信息')
     await mai.get_music()
+    log.info('正在获取maimai牌子数据')
+    await mai.get_plate_json()
     log.info('正在获取maimai所有曲目别名信息')
     await mai.get_music_alias()
-    log.info('正在初始化猜歌数据')
-    mai.guess()
     log.success('maimai数据获取完成')
 
 
