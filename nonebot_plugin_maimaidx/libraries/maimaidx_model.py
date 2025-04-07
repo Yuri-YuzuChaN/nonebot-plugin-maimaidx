@@ -1,7 +1,7 @@
 from collections import namedtuple
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 ##### Music
