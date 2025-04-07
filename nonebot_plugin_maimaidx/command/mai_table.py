@@ -1,11 +1,7 @@
 import re
 
 from nonebot import on_fullmatch, on_regex
-from nonebot.adapters.onebot.v11 import (
-    GroupMessageEvent,
-    MessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.onebot.v11 import MessageEvent, PrivateMessageEvent
 from nonebot.params import Depends, RegexMatched
 from nonebot.permission import SUPERUSER
 
@@ -24,8 +20,8 @@ level_process           = on_regex(r'^([0-9]+\+?)\s?([abcdsfxp\+]+)\s?([\u4e00-\
 level_achievement_list  = on_regex(r'^([0-9]+\.?[0-9]?\+?)\s?分数列表\s?([0-9]+)?\s?(.+)?')
 
 
-def get_at_qq(message: GroupMessageEvent) -> Optional[int]:
-    for item in message:
+def get_at_qq(message: MessageEvent) -> Optional[int]:
+    for item in message.message:
         if isinstance(item, MessageSegment) and item.type == 'at' and item.data['qq'] != 'all':
             return int(item.data['qq'])
     return None

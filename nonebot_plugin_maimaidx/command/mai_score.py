@@ -1,7 +1,7 @@
 import re
 
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import GroupMessageEvent, Message, MessageEvent
+from nonebot.adapters.onebot.v11 import Message, MessageEvent
 from nonebot.params import CommandArg, Depends
 
 from ..libraries.maimaidx_music_info import *
@@ -14,8 +14,8 @@ ginfo   = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'})
 score   = on_command('分数线')
 
 
-def get_at_qq(message: GroupMessageEvent) -> Optional[int]:
-    for item in message:
+def get_at_qq(message: MessageEvent) -> Optional[int]:
+    for item in message.message:
         if isinstance(item, MessageSegment) and item.type == 'at' and item.data['qq'] != 'all':
             return int(item.data['qq'])
     return None
