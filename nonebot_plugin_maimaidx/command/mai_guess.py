@@ -11,7 +11,7 @@ from ..libraries.maimaidx_update_plate import *
 
 
 def is_now_playing_guess_music(event: GroupMessageEvent) -> bool:
-    return str(event.group_id) in guess.Group
+    return event.group_id in guess.Group
 
 guess_music_start   = on_command('猜歌')
 guess_music_pic     = on_command('猜曲绘')
