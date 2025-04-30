@@ -29,8 +29,8 @@ alias_local_apply   = on_command('添加本地别名', aliases={'添加本地别
 alias_apply         = on_command('添加别名', aliases={'增加别名', '增添别名', '添加别称'})
 alias_agree         = on_command('同意别名', aliases={'同意别称'})
 alias_status        = on_command('当前投票', aliases={'当前别名投票', '当前别称投票'})
-alias_switch        = on_endswith(
-    ('别名推送', '别称推送'), 
+alias_switch        = on_regex(
+    r'^([开启关闭]+)别名推送$',
     permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
 )
 alias_global_switch = on_regex(r'^全局([开启关闭]+)别名推送$', permission=SUPERUSER)
@@ -200,11 +200,10 @@ async def _(match = RegexMatched()):
 
 
 @alias_switch.handle()
-async def _(event: GroupMessageEvent, end: str = Endswith()):
-    args = event.get_plaintext().lower()[0:-len(end)].strip()
-    if args == '开启':
+async def _(event: GroupMessageEvent, match = RegexMatched()):
+    if match.group(1) == '开启':
         msg = await alias.on(event.group_id)
-    elif args == '关闭':
+    elif match.group(1) == '关闭':
         msg = await alias.off(event.group_id)
     else:
         raise ValueError('matcher type error')
@@ -215,10 +214,10 @@ async def _(event: GroupMessageEvent, end: str = Endswith()):
 @alias_global_switch.handle()
 async def _(match = RegexMatched()):
     if match.group(1) == '开启':
-        alias.alias_global_change(True)
+        await alias.alias_global_change(True)
         await alias_global_switch.finish('已全局开启maimai别名推送')
     elif match.group(1) == '关闭':
-        alias.alias_global_change(False)
+        await alias.alias_global_change(False)
         await alias_global_switch.finish('已全局关闭maimai别名推送')
     else:
         await alias_global_switch.finish()

@@ -147,11 +147,11 @@ async def _(message: Message = CommandArg()):
             reduce = 101 - line
             if reduce <= 0 or reduce >= 101:
                 raise ValueError
-            msg = dedent(f'''\
+            msg = dedent(f'''
                 {music.title} {level_labels2[level_index]}
                 分数线 {line}% 允许的最多 TAP GREAT 数量为 {(total_score * reduce / 10000):.2f}(每个-{10000 / total_score:.4f}%),
                 BREAK 50落(一共{brk}个)等价于 {(break_50_reduce / 100):.3f} 个 TAP GREAT(-{break_50_reduce / total_score * 100:.4f}%)''')
-            await score.finish(MessageSegment.image(text_to_bytes_io(msg)), reply_message=True)
+            await score.finish(msg.strip(), reply_message=True)
         except (AttributeError, ValueError) as e:
             log.exception(e)
             await score.finish('格式错误，输入“分数线 帮助”以查看帮助信息', reply_message=True)
