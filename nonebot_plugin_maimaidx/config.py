@@ -15,6 +15,7 @@ class Config(BaseModel):
     maimaidxpath: str
     maimaidxproberproxy: bool = False
     maimaidxaliasproxy: bool = False
+    saveinmem: Optional[bool] = True
     botName: str = list(driver.config.nickname)[0] if driver.config.nickname else 'Sakura'
 
 
@@ -22,6 +23,13 @@ maiconfig = get_plugin_config(Config)
 
 
 vote_url: str = 'https://www.yuzuchan.moe/vote'
+
+
+# echartsjs
+SNAPSHOT_JS = (
+    "echarts.getInstanceByDom(document.querySelector('div[_echarts_instance_]'))."
+    "getDataURL({type: 'PNG', pixelRatio: 2, excludeComponents: ['toolbox']})"
+)
 
 
 # 文件路径
@@ -36,6 +44,7 @@ music_file: Path = static / 'music_data.json'                   # 曲目暂存�
 chart_file: Path = static / 'music_chart.json'                  # 谱面数据暂存文件
 guess_file: Path = static / 'group_guess_switch.json'           # 猜歌开关群文件
 group_alias_file: Path = static / 'group_alias_switch.json'     # 别名推送开关群文件
+pie_html_file: Path = static / 'temp_pie.html'                  # 饼图html文件
 
 
 # 静态资源路径

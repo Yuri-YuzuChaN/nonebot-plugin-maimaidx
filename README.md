@@ -35,11 +35,13 @@
         git clone https://github.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx
         ```
     
-2. 安装 `PhantomJS`，前往 https://phantomjs.org/download.html 下载对应平台支持
-3. 安装 `微软雅黑` 字体，解决使用 `ginfo` 指令字体不渲染的问题，例如 `ubuntu`：`apt install fonts-wqy-microhei`
+2. 安装 `chromium`，**相关依赖已安装，请直接使用该指令执行**
+   
+    ``` shell
+    playwright install --with-deps chromium
+    ```
 
-> [!WARNING]
-> 未配置 `PhantomJS` 支持的Bot，在使用 `ginfo` 指令时会被强制关闭 Bot 进程
+3. 安装 `微软雅黑` 字体，解决使用 `ginfo` 指令字体不渲染的问题，例如 `ubuntu`：`apt install fonts-wqy-microhei`
 
 ## 配置
    
@@ -73,6 +75,12 @@
     MAIMAIDXPROBERPROXY=false
     # 别名代理，推荐国内服务器使用
     MAIMAIDXALIASPROXY=false
+    ```
+
+5. 可选，是否将部分图片在保存在内存中，不需要请在 `.env` 文件中配置 `SAVEINMEM` 为 `false`
+
+    ``` dotenv
+    SAVEINMEM=false
     ```
 
 > [!NOTE]

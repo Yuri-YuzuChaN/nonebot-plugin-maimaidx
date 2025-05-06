@@ -3,7 +3,7 @@ import re
 import traceback
 from textwrap import dedent
 
-from nonebot import get_bot, on_command, on_endswith, on_regex
+from nonebot import get_bot, on_command, on_regex
 from nonebot.adapters.onebot.v11 import (
     GROUP_ADMIN,
     GROUP_OWNER,
@@ -14,7 +14,7 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment,
     PrivateMessageEvent,
 )
-from nonebot.params import CommandArg, Endswith, RegexMatched
+from nonebot.params import CommandArg, RegexMatched
 from nonebot.permission import SUPERUSER
 
 from ..config import *

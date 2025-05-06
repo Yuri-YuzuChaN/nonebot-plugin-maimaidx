@@ -38,7 +38,25 @@ async def get_music():
     await mai.get_plate_json()
     log.info('正在获取maimai所有曲目别名信息')
     await mai.get_music_alias()
+    mai.guess()
     log.success('maimai数据获取完成')
+    
+    if not list(ratingdir.iterdir()):
+        log.opt(colors=True).warning(
+            '<y>注意！注意！</y>检测到定数表文件夹为空！'
+            '可能导致「定数表」「完成表」指令无法使用，'
+            '请及时私聊BOT使用指令「更新定数表」进行生成。'
+        )
+    plate_list = [name for name in list(plate_to_version.keys())[1:]]
+    platedir_list = [f.name.split('.')[0] for f in platedir.iterdir()]
+    notin = set(plate_list) - set(platedir_list)
+    if notin:
+        anyname = '，'.join(notin)
+        log.opt(colors=True).warning(
+            f'<y>注意！注意！</y>未检测到牌子文件夹中的牌子：<y>{anyname}</y>，'
+            '可能导致这些牌子的「完成表」指令无法使用，'
+            '请及时私聊BOT使用指令「更新完成表」进行生成。'
+        )
 
 
 scheduler.add_job(alias_apply_status, 'interval', minutes=5)
