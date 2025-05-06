@@ -51,33 +51,30 @@ class ScoreBaseImage:
     rainbow_bg = None
     rainbow_bottom_bg = None
 
-    if maiconfig.saveinmem:
-        @classmethod
-        def _load_image(cls):
-            cls._diff = [
-                Image.open(maimaidir / 'b50_score_basic.png'), 
-                Image.open(maimaidir / 'b50_score_advanced.png'), 
-                Image.open(maimaidir / 'b50_score_expert.png'), 
-                Image.open(maimaidir / 'b50_score_master.png'), 
-                Image.open(maimaidir / 'b50_score_remaster.png')
-            ]
-            cls._rise = [
-                Image.open(maimaidir / 'rise_score_basic.png'),
-                Image.open(maimaidir / 'rise_score_advanced.png'),
-                Image.open(maimaidir / 'rise_score_expert.png'),
-                Image.open(maimaidir / 'rise_score_master.png'),
-                Image.open(maimaidir / 'rise_score_remaster.png')
-            ]
-            cls.title_bg = Image.open(maimaidir / 'title.png')
-            cls.title_lengthen_bg = Image.open(maimaidir / 'title-lengthen.png')
-            cls.design_bg = Image.open(maimaidir / 'design.png')
-            cls.aurora_bg = Image.open(maimaidir / 'aurora.png').convert('RGBA').resize((1400, 220))
-            cls.shines_bg = Image.open(maimaidir / 'bg_shines.png').convert('RGBA')
-            cls.pattern_bg = Image.open(maimaidir / 'pattern.png')
-            cls.rainbow_bg = Image.open(maimaidir / 'rainbow.png').convert('RGBA')
-            cls.rainbow_bottom_bg = Image.open(maimaidir / 'rainbow_bottom.png').convert('RGBA').resize((1200, 200))
-        
-        _load_image()
+    @classmethod
+    def _load_image(cls):
+        cls._diff = [
+            Image.open(maimaidir / 'b50_score_basic.png'), 
+            Image.open(maimaidir / 'b50_score_advanced.png'), 
+            Image.open(maimaidir / 'b50_score_expert.png'), 
+            Image.open(maimaidir / 'b50_score_master.png'), 
+            Image.open(maimaidir / 'b50_score_remaster.png')
+        ]
+        cls._rise = [
+            Image.open(maimaidir / 'rise_score_basic.png'),
+            Image.open(maimaidir / 'rise_score_advanced.png'),
+            Image.open(maimaidir / 'rise_score_expert.png'),
+            Image.open(maimaidir / 'rise_score_master.png'),
+            Image.open(maimaidir / 'rise_score_remaster.png')
+        ]
+        cls.title_bg = Image.open(maimaidir / 'title.png')
+        cls.title_lengthen_bg = Image.open(maimaidir / 'title-lengthen.png')
+        cls.design_bg = Image.open(maimaidir / 'design.png')
+        cls.aurora_bg = Image.open(maimaidir / 'aurora.png').convert('RGBA').resize((1400, 220))
+        cls.shines_bg = Image.open(maimaidir / 'bg_shines.png').convert('RGBA')
+        cls.pattern_bg = Image.open(maimaidir / 'pattern.png')
+        cls.rainbow_bg = Image.open(maimaidir / 'rainbow.png').convert('RGBA')
+        cls.rainbow_bottom_bg = Image.open(maimaidir / 'rainbow_bottom.png').convert('RGBA').resize((1200, 200))
     
     
     def __init__(self, image: Image.Image = None) -> None:

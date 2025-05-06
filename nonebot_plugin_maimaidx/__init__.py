@@ -41,6 +41,10 @@ async def get_music():
     mai.guess()
     log.success('maimai数据获取完成')
     
+    if maiconfig.saveinmem:
+        ScoreBaseImage._load_image()
+        log.success('已将图片保存在内存中')
+    
     if not list(ratingdir.iterdir()):
         log.opt(colors=True).warning(
             '<y>注意！注意！</y>检测到定数表文件夹为空！'
