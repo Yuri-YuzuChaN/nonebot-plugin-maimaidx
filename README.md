@@ -21,7 +21,7 @@
 ## 安装
 
 > [!WARNING]
-> Python 3.13.X 安装插件失败解决方案: [Windows](https://github.com/LeiSureLyYrsc/nb-maimaidx-install-problem)
+> Python 3.13.X 安装插件失败解决方案: [#69](https://github.com/LeiSureLyYrsc/nb-maimaidx-install-problem)
 
 1. 安装 `nonebot-plugin-maimaidx`
 
