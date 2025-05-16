@@ -20,6 +20,9 @@
 
 ## 安装
 
+> [!WARNING]
+> Python 3.13.X 安装插件失败解决方案: [Windows](https://github.com/LeiSureLyYrsc/nb-maimaidx-install-problem)
+
 1. 安装 `nonebot-plugin-maimaidx`
 
     - 使用 `nb-cli` 安装
@@ -44,7 +47,7 @@
 3. 安装 `微软雅黑` 字体，解决使用 `ginfo` 指令字体不渲染的问题，例如 `ubuntu`：`apt install fonts-wqy-microhei`
 
 ## 配置
-   
+
 1. 下载静态资源文件，将该压缩文件解压，且解压完为文件夹 `static`
 
    - [私人云盘](https://cloud.yuzuchan.moe/f/1bUn/Resource.7z)
