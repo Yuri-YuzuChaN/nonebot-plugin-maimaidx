@@ -92,23 +92,17 @@ async def _(message: Message = CommandArg()):
         )
     page = 1
     if len(args) == 1:
-        result = song_level(float(args[0]), float(args[0]))
+        ds1, ds2 = args[0], args[0]
     elif len(args) == 2:
-        try:
-            result = song_level(float(args[0]), float(args[1]))
-        except:
-            page = int(args[1]) if args[1].isdigit() else 1
-            result = song_level(float(args[0]), float(args[0]))
-    elif len(args) == 3:
-        try:
-            page = int(args[2]) if args[2].isdigit() else 1
-            result = song_level(float(args[0]), float(args[1]))
-        except:
-            page = int(args[2]) if args[2].isdigit() else 1
-            result = song_level(float(args[0]), float(args[0]))
+        if '.' in args[1]:
+            ds1, ds2 = args
+        else:
+            ds1, ds2 = args[0], args[0]
+            page = args[1]
     else:
-        result = song_level(float(args[0]), float(args[1]))
-        page = int(args[2]) if args[2].isdigit() else 1
+        ds1, ds2, page = args
+    page = int(page)
+    result = song_level(float(ds1), float(ds2))
     if not result:
         await search_base.finish('没有找到这样的乐曲。', reply_message=True)
     

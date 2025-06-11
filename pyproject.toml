@@ -6,7 +6,7 @@ authors = [
 ]
 description = "maimaidx plugin for nonebot2"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9, <3.13"
 license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -21,8 +21,9 @@ dependencies = [
     "pillow<11.0.0,>=10.0.0",
     "pydantic<3.0.0,>=2.0.0",
     "pyecharts<3.0.0,>=2.0.0",
-    "pytest-playwright<1.0.0,>=0.7.0",
-    "numpy<2.0.0,>=1.26.0"
+    "pytest-playwright<0.7.0",
+    "numpy<2.0.0,>=1.26.0",
+    "httpx-ws<1.0.0,>=0.7.2"
 ]
 
 [project.urls]

@@ -34,6 +34,13 @@ SNAPSHOT_JS = (
 )
 
 
+# echartsjs
+SNAPSHOT_JS = (
+    "echarts.getInstanceByDom(document.querySelector('div[_echarts_instance_]'))."
+    "getDataURL({type: 'PNG', pixelRatio: 2, excludeComponents: ['toolbox']})"
+)
+
+
 # 文件路径
 Root: Path = Path(__file__).parent
 if maiconfig.maimaidxpath:

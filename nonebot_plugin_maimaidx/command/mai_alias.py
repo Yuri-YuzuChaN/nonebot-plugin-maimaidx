@@ -6,7 +6,7 @@ from textwrap import dedent
 
 import httpx
 from httpx_ws import WebSocketDisconnect, aconnect_ws
-from nonebot import get_bot, on_command, on_endswith, on_regex
+from nonebot import get_bot, on_command, on_regex
 from nonebot.adapters.onebot.v11 import (
     GROUP_ADMIN,
     GROUP_OWNER,
@@ -17,7 +17,7 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment,
     PrivateMessageEvent,
 )
-from nonebot.params import CommandArg, Endswith, RegexMatched
+from nonebot.params import CommandArg, RegexMatched
 from nonebot.permission import SUPERUSER
 
 from ..config import *
@@ -33,8 +33,8 @@ alias_local_apply   = on_command('添加本地别名', aliases={'添加本地别
 alias_apply         = on_command('添加别名', aliases={'申请别名', '增加别名', '增添别名', '添加别称'})
 alias_agree         = on_command('同意别名', aliases={'同意别称'})
 alias_status        = on_command('当前投票', aliases={'当前别名投票', '当前别称投票'})
-alias_switch        = on_endswith(
-    ('别名推送', '别称推送'), 
+alias_switch        = on_regex(
+    r'^([开启关闭]+)别名推送$',
     permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
 )
 alias_global_switch = on_regex(r'^全局([开启关闭]+)别名推送$', permission=SUPERUSER)
@@ -195,11 +195,10 @@ async def _(match = RegexMatched()):
 
 
 @alias_switch.handle()
-async def _(event: GroupMessageEvent, end: str = Endswith()):
-    args = event.get_plaintext().lower()[0:-len(end)].strip()
-    if args == '开启':
+async def _(event: GroupMessageEvent, match = RegexMatched()):
+    if match.group(1) == '开启':
         msg = await alias.on(event.group_id)
-    elif args == '关闭':
+    elif match.group(1) == '关闭':
         msg = await alias.off(event.group_id)
     else:
         raise ValueError('matcher type error')
