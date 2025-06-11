@@ -29,11 +29,13 @@ async def _(event: GroupMessageEvent):
     if gid in guess.Group:
         await guess_music_start.finish('该群已有正在进行的猜歌或猜曲绘')
     guess.start(gid)
-    await guess_music_start.send(dedent(''' \
-        我将从热门乐曲中选择一首歌，每隔8秒描述它的特征，
-        请输入歌曲的 id 标题 或 别名（需bot支持，无需大小写） 进行猜歌（DX乐谱和标准乐谱视为两首歌）。
-        猜歌时查歌等其他命令依然可用。
-    '''))
+    await guess_music_start.send(
+        dedent('''\
+            我将从热门乐曲中选择一首歌，每隔8秒描述它的特征，
+            请输入歌曲的 id 标题 或 别名（需bot支持，无需大小写）进行猜歌（DX乐谱和标准乐谱视为两首歌）。
+            猜歌时查歌等其他命令依然可用。
+        ''')
+    )
     await asyncio.sleep(4)
     for cycle in range(7):
         if event.group_id not in guess.switch.enable or gid not in guess.Group or guess.Group[gid].end:

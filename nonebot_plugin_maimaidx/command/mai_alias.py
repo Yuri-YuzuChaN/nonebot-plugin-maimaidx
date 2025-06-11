@@ -1,8 +1,11 @@
 import asyncio
+import json
 import re
 import traceback
 from textwrap import dedent
 
+import httpx
+from httpx_ws import WebSocketDisconnect, aconnect_ws
 from nonebot import get_bot, on_command, on_endswith, on_regex
 from nonebot.adapters.onebot.v11 import (
     GROUP_ADMIN,
@@ -20,13 +23,14 @@ from nonebot.permission import SUPERUSER
 from ..config import *
 from ..libraries.image import text_to_bytes_io
 from ..libraries.maimaidx_api_data import maiApi
-from ..libraries.maimaidx_error import AliasesNotFoundError, ServerError
+from ..libraries.maimaidx_error import ServerError
+from ..libraries.maimaidx_model import Alias, PushAliasStatus
 from ..libraries.maimaidx_music import alias, mai, update_local_alias
 from ..libraries.maimaidx_music_info import draw_music_info
 
 update_alias        = on_command('更新别名库', permission=SUPERUSER)
 alias_local_apply   = on_command('添加本地别名', aliases={'添加本地别称'})
-alias_apply         = on_command('添加别名', aliases={'增加别名', '增添别名', '添加别称'})
+alias_apply         = on_command('添加别名', aliases={'申请别名', '增加别名', '增添别名', '添加别称'})
 alias_agree         = on_command('同意别名', aliases={'同意别称'})
 alias_status        = on_command('当前投票', aliases={'当前别名投票', '当前别称投票'})
 alias_switch        = on_endswith(
@@ -56,17 +60,13 @@ async def _(event: MessageEvent, message: Message = CommandArg()):
     song_id, alias_name = args
     if not mai.total_list.by_id(song_id):
         await alias_local_apply.finish(f'未找到ID「{song_id}」的曲目', reply_message=True)
-    try:
-        server_exist = await maiApi.get_songs_alias(song_id)
-        if alias_name.lower() in server_exist.Alias:
-            await alias_apply.send(
-                f'该曲目的别名「{alias_name}」已存在别名服务器，不能重复添加别名，正在进行更新别名库', 
-                reply_message=True
-            )
-            await mai.get_music_alias()
-            await alias_apply.finish('别名库更新完成', reply_message=True)
-    except AliasesNotFoundError:
-        pass
+    
+    server_exist = await maiApi.get_songs_alias(song_id)
+    if isinstance(server_exist, Alias) and alias_name.lower() in server_exist.Alias:
+        await alias_local_apply.finish(
+            f'该曲目的别名「{alias_name}」已存在别名服务器', 
+            reply_message=True
+        )
 
     local_exist = mai.total_alias_list.by_id(song_id)
     if local_exist and alias_name.lower() in local_exist[0].Alias:
@@ -81,34 +81,23 @@ async def _(event: MessageEvent, message: Message = CommandArg()):
     
     
 @alias_apply.handle()
-async def _(event: MessageEvent, message: Message = CommandArg()):
+async def _(event: GroupMessageEvent, message: Message = CommandArg()):
     try:
         args = message.extract_plain_text().strip().split()
         if len(args) != 2:
             await alias_apply.finish('参数错误', reply_message=True)
         song_id, alias_name = args
-        if not (music := mai.total_list.by_id(song_id)):
+        if not mai.total_list.by_id(song_id):
             await alias_apply.finish(f'未找到ID「{song_id}」的曲目', reply_message=True)
-        try:
-            isexist = await maiApi.get_songs_alias(song_id)
-            if alias_name.lower() in isexist.Alias:
-                await alias_apply.send(
-                    f'该曲目的别名「{alias_name}」已存在别名服务器，不能重复添加别名，正在进行更新别名库', 
-                    reply_message=True
-                )
-                await mai.get_music_alias()
-                await alias_apply.finish('别名库更新完成', reply_message=True)
-        except AliasesNotFoundError:
-            pass
 
-        status = await maiApi.post_alias(song_id, alias_name, event.user_id)
-        msg = MessageSegment.text(dedent(f'''\
-            您已提交以下别名申请
-            ID：{song_id}
-            别名：{alias_name}
-            现在可用使用唯一标签「{status.Tag}」来进行投票，例如：同意别名 {status.Tag}
-            浏览{vote_url}查看详情
-        ''')) + await draw_music_info(music)
+        isexist = await maiApi.get_songs_alias(song_id)
+        if isinstance(isexist, Alias) and alias_name.lower() in isexist.Alias:
+            await alias_apply.finish(
+                f'该曲目的别名「{alias_name}」已存在别名服务器', 
+                reply_message=True
+            )
+
+        msg = await maiApi.post_alias(song_id, alias_name, event.user_id, event.group_id)
     except (ServerError, ValueError) as e:
         log.error(traceback.format_exc())
         msg = str(e)
@@ -116,7 +105,7 @@ async def _(event: MessageEvent, message: Message = CommandArg()):
 
 
 @alias_agree.handle()
-async def _(event: MessageEvent, message: Message = CommandArg()):
+async def _(event: GroupMessageEvent, message: Message = CommandArg()):
     try:
         tag = message.extract_plain_text().strip().upper()
         status = await maiApi.post_agree_user(tag, event.user_id)
@@ -140,8 +129,14 @@ async def _(message: Message = CommandArg()):
                 apply_alias = _s.ApplyAlias
                 if len(_s.ApplyAlias) > 15:
                     apply_alias = _s.ApplyAlias[:15] + '...'
-                r = f'{_s.Tag}：\n- ID：{_s.SongID}\n- 别名：{apply_alias}\n- 票数：{_s.AgreeVotes}/{_s.Votes}'
-                result.append(r)
+                result.append(
+                    dedent(f'''\
+                        - {_s.Tag}：
+                        - ID：{_s.SongID}
+                        - 别名：{apply_alias}
+                        - 票数：{_s.AgreeVotes}/{_s.Votes}
+                    ''')
+                )
         result.append(f'第「{page}」页，共「{len(status) // SONGS_PER_PAGE + 1}」页')
         msg = MessageSegment.image(text_to_bytes_io('\n'.join(result)))
     except (ServerError, ValueError) as e:
@@ -215,58 +210,96 @@ async def _(event: GroupMessageEvent, end: str = Endswith()):
 @alias_global_switch.handle()
 async def _(match = RegexMatched()):
     if match.group(1) == '开启':
-        alias.alias_global_change(True)
+        await alias.alias_global_change(True)
         await alias_global_switch.finish('已全局开启maimai别名推送')
     elif match.group(1) == '关闭':
-        alias.alias_global_change(False)
+        await alias.alias_global_change(False)
         await alias_global_switch.finish('已全局关闭maimai别名推送')
     else:
         await alias_global_switch.finish()
 
 
-async def alias_apply_status():
+async def push_alias(push: PushAliasStatus):
     bot: Bot = get_bot()
-    try:
-        group_list = await bot.get_group_list()
-        status = await maiApi.get_alias_status()
-        if not alias.push.global_switch:
-            await mai.get_music_alias()
-            return
-        if status:
-            msg = ['检测到新的别名申请']
-            msg2 = ['以下是已成功添加别名的曲目']
-            for _s in status:
-                if _s.IsNew and (usernum := _s.AgreeVotes) < (votes := _s.Votes):
-                    song_id = str(_s.SongID)
-                    alias_name = _s.ApplyAlias
-                    music = mai.total_list.by_id(song_id)
-                    msg.append(f'{_s.Tag}：\nID：{song_id}\n标题：{music.title}\n别名：{alias_name}\n票数：{usernum}/{votes}')
-                elif _s.IsEnd:
-                    song_id = str(_s.SongID)
-                    alias_name = _s.ApplyAlias
-                    music = mai.total_list.by_id(song_id)
-                    msg2.append(f'ID：{song_id}\n标题：{music.title}\n别名：{alias_name}')
+    song_id = str(push.Status.SongID)
+    alias_name = push.Status.ApplyAlias
+    music = mai.total_list.by_id(song_id)
+    
+    if push.Type == 'Approved':
+        message = MessageSegment.at(push.Status.ApplyUID) + dedent(f'''\
+            您申请的别名已通过审核
+            =================
+            {push.Status.Tag}：
+            ID：{song_id}
+            标题：{push.Status.Name}
+            别名：{alias_name}
+            =================
+            请使用指令「同意别名 {push.Status.Tag}」进行投票
+        ''').strip() + await draw_music_info(music)
+        await bot.send_group_msg(group_id=push.Status.GroupID, message=message)
+        return
 
-            if len(msg) != 1 and len(msg2) != 1:
-                for group in group_list:
-                    gid: int = group['group_id']
-                    if gid in alias.push.disable:
-                        continue
-                    try:
-                        if len(msg) != 1: 
-                            await bot.send_group_msg(
-                                group_id=gid, 
-                                message='\n======\n'.join(msg) + f'\n浏览{vote_url}查看详情'
-                            )
-                            await asyncio.sleep(5)
-                        if len(msg2) != 1:
-                            await bot.send_group_msg(
-                                group_id=gid, 
-                                message='\n======\n'.join(msg2)
-                            )
-                            await asyncio.sleep(5)
-                    except: 
-                        continue
+    if not alias.push.global_switch:
         await mai.get_music_alias()
-    except (ServerError, ValueError) as e:
-        log.error(str(e))
+        return
+    group_list = await bot.get_group_list()
+    message = ''
+    if push.Type == 'Apply':
+        message = dedent(f'''\
+            检测到新的别名申请
+            =================
+            {push.Status.Tag}：
+            ID：{song_id}
+            标题：{music.title}
+            别名：{alias_name}
+            浏览{vote_url}查看详情
+        ''').strip() + await draw_music_info(music)
+    if push.Type == 'End':
+        message = dedent(f'''\
+            检测到新增别名
+            =================
+            ID：{song_id}
+            标题：{music.title}
+            别名：{alias_name}
+        ''').strip() + await draw_music_info(music)
+    
+    for group in group_list:
+        gid: int = group['group_id']
+        if gid in alias.push.disable:
+            continue
+        try:
+            await bot.send_group_msg(group_id=gid, message=message)
+            await asyncio.sleep(5)
+        except:
+            continue
+
+
+async def ws_alias_server():
+    log.info('正在连接别名推送服务器') 
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(60)) as session:
+                async with aconnect_ws(f'wss://www.yuzuchan.moe/api/maimaidx/ws/{UUID}', session) as ws:
+                    try:
+                        log.success('别名推送服务器连接成功')
+                        while True:
+                            data = await ws.receive_text()
+                            if data == 'Hello':
+                                log.info('别名推送服务器正常运行')
+                            try:
+                                newdata = json.loads(data)
+                                status = PushAliasStatus.model_validate(newdata)
+                                await asyncio.create_task(push_alias(status))
+                            except:
+                                continue
+                    except WebSocketDisconnect:
+                        log.warning('别名推送服务器已断开连接，将在1分钟后重新尝试连接')
+                        await asyncio.sleep(60)
+                    except httpx.LocalProtocolError:
+                        log.error('别名推送服务器连接失败，将在1分钟后重试')
+                        await asyncio.sleep(60)
+                        log.info('正在尝试重新连接别名推送服务器')
+        except:
+            log.error('别名推送服务器连接失败，将在1分钟后重试')
+            await asyncio.sleep(60)
+            log.info('正在尝试重新连接别名推送服务器')

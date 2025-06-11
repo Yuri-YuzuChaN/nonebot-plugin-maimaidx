@@ -64,7 +64,7 @@ async def _(event: MessageEvent):
     for i in range(11):
         wm_value.append(h & 3)
         h >>= 2
-    msg = f'\n今日人品值：{rp}\n'
+    msg = f'今日人品值：{rp}\n'
     for i in range(11):
         if wm_value[i] == 3:
             msg += f'宜 {wm_list[i]}\n'
@@ -164,7 +164,7 @@ async def _(event: MessageEvent):
         await my_rating_ranking.finish(str(e), reply_message=True)
 
 
-async def data_update_daily():
+async def update_daily():
     await mai.get_music()
     mai.guess()
     log.info('maimaiDX数据更新完毕')

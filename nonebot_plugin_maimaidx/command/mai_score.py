@@ -115,16 +115,18 @@ async def _(message: Message = CommandArg()):
     if args and args[0] == '帮助':
         msg = dedent('''\
             此功能为查找某首歌分数线设计。
-            命令格式：分数线 <难度+歌曲id> <分数线>
+            命令格式：分数线「难度+歌曲id」「分数线」
             例如：分数线 紫799 100
-            命令将返回分数线允许的 TAP GREAT 容错以及 BREAK 50落等价的 TAP GREAT 数。
-            以下为 TAP GREAT 的对应表：
-            GREAT/GOOD/MISS
-            TAP    1/2.5/5
-            HOLD   2/5/10
-            SLIDE  3/7.5/15
-            TOUCH  1/2.5/5
-            BREAK  5/12.5/25(外加200落)''')
+            命令将返回分数线允许的「TAP」「GREAT」容错，
+            以及「BREAK」50落等价的「TAP」「GREAT」数。
+            以下为「TAP」「GREAT」的对应表：
+                    GREAT / GOOD / MISS
+            TAP         1 / 2.5  / 5
+            HOLD        2 / 5    / 10
+            SLIDE       3 / 7.5  / 15
+            TOUCH       1 / 2.5  / 5
+            BREAK       5 / 12.5 / 25 (外加200落)
+        ''').strip()
         await score.finish(MessageSegment.image(text_to_bytes_io(msg)), reply_message=True)
     else:
         try:
@@ -148,10 +150,14 @@ async def _(message: Message = CommandArg()):
             if reduce <= 0 or reduce >= 101:
                 raise ValueError
             msg = dedent(f'''\
-                {music.title} {level_labels2[level_index]}
-                分数线 {line}% 允许的最多 TAP GREAT 数量为 {(total_score * reduce / 10000):.2f}(每个-{10000 / total_score:.4f}%),
-                BREAK 50落(一共{brk}个)等价于 {(break_50_reduce / 100):.3f} 个 TAP GREAT(-{break_50_reduce / total_score * 100:.4f}%)''')
-            await score.finish(MessageSegment.image(text_to_bytes_io(msg)), reply_message=True)
+                {music.title}「{level_labels2[level_index]}」
+                分数线「{line}%」
+                允许的最多「TAP」「GREAT」数量为 
+                「{(total_score * reduce / 10000):.2f}」(每个-{10000 / total_score:.4f}%),
+                「BREAK」50落(一共「{brk}」个)
+                等价于「{(break_50_reduce / 100):.3f}」个「TAP」「GREAT」(-{break_50_reduce / total_score * 100:.4f}%)
+            ''').strip()
+            await score.finish(msg, reply_message=True)
         except (AttributeError, ValueError) as e:
             log.exception(e)
             await score.finish('格式错误，输入“分数线 帮助”以查看帮助信息', reply_message=True)

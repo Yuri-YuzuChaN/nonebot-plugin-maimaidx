@@ -11,12 +11,9 @@
 
 ## 重要更新
 
-**2025-03-28**
+**2025-06-11**
 
-> [!WARNING]
-> 对于这个版本之前的插件和修改版的插件请注意，预更新版本别名库将全部更换成新的 `API` 地址，返回的数据结构均更改，目前旧版 `API` 将再运行一段时间，预计正式更新 `舞萌DX2025` 时将会关闭
-
-1. 预更新 `舞萌DX2025` UI，资源全部更换，更新部分依赖和文件，**请重新进行安装**
+1. 更新 `舞萌DX2025`，资源全部更换，更新部分依赖和文件，**请重新进行安装**
 
 ## 安装
 
@@ -35,18 +32,20 @@
         git clone https://github.com/Yuri-YuzuChaN/nonebot-plugin-maimaidx
         ```
     
-2. 安装 `PhantomJS`，前往 https://phantomjs.org/download.html 下载对应平台支持
-3. 安装 `微软雅黑` 字体，解决使用 `ginfo` 指令字体不渲染，例如 `ubuntu`：`apt install fonts-wqy-microhei`
+2. 安装 `chromium`，**相关依赖已安装，请直接使用该指令执行**
+   
+    ``` shell
+    playwright install --with-deps chromium
+    ```
 
-> [!WARNING]
-> 未配置 `PhantomJS` 支持的Bot，在使用 `ginfo` 指令时会被强制关闭 Bot 进程
+3. 安装 `微软雅黑` 字体，解决使用 `ginfo` 指令字体不渲染的问题，例如 `ubuntu`：`apt install fonts-wqy-microhei`
+
 
 ## 配置
    
 1. 下载静态资源文件，将该压缩文件解压，且解压完为文件夹 `static`
 
-   - [私人云盘](https://cloud.yuzuchan.moe/f/1bUn/Resource.7z)
-   - [AList网盘](https://share.yuzuchan.moe/p/Resource.7z?sign=EvCwaGwJrneyD1Olq00NG3HXNK7fQKpx_sa3Ck9Uzjs=:0)
+   - [Cloudreve私人云盘](https://cloud.yuzuchan.moe/f/1bUn/Resource.7z)
    - [onedrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzu_yuzuchan_moe/EdGUKRSo-VpHjT2noa_9EroBdFZci-tqWjVZzKZRTEeZkw?e=a1TM40)
 
 2. 在 `.env` 文件中配置静态文件绝对路径 `MAIMAIDXPATH`
@@ -66,13 +65,19 @@
     MAIMAIDXTOKEN=MAIMAITOKEN
     ```
 
-4. 可选，如果你的服务器或主机不能顺利流畅的访问查分器和别名库的API，请在 `.env` 文件中配置代理。均为香港服务器代理中转，例如你的服务器访问查分器很困难，请设置 `MAIMAIDXPROBERPROXY` 为 `ture`，别名库同理
+4. 可选，如果你的服务器或主机不能顺利流畅的访问查分器和别名库的API，请在 `.env` 文件中配置代理。均为香港服务器代理中转，例如你的服务器访问查分器很困难，请设置 `MAIMAIDXPROBERPROXY` 为 `true`，别名库同理
 
     ``` dotenv
     # 查分器代理，推荐境外服务器使用
     MAIMAIDXPROBERPROXY=false
     # 别名代理，推荐国内服务器使用
     MAIMAIDXALIASPROXY=false
+    ```
+
+5. 可选，是否将部分图片在保存在内存中，不需要请在 `.env` 文件中配置 `SAVEINMEM` 为 `false`
+
+    ``` dotenv
+    SAVEINMEM=false
     ```
 
 > [!NOTE]
