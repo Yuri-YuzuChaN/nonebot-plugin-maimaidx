@@ -27,12 +27,6 @@ vote_url: str = 'https://www.yuzuchan.moe/vote'
 # ws
 UUID = uuid.uuid1()
 
-# echartsjs
-SNAPSHOT_JS = (
-    "echarts.getInstanceByDom(document.querySelector('div[_echarts_instance_]'))."
-    "getDataURL({type: 'PNG', pixelRatio: 2, excludeComponents: ['toolbox']})"
-)
-
 
 # echartsjs
 SNAPSHOT_JS = (
