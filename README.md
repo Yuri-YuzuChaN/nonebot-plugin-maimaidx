@@ -33,7 +33,7 @@
         ```
     
 2. 安装 `chromium`，**相关依赖已安装，请直接使用该指令执行**
-   
+
     ``` shell
     playwright install --with-deps chromium
     ```

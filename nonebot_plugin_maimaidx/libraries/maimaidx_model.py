@@ -101,7 +101,8 @@ class AliasStatus(StatusBase):
 
 class Reviewed(StatusBase):
 
-    ...
+    Tag: str
+    Name: str
 
 
 class PushAliasStatus(BaseModel):

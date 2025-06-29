@@ -225,7 +225,7 @@ async def push_alias(push: PushAliasStatus):
     music = mai.total_list.by_id(song_id)
     
     if push.Type == 'Approved':
-        message = MessageSegment.at(push.Status.ApplyUID) + dedent(f'''\
+        message = MessageSegment.at(push.Status.ApplyUID) + '\n' + dedent(f'''\
             您申请的别名已通过审核
             =================
             {push.Status.Tag}：
@@ -234,6 +234,16 @@ async def push_alias(push: PushAliasStatus):
             别名：{alias_name}
             =================
             请使用指令「同意别名 {push.Status.Tag}」进行投票
+        ''').strip() + await draw_music_info(music)
+        await bot.send_group_msg(group_id=push.Status.GroupID, message=message)
+        return
+    if push.Type == 'Reject':
+        message = MessageSegment.at(push.Status.ApplyUID) + '\n' + dedent(f'''\
+            您申请的别名被拒绝
+            =================
+            ID：{song_id}
+            标题：{push.Status.Name}
+            别名：{alias_name}
         ''').strip() + await draw_music_info(music)
         await bot.send_group_msg(group_id=push.Status.GroupID, message=message)
         return
