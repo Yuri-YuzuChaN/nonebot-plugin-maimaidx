@@ -28,7 +28,7 @@ async def _(
     user_id: Optional[int] = Depends(get_at_qq)
 ):
     qqid = user_id or event.user_id
-    username = message.extract_plain_text()
+    username = message.extract_plain_text().strip()
     await best50.finish(await generate(qqid, username), reply_message=True)
 
 
