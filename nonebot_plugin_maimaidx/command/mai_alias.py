@@ -84,9 +84,12 @@ async def _(event: MessageEvent, message: Message = CommandArg()):
 async def _(event: GroupMessageEvent, message: Message = CommandArg()):
     try:
         args = message.extract_plain_text().strip().split()
-        if len(args) != 2:
+        if len(args) < 2:
             await alias_apply.finish('参数错误', reply_message=True)
-        song_id, alias_name = args
+        song_id = args[0]
+        if not song_id.isdigit():
+            await alias_apply.finish('请输入正确的ID', reply_message=True)
+        alias_name = ' '.join(args[1:])
         if not mai.total_list.by_id(song_id):
             await alias_apply.finish(f'未找到ID「{song_id}」的曲目', reply_message=True)
 
