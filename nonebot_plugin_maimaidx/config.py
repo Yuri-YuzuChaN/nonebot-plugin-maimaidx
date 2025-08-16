@@ -15,8 +15,9 @@ class Config(BaseModel):
     maimaidxpath: str
     maimaidxproberproxy: bool = False
     maimaidxaliasproxy: bool = False
+    maimaidxaliaspush: bool = True
     saveinmem: Optional[bool] = True
-    botName: str = list(driver.config.nickname)[0] if driver.config.nickname else 'Sakura'
+    botName: str = list(driver.config.nickname)[0] if driver.config.nickname else 'maimai'
 
 
 maiconfig = get_plugin_config(Config)

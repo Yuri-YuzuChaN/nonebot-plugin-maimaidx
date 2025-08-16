@@ -526,7 +526,7 @@ class GroupAlias:
             self.push.enable.append(gid)
         if gid in self.push.disable:
             self.push.disable.remove(gid)
-        await writefile(group_alias_file, self.push.model_dump(by_alias=True))
+        await writefile(group_alias_file, self.push.model_dump())
         return '群别名推送功能已开启'
 
     async def off(self, gid: int) -> str:
@@ -535,13 +535,20 @@ class GroupAlias:
             self.push.disable.append(gid)
         if gid in self.push.enable:
             self.push.enable.remove(gid)
-        await writefile(group_alias_file, self.push.model_dump(by_alias=True))
+        await writefile(group_alias_file, self.push.model_dump())
         return '群别名推送功能已关闭'
 
-    async def alias_global_change(self, set: bool):
+    async def alias_global_change(self, switch: bool, group_list: List[int]):
         """修改全局开关"""
-        self.push.global_switch = set
-        await writefile(group_alias_file, self.push.model_dump(by_alias=True))
+        if switch:
+            self.push.disable.clear()
+            self.push.enable.clear()
+            self.push.enable.extend(group_list)
+        else:
+            self.push.enable.clear()
+            self.push.disable.clear()
+            self.push.disable.extend(group_list)
+        await writefile(group_alias_file, self.push.model_dump())
 
 
 alias = GroupAlias()

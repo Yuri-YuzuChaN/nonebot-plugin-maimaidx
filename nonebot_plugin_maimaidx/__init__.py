@@ -32,7 +32,11 @@ async def get_music():
     if maiconfig.maimaidxaliasproxy:
         log.info('正在使用代理服务器访问别名服务器')
     maiApi.load_token_proxy()
-    asyncio.ensure_future(ws_alias_server())
+    if maiconfig.maimaidxaliaspush:
+        log.opt(colors=True).info('别名推送为「<g>开启</g>」状态')
+        asyncio.ensure_future(ws_alias_server())
+    else:
+        log.opt(colors=True).info('别名推送为「<r>关闭</r>」状态')
     log.info('正在获取maimai所有曲目信息')
     await mai.get_music()
     log.info('正在获取maimai牌子数据')

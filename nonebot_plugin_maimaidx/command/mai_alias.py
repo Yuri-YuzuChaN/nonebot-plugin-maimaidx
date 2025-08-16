@@ -210,12 +210,14 @@ async def _(event: GroupMessageEvent, match = RegexMatched()):
 
 
 @alias_global_switch.handle()
-async def _(match = RegexMatched()):
+async def _(bot: Bot, match = RegexMatched()):
+    group = await bot.get_group_list()
+    group_id = [g['group_id'] for g in group]
     if match.group(1) == '开启':
-        await alias.alias_global_change(True)
+        await alias.alias_global_change(True, group_id)
         await alias_global_switch.finish('已全局开启maimai别名推送')
     elif match.group(1) == '关闭':
-        await alias.alias_global_change(False)
+        await alias.alias_global_change(False, group_id)
         await alias_global_switch.finish('已全局关闭maimai别名推送')
     else:
         await alias_global_switch.finish()
@@ -251,7 +253,7 @@ async def push_alias(push: PushAliasStatus):
         await bot.send_group_msg(group_id=push.Status.GroupID, message=message)
         return
 
-    if not alias.push.global_switch:
+    if not maiconfig.maimaidxaliaspush:
         await mai.get_music_alias()
         return
     group_list = await bot.get_group_list()
@@ -287,11 +289,15 @@ async def push_alias(push: PushAliasStatus):
 
 
 async def ws_alias_server():
-    log.info('正在连接别名推送服务器') 
+    log.info('正在连接别名推送服务器')
+    if maiconfig.maimaidxaliasproxy:
+        wsapi = 'proxy.yuzuchan.xyz/maimaidxaliases'
+    else:
+        wsapi = 'www.yuzuchan.moe/api/maimaidx'
     while True:
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(60)) as session:
-                async with aconnect_ws(f'wss://www.yuzuchan.moe/api/maimaidx/ws/{UUID}', session) as ws:
+                async with aconnect_ws(f'wss://{wsapi}/ws/{UUID}', session) as ws:
                     try:
                         log.success('别名推送服务器连接成功')
                         while True:
