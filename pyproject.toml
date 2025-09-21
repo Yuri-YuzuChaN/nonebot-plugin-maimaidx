@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-maimaidx"
-version = "2.1.4"
+version = "2.1.5"
 authors = [
   { name="Yuri-YuzuChaN", email="806235364@qq.com" },
 ]
@@ -16,7 +16,7 @@ dependencies = [
     "nonebot2>=2.0.0,<3.0.0",
     "nonebot-adapter-onebot>=2.2.2,<3.0.0",
     "nonebot-plugin-apscheduler>=0.3.0,<1.0.0",
-    "aiofiles>=23.2.1,<24.0.0",
+    "aiofiles>=23.2.1,<25.0.0",
     "httpx>=0.23.1,<1.0.0",
     "pydantic>=2.0.0,<3.0.0",
     "pyecharts>=2.0.0,<3.0.0",
