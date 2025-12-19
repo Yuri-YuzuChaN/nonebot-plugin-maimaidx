@@ -1,7 +1,8 @@
 import random
 import time
 import traceback
-from typing import Callable
+from collections import defaultdict
+from typing import Callable, DefaultDict
 
 import pyecharts.options as opts
 from nonebot.adapters.onebot.v11 import MessageSegment
@@ -305,7 +306,7 @@ class DrawScore(ScoreBaseImage):
 
 
 def get_rise_score_list(
-    old_records: Dict[int, Dict[str, Union[int, float]]],
+    old_records: DefaultDict[int, Dict[int, float]],
     type: str, 
     info: List[ChartInfo], 
     level: Optional[str] = None, 
@@ -330,10 +331,10 @@ def get_rise_score_list(
     if score is None:
         ss_ds = round(ra / 20.8, 1)
     else:
-        ss_ds = round((ra + score) / 20.8, 1)
+        ss_ds = round((ra + int(score)) / 20.8, 1)
     sssp_ds = round(ra / 22.4, 1)
     ds = (sssp_ds + 0.1, ss_ds + 0.1)
-    version = list(plate_to_dx_version.values())[-1] if type == 'DX' else list(plate_to_dx_version.values())[:-1]
+    version = list(plate_to_dx_version.values())[-2:] if type == 'DX' else list(plate_to_dx_version.values())[:-2]
     musiclist = mai.total_list.filter(level=level, ds=ds, version=version)
     for _m in musiclist:
         if (song_id := int(_m.id)) in ignore:
@@ -345,10 +346,10 @@ def get_rise_score_list(
                 basera, rate = computeRa(_m.ds[index], r, israte=True)
                 if basera <= ra:
                     continue
-                if score and basera - score < ra:
+                if score and basera - int(score) < ra:
                     continue
-                if song_id in old_records and old_records[song_id]['level_index'] == index:
-                    oldra, oldrate = computeRa(_m.ds[index], old_records[song_id]['achievements'], israte=True)
+                if song_id in old_records and index in old_records[song_id]:
+                    oldra, oldrate = computeRa(_m.ds[index], old_records[song_id][index], israte=True)
                     if oldra >= basera:
                         continue
                     ss = RiseScore(
@@ -362,7 +363,7 @@ def get_rise_score_list(
                         achievements=r,
                         oldra=oldra,
                         oldrate=oldrate,
-                        oldachievements=old_records[song_id]['achievements']
+                        oldachievements=old_records[song_id][index]
                     )
                 else:
                     ss = RiseScore(
@@ -404,12 +405,9 @@ async def rise_score_data(
     try:
         user = await maiApi.query_user_b50(qqid=qqid, username=username)
         records = await maiApi.query_user_plate(qqid=qqid, username=username, version=list(plate_to_dx_version.values()))
-        old_records: Dict[int, Dict[str, Union[int, float]]] = {
-            m.song_id: {
-                'level_index': m.level_index,
-                'achievements': m.achievements
-            } for m in records
-        }
+        old_records: DefaultDict[int, Dict[int, float]] = defaultdict(dict)
+        for m in records:
+            old_records[m.song_id][m.level_index] = m.achievements
         
         sd, sd_low_score = get_rise_score_list(old_records, 'SD', user.charts.sd, level, score)
         dx, dx_low_score = get_rise_score_list(old_records, 'DX', user.charts.dx, level, score)

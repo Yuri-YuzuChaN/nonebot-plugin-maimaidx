@@ -154,7 +154,8 @@ plate_to_dx_version: Dict[str, str] = {
     '祝': 'maimai でらっくす FESTiVAL PLUS',
     '双': 'maimai でらっくす BUDDiES',
     '宴': 'maimai でらっくす BUDDiES PLUS',
-    '镜': 'maimai でらっくす PRiSM'
+    '镜': 'maimai でらっくす PRiSM',
+    '彩': 'maimai でらっくす PRiSM PLUS'
 }
 version_map = {
     '真': ([plate_to_dx_version['真'], plate_to_dx_version['初']], '真'),
@@ -182,7 +183,8 @@ version_map = {
     '祝': ([plate_to_dx_version['祭']], '祭&祝'),
     '双': ([plate_to_dx_version['双']], '双&宴'),
     '宴': ([plate_to_dx_version['双']], '双&宴'),
-    '镜': ([plate_to_dx_version['镜']], '镜')
+    '镜': ([plate_to_dx_version['镜']], '镜&彩'),
+    '彩': ([plate_to_dx_version['镜']], '镜&彩')
 }
 platecn = {
     '晓': '暁',

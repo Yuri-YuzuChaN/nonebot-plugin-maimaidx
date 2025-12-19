@@ -22,6 +22,7 @@ my_rating_ranking   = on_command('我的排名')
 async def _(event: PrivateMessageEvent):
     await mai.get_music()
     await mai.get_music_alias()
+    await mai.get_plate_json()
     await update_data.finish('maimai数据更新完成')
 
 
