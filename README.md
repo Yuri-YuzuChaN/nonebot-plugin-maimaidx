@@ -50,8 +50,8 @@
    
 1. 下载静态资源文件，将该压缩文件解压，且解压完为文件夹 `static`
 
-   - [Cloudreve私人云盘](https://cloud.yuzuchan.moe/f/1bUn/Resource.7z)
-   - [onedrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzu_yuzuchan_moe/EdGUKRSo-VpHjT2noa_9EroBdFZci-tqWjVZzKZRTEeZkw?e=a1TM40)
+   - [Cloudreve私人云盘](https://cloud.yuzuchan.moe/f/nXt6/Resource.7z)
+   - [onedrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzu_yuzuchan_moe/IQDRlCkUqPlaR409p6Gv_RK6AZ-dJaBtbgZoJMvFI4IJiYw?e=eu5f2h)
 
 2. 在 `.env` 文件中配置静态文件绝对路径 `MAIMAIDXPATH`
 
