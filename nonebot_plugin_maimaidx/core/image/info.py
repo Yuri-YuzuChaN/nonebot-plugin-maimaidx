@@ -1,32 +1,25 @@
-from io import BytesIO
-
 from PIL import Image, ImageDraw
 
 from ...config import maiconfig
 from ...constants import CATEGORY, COMBO_MAP, RANK_MAP, SYNC_MAP
 from ...resources import FOTNEWRODIN, SIYUAN, TBFONT, pic_dir
-from ..clients.exceptions import *
 from ..image.base import DrawText
-from ..merge.models.score import NotPlayedResult, PlayedResult
-from ..merge.models.service import ServiceName
-from ..merge.models.song import Song
-from ..merge.models.theme import Theme
-from ..utils.calc import compute_rating, dx_score
+from ..merge.models import NotPlayedResult, PlayedResult, ServiceName, Song, Theme
+from ..utils.calc import dx_score
 from .base import change_column_width, coloum_width, song_chart
 from .tools import image_to_base64
 
 
 def song_play_data(
-    service: ServiceName, 
+    service: ServiceName,
     theme: Theme,
-    *, 
+    *,
     song: Song,
     play_result: list[NotPlayedResult | PlayedResult],
-    isdev: bool = False
-) -> BytesIO:
+) -> str:
     """
     谱面游玩
-    
+
     Params:
         `qqid`: qqid
         `song_id`: 曲目ID
@@ -43,31 +36,30 @@ def song_play_data(
     # logo
     im.alpha_composite(Image.open(pic_dir / "logo.png").resize((249, 120)), (42, 34))
     # cover
-    im.alpha_composite(Image.open(song_chart(song.song_id)).resize((300, 300)), (100, 260))
+    im.alpha_composite(
+        Image.open(song_chart(song.song_id)).resize((300, 300)), (100, 260)
+    )
     # genre
     im.alpha_composite(
-        Image.open(pic_dir / f"info_{CATEGORY[song.genre]}.png"), 
-        (100, 260)
+        Image.open(pic_dir / f"info_{CATEGORY[song.genre]}.png"), (100, 260)
     )
     # version
     im.alpha_composite(
-        Image.open(pic_dir / f"{song.version_str}.png").resize((183, 90)), 
-        (295, 205)
+        Image.open(pic_dir / f"{song.version_str}.png").resize((183, 90)), (295, 205)
     )
     # type
     im.alpha_composite(
-        Image.open(pic_dir / f"{song.type}.png").resize((55, 20)), 
-        (350, 560)
+        Image.open(pic_dir / f"{song.type}.png").resize((55, 20)), (350, 560)
     )
-    
+
     default_color = (249, 62, 172, 255)
-    
+
     # artist
     artist = song.artist
     if coloum_width(artist) > 58:
         artist = change_column_width(artist, 57) + "..."
     mr.draw(255, 595, 12, artist, default_color, "mm")
-    
+
     # title
     song_name = song.song_name
     if coloum_width(song_name) > 38:
@@ -83,47 +75,52 @@ def song_play_data(
         im.alpha_composite(Image.open(pic_dir / f"d_{num}.png"), (650, 235 + y * num))
         if isinstance(info, PlayedResult):
             im.alpha_composite(
-                Image.open(pic_dir / "ra_dx.png").resize((102, 44)), 
-                (850, 272 + y * num)
+                Image.open(pic_dir / "ra_dx.png").resize((102, 44)),
+                (850, 272 + y * num),
             )
-            if isdev:
-                dxscore = info.dx_score
-                _dxscore = song.difficulties[num].dx_score
-                dxnum = dx_score(dxscore / song.difficulties[num].dx_score * 100)
-                rating, rate = info.rating, RANK_MAP[info.rate]
-                if dxnum != 0:
-                    im.alpha_composite(
-                        Image.open(
-                            pic_dir / f"UI_GAM_Gauge_DXScoreIcon_0{dxnum}.png"
-                        ).resize((32, 19)), 
-                        (851, 296 + y * num)
-                    )
-                tb.draw(916, 304 + y * num, 13, f"{dxscore}/{_dxscore}", default_color, "mm")
-            else:
-                rating, rate = compute_rating(info.level_value, info.achievements, israte=True)
-            
+            dxscore = info.dx_score
+            _dxscore = song.difficulties[num].dx_score
+            dxnum = dx_score(dxscore / song.difficulties[num].dx_score * 100)
+            rating, rate = info.rating, RANK_MAP[info.rate]
+            if dxnum != 0:
+                im.alpha_composite(
+                    Image.open(
+                        pic_dir / f"UI_GAM_Gauge_DXScoreIcon_0{dxnum}.png"
+                    ).resize((32, 19)),
+                    (851, 296 + y * num),
+                )
+            tb.draw(
+                916, 304 + y * num, 13, f"{dxscore}/{_dxscore}", default_color, "mm"
+            )
+
             im.alpha_composite(Image.open(pic_dir / "fcfs.png"), (965, 265 + y * num))
             if info.fc:
                 im.alpha_composite(
                     Image.open(
                         pic_dir / f"UI_CHR_PlayBonus_{COMBO_MAP[info.fc]}.png"
-                    ).resize((65, 65)), 
-                    (960, 261 + y * num)
+                    ).resize((65, 65)),
+                    (960, 261 + y * num),
                 )
             if info.fs:
                 im.alpha_composite(
                     Image.open(
                         pic_dir / f"UI_CHR_PlayBonus_{SYNC_MAP[info.fs]}.png"
-                    ).resize((65, 65)), 
-                    (1025, 261 + y * num)
+                    ).resize((65, 65)),
+                    (1025, 261 + y * num),
                 )
-            im.alpha_composite(Image.open(pic_dir / theme.value / "ra.png"), (1350, 405 + y * num))
             im.alpha_composite(
-                Image.open(pic_dir / theme.value / f"UI_TTR_Rank_{rate}.png").resize((100, 45)), 
-                (737, 272 + y * num)
+                Image.open(pic_dir / theme.value / "ra.png"), (1350, 405 + y * num)
+            )
+            im.alpha_composite(
+                Image.open(pic_dir / theme.value / f"UI_TTR_Rank_{rate}.png").resize(
+                    (100, 45)
+                ),
+                (737, 272 + y * num),
             )
 
-            fn.draw(500, 295 + y * num, 30, f"{info.achievements:.4f}%", default_color, "lm")
+            fn.draw(
+                500, 295 + y * num, 30, f"{info.achievements:.4f}%", default_color, "lm"
+            )
             fn.draw(685, 248 + y * num, 20, info.level_value, anchor="mm")
             tb.draw(915, 283 + y * num, 18, rating, default_color, "mm")
         else:
@@ -133,9 +130,12 @@ def song_play_data(
         mr.draw(800, 302 + y * 4, 30, "没有该难度", default_color, "mm")
 
     mr.draw(
-        600, 815, 22, 
+        600,
+        815,
+        22,
         f"Designed by Yuri-YuzuChaN & BlueDeer233. Data by {service.value}. ",
-        default_color, "mm"
+        default_color,
+        "mm",
     )
     mr.draw(600, 835, 22, f"Generated by {maiconfig.bot_name} BOT", default_color, "mm")
     return image_to_base64(im)

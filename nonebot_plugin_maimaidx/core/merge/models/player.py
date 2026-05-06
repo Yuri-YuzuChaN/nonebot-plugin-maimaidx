@@ -1,10 +1,9 @@
 from pydantic import BaseModel
 
-from ...clients.lxns.models.collection import Collection
+from ...clients.lxns.models import Collection
 
 
 class LxnsPlayer(BaseModel):
-    
     friend_code: int = 0
     class_rank: int = 0
     star: int | None = None
@@ -15,7 +14,6 @@ class LxnsPlayer(BaseModel):
 
 
 class Player(LxnsPlayer):
-    
     name: str
     """name / nickname"""
     rating: int

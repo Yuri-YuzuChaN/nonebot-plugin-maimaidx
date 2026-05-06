@@ -10,26 +10,24 @@ from ..config import log
 from ..core.clients.exceptions import UserNotBindError
 from ..core.database.qq import User
 from ..core.image.tools import text_to_bytes_io
-from ..core.merge.models.service import ServiceName
+from ..core.merge.models import ServiceName
 from ..core.search import draw_best50, draw_play_data, draw_song_galobal_data
 from ..core.service import mai
 from .extra import get_user_db
 
-dfb50   = on_command("b50", aliases={"B50"})
-lxb50   = on_command("lx50")
-info    = on_command("info", aliases={"minfo", "Minfo", "MINFO", "info", "Info", "INFO"})
-dfinfo  = on_command("dfinfo")
-lxinfo  = on_command("lxinfo")
-ginfo   = on_command("ginfo", aliases={"ginfo", "Ginfo", "GINFO"})
-score   = on_command("分数线")
+dfb50 = on_command("b50", aliases={"B50"})
+lxb50 = on_command("lx50")
+info = on_command("info", aliases={"minfo", "Minfo", "MINFO", "info", "Info", "INFO"})
+dfinfo = on_command("dfinfo")
+lxinfo = on_command("lxinfo")
+ginfo = on_command("ginfo", aliases={"ginfo", "Ginfo", "GINFO"})
+score = on_command("分数线")
 
 
 @dfb50.handle()
 @lxb50.handle()
 async def _(
-    matcher: Matcher,
-    message: Message = CommandArg(), 
-    user: User = Depends(get_user_db)
+    matcher: Matcher, message: Message = CommandArg(), user: User = Depends(get_user_db)
 ):
     try:
         username = message.extract_plain_text().strip()
@@ -46,14 +44,12 @@ async def _(
 @dfinfo.handle()
 @lxinfo.handle()
 async def _(
-    matcher: Matcher,
-    message: Message = CommandArg(), 
-    user: User = Depends(get_user_db)
+    matcher: Matcher, message: Message = CommandArg(), user: User = Depends(get_user_db)
 ):
     data = message.extract_plain_text().strip()
     if not data:
         await matcher.finish("请输入曲目id或曲名")
-    
+
     if data.isdigit() and mai.total_list.by_id(int(data)):
         song_id = data
     elif by_t := mai.total_list.by_name(data):
@@ -70,7 +66,7 @@ async def _(
         else:
             song_id = aliases[0].song_id
     song = mai.total_list.by_id(int(song_id))
-    
+
     if isinstance(matcher, info):
         service = None
     elif isinstance(matcher, dfinfo):
@@ -86,7 +82,7 @@ async def _(message: Message = CommandArg()):
     args = message.extract_plain_text().strip()
     if not args:
         await ginfo.finish("请输入曲目id或曲名")
-    
+
     if args[0] not in "绿黄红紫白":
         level_index = 3
     else:
@@ -109,10 +105,10 @@ async def _(message: Message = CommandArg()):
             await ginfo.finish(msg.strip())
         else:
             id = str(alias[0].song_id)
-    
+
     song = mai.total_list.by_id(id)
     stats = song.difficulties[level_index].stats
-    
+
     if len(song.difficulties) == 4 and level_index == 4:
         await ginfo.finish("该乐曲没有这个等级")
     if not song.difficulties[level_index]:
@@ -146,7 +142,9 @@ async def _(message: Message = CommandArg()):
             TOUCH       1 / 2.5  / 5
             BREAK       5 / 12.5 / 25 (外加200落)
         """).strip()
-        await score.finish(MessageSegment.image(text_to_bytes_io(msg)), reply_message=True)
+        await score.finish(
+            MessageSegment.image(text_to_bytes_io(msg)), reply_message=True
+        )
     else:
         try:
             result = re.search(r"([绿黄红紫白])\s?([0-9]+)", _args)
@@ -162,7 +160,9 @@ async def _(message: Message = CommandArg()):
             hold = int(chart.notes.hold)
             touch = int(chart.notes.touch) if len(chart.notes) == 5 else 0
             brk = int(chart.notes.brk)
-            total_score = tap * 500 + slide * 1500 + hold * 1000 + touch * 500 + brk * 2500
+            total_score = (
+                tap * 500 + slide * 1500 + hold * 1000 + touch * 500 + brk * 2500
+            )
             break_bonus = 0.01 / brk
             break_50_reduce = total_score * break_bonus / 4
             reduce = 101 - line
@@ -179,4 +179,6 @@ async def _(message: Message = CommandArg()):
             await score.finish(msg, reply_message=True)
         except (AttributeError, ValueError) as e:
             log.exception(e)
-            await score.finish("格式错误，输入“分数线 帮助”以查看帮助信息", reply_message=True)
+            await score.finish(
+                "格式错误，输入“分数线 帮助”以查看帮助信息", reply_message=True
+            )

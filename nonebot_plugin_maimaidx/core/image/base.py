@@ -2,8 +2,7 @@ from PIL import Image, ImageDraw
 
 from ...constants import COMBO_MAP, RANK_MAP, SYNC_MAP
 from ...resources import FOTNEWRODIN, SIYUAN, TBFONT, pic_dir
-from ..merge.models.score import PlayedResult
-from ..merge.models.theme import Theme
+from ..merge.models import PlayedResult, Theme
 from ..service import mai
 from ..utils.calc import calc_ds, dx_score
 from .tools import DrawText, song_chart

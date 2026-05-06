@@ -4,7 +4,6 @@ from .score import PlayedResult
 
 
 class Best50(BaseModel):
-    
     sd_total: int
     dx_total: int
     sd: list[PlayedResult] = []

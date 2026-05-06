@@ -4,25 +4,22 @@ from .enum import LevelIndex, SongType
 
 
 class Notes(BaseModel):
-    
     total: int
     tap: int
     hold: int
     slide: int
     touch: int
     brk: int = Field(alias="break")
-    
+
     model_config = ConfigDict(populate_by_name=True)
 
 
 class BuddyNotes(BaseModel):
-    
     left: Notes
     right: Notes
 
 
 class SongDifficulty(BaseModel):
-    
     type: SongType
     difficulty: LevelIndex
     level: str
@@ -33,7 +30,6 @@ class SongDifficulty(BaseModel):
 
 
 class SongDifficultyUtage(BaseModel):
-    
     kanji: str
     description: str
     is_buddy: bool
@@ -41,14 +37,12 @@ class SongDifficultyUtage(BaseModel):
 
 
 class SongDifficulties(BaseModel):
-    
     standard: list[SongDifficulty] = []
     dx: list[SongDifficulty] = []
     utage: list[SongDifficultyUtage] = []
 
 
 class Song(BaseModel):
-    
     id: int
     title: str
     artist: str
@@ -63,32 +57,27 @@ class Song(BaseModel):
 
 
 class Genre(BaseModel):
-    
     id: int
     title: str
     genre: str
 
 
 class Version(BaseModel):
-    
     id: int
     title: str
     version: int
 
 
 class Songs(BaseModel):
-    
     songs: list[Song]
     genres: list[Genre]
     versions: list[Version]
 
 
 class Alias(BaseModel):
-    
     song_id: int
     aliases: list[str] = []
 
 
 class Aliases(BaseModel):
-    
     aliases: list[Alias]

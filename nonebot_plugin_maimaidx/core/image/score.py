@@ -1,14 +1,16 @@
-from io import BytesIO
-
 from PIL import Image
 
 from ...config import maiconfig
 from ...constants import RANK_MAP
 from ...resources import pic_dir
-from ..merge.models.category import Category
-from ..merge.models.score import *
-from ..merge.models.service import ServiceName
-from ..merge.models.theme import Theme
+from ..merge.models import (
+    Category, 
+    NotPlayedResult, 
+    PlayedResult, 
+    RiseResult, 
+    ServiceName, 
+    Theme
+)
 from .base import ScoreBaseImage, change_column_width, coloum_width
 from .tools import image_to_base64, song_chart
 
@@ -126,7 +128,7 @@ class DrawScore(ScoreBaseImage):
         dx: list[RiseResult], 
         dx_score: int,
         total_height: int
-    ) -> BytesIO:
+    ) -> str:
         """
         绘制上分数据表
         
@@ -163,7 +165,7 @@ class DrawScore(ScoreBaseImage):
         notstarted: list[NotPlayedResult],
         plan: str,
         completed_len: int,
-    ) -> BytesIO:
+    ) -> str:
         """
         绘制进度表
         
@@ -227,7 +229,7 @@ class DrawScore(ScoreBaseImage):
         data: list[PlayedResult] | list[NotPlayedResult],
         page: int = 1, 
         end_page: int = 1
-    ) -> BytesIO:
+    ) -> str:
         """
         绘制指定进度表
         
@@ -274,7 +276,7 @@ class DrawScore(ScoreBaseImage):
         play_result: list[PlayedResult], 
         page: int, 
         end_page: int
-    ) -> BytesIO:
+    ) -> str:
         """
         绘制分数列表
         

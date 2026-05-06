@@ -4,7 +4,6 @@ from .song import Song
 
 
 class GuessBase(BaseModel):
-    
     song: Song
     img: str
     answer: list[str]
@@ -12,7 +11,6 @@ class GuessBase(BaseModel):
 
 
 class GuessDefaultData(GuessBase):
-    
     options: list[str]
 
 
@@ -20,10 +18,8 @@ class GuessPicData(GuessBase): ...
 
 
 class Switch(BaseModel):
-
     enable: list[int] = []
     disable: list[int] = []
 
 
-class GuessSwitch(Switch): ...
 class GuessSwitch(Switch): ...

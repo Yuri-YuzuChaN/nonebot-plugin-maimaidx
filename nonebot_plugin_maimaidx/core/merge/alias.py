@@ -2,11 +2,10 @@ import json
 
 from ...resources import group_alias_file
 from ..tool import writefile
-from .models.alias_push import AliasesPush
+from .models.alias import AliasesPush
 
 
 class GroupAlias:
-
     push: AliasesPush
 
     def __init__(self) -> None:
@@ -15,7 +14,7 @@ class GroupAlias:
             self.push = AliasesPush()
         else:
             self.push = AliasesPush.model_validate(
-                json.load(open(group_alias_file, 'r', encoding='utf-8'))
+                json.load(open(group_alias_file, "r", encoding="utf-8"))
             )
 
     async def on(self, gid: int) -> str:
@@ -25,7 +24,7 @@ class GroupAlias:
         if gid in self.push.disable:
             self.push.disable.remove(gid)
         await writefile(group_alias_file, self.push.model_dump())
-        return '群别名推送功能已开启'
+        return "群别名推送功能已开启"
 
     async def off(self, gid: int) -> str:
         """关闭推送"""
@@ -34,7 +33,7 @@ class GroupAlias:
         if gid in self.push.enable:
             self.push.enable.remove(gid)
         await writefile(group_alias_file, self.push.model_dump())
-        return '群别名推送功能已关闭'
+        return "群别名推送功能已关闭"
 
     async def alias_global_change(self, switch: bool, group_list: list[int]):
         """修改全局开关"""

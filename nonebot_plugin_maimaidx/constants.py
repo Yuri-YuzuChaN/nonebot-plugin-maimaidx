@@ -1,69 +1,128 @@
 import uuid
 
-from .core.merge.models.theme import Theme
+from .core.merge.models import Theme
 
 # vote
-VOTE_URL = 'https://www.yuzuchan.moe/vote'
+VOTE_URL = "https://www.yuzuchan.moe/vote"
 
 # ws
 UUID = uuid.uuid1()
 
-# echartsjs
-SNAPSHOT_JS = (
-    "echarts.getInstanceByDom(document.querySelector('div[_echarts_instance_]'))."
-    "getDataURL({type: 'PNG', pixelRatio: 2, excludeComponents: ['toolbox']})"
-)
 
 # 常量
 SONGS_PER_PAGE = 25
 FORTUNE = [
-    "拼机", "推分", "越级", "下埋", "夜勤", "练底力", "练手法", 
-    "打旧框", "干饭", "抓绝赞", "收歌", "打大歌", "推AP"
+    "拼机",
+    "推分",
+    "越级",
+    "下埋",
+    "夜勤",
+    "练底力",
+    "练手法",
+    "打旧框",
+    "干饭",
+    "抓绝赞",
+    "收歌",
+    "打大歌",
+    "推AP",
 ]
 THEME = {str(k): v for k, v in enumerate(Theme)}
 RANK_SP = [
-    "d", "c", "b", "bb", "bbb", "a", "aa", 
-    "aaa", "s", "sp", "ss", "ssp", "sss", "sssp"
+    "d",
+    "c",
+    "b",
+    "bb",
+    "bbb",
+    "a",
+    "aa",
+    "aaa",
+    "s",
+    "sp",
+    "ss",
+    "ssp",
+    "sss",
+    "sssp",
 ]
 RANK_PLUS = [k.replace("p", "+") for k in RANK_SP]
 RANK_MAP = {
-    k: (k[:-1].upper() + "p" if k.endswith("p") else k.upper())
-    for k in RANK_SP
+    k: (k[:-1].upper() + "p" if k.endswith("p") else k.upper()) for k in RANK_SP
 }
 
 COMBO_SP = ["fc", "fcp", "ap", "app"]
 COMBO_PLUS = [k.replace("p", "+") for k in COMBO_SP]
 COMBO_MAP = {
-    k: (k[:-1].upper() + "p" if k.endswith("p") else k.upper())
-    for k in COMBO_SP
+    k: (k[:-1].upper() + "p" if k.endswith("p") else k.upper()) for k in COMBO_SP
 }
 
 SYNC_D_SP = ["fs", "fsp", "fsd", "fsdp"]
 SYNC_SP = ["fs", "fsp", "fdx", "fdxp"]
 SYNC_PLUS = [k.replace("p", "+") for k in SYNC_SP]
 SYNC_MAP = {
-    "fs": "FS", 
-    "fsp": "FSp", 
-    "fsd": "FSD", 
-    "fdx": "FSD", 
-    "fsdp": "FSDp", 
-    "fdxp": "FSDp", 
-    "sync": "Sync"
+    "fs": "FS",
+    "fsp": "FSp",
+    "fsd": "FSD",
+    "fdx": "FSD",
+    "fsdp": "FSDp",
+    "fdxp": "FSDp",
+    "sync": "Sync",
 }
 
 DIFFS = ["Basic", "Advanced", "Expert", "Master", "Re:Master"]
 LEVEL_LIST = [
-    "1", "2", "3", "4", "5", "6", "7", "7+", "8", "8+", "9", 
-    "9+", "10", "10+", "11", "11+", "12", "12+", "13", "13+", 
-    "14", "14+", "15"
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "7+",
+    "8",
+    "8+",
+    "9",
+    "9+",
+    "10",
+    "10+",
+    "11",
+    "11+",
+    "12",
+    "12+",
+    "13",
+    "13+",
+    "14",
+    "14+",
+    "15",
 ]
 ACHIEVEMENT_LIST = [
-    50.0, 60.0, 70.0, 75.0, 80.0, 90.0,
-    94.0, 97.0, 98.0, 99.0, 99.5, 100.0, 100.5
+    50.0,
+    60.0,
+    70.0,
+    75.0,
+    80.0,
+    90.0,
+    94.0,
+    97.0,
+    98.0,
+    99.0,
+    99.5,
+    100.0,
+    100.5,
 ]
 BASE_RA_SPP = [
-    7.0, 8.0, 9.6, 11.2, 12.0, 13.6,
-    15.2, 16.8, 20.0, 20.3, 20.8, 21.1, 21.6, 22.4
+    7.0,
+    8.0,
+    9.6,
+    11.2,
+    12.0,
+    13.6,
+    15.2,
+    16.8,
+    20.0,
+    20.3,
+    20.8,
+    21.1,
+    21.6,
+    22.4,
 ]
 SD_VERSION = {
     "初": "maimai",
@@ -82,7 +141,7 @@ SD_VERSION = {
     "白": "maimai MiLK",
     "雪": "MiLK PLUS",
     "輝": "maimai FiNALE",
-    "辉": "maimai FiNALE"
+    "辉": "maimai FiNALE",
 }
 DX_VERSION = {
     **SD_VERSION,
@@ -142,13 +201,8 @@ VERSION_MAP = {
     # "丸": ([DX_VERSION["丸"]], "丸"),
     # "": ([DX_VERSION["丸"]], "丸")
 }
-PLATE_CN = {
-    "晓": "暁",
-    "樱": "櫻",
-    "堇": "菫",
-    "辉": "輝",
-    "华": "華"
-}
+ALL_VERSION_KEY = list(VERSION_MAP.keys())
+PLATE_CN = {"晓": "暁", "樱": "櫻", "堇": "菫", "辉": "輝", "华": "華"}
 CATEGORY = {
     "流行&动漫": "anime",
     "舞萌": "maimai",
@@ -162,5 +216,5 @@ CATEGORY = {
     "東方Project": "touhou",
     "ゲームバラエティ": "game",
     "オンゲキCHUNITHM": "ongeki",
-    "宴会場": "宴会场"
+    "宴会場": "宴会场",
 }

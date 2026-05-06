@@ -14,12 +14,14 @@ else:
 
 
 # 静态资源路径
-font_dir    = static / "font"
-data_dir    = static / "data"
-pic_dir     = static / "mai" / "pic"
-cover_dir   = static / "mai" / "cover"
-rating_dir  = static / "mai" / "rating"
-plate_dir   = static / "mai" / "plate"
+font_dir            = static / "font"
+data_dir            = static / "data"
+pic_dir             = static / "mai" / "pic"
+cover_dir           = static / "mai" / "cover"
+plate_dir           = static / "mai" / "plate"
+plate_version_dir   = static / "mai" / "plate_version"
+plate_table_dir     = static / "mai" / "plate_table"
+rating_table_dir    = static / "mai" / "rating_table"
 
 
 # 路径文件

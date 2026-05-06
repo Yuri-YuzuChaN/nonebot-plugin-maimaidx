@@ -7,13 +7,20 @@ from typing import Any
 import aiofiles
 from playwright.async_api import async_playwright
 
-from ..constants import SNAPSHOT_JS
 from ..resources import pie_html_file
+
+SNAPSHOT_JS = (
+    "echarts.getInstanceByDom(document.querySelector('div[_echarts_instance_]'))."
+    "getDataURL({type: 'PNG', pixelRatio: 2, excludeComponents: ['toolbox']})"
+)
 
 
 def qqhash(qq: int) -> int:
-    days = int(time.strftime("%d", time.localtime(time.time()))) + 31 * int(
-        time.strftime("%m", time.localtime(time.time()))) + 77
+    days = (
+        int(time.strftime("%d", time.localtime(time.time())))
+        + 31 * int(time.strftime("%m", time.localtime(time.time())))
+        + 77
+    )
     return (days * qq) >> 8
 
 
@@ -35,10 +42,10 @@ async def run_chrome_to_base64() -> str:
         page = await browers.new_page(java_script_enabled=True)
         await page.goto("file://" + str(pie_html_file))
         await asyncio.sleep(2)
-        
+
         content: str = await page.evaluate(SNAPSHOT_JS)
         await browers.close()
-        
+
     content_array = content.split(",")
     if len(content_array) != 2:
         raise OSError(content_array)

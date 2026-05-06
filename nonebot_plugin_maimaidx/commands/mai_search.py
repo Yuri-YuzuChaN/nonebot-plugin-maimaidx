@@ -7,26 +7,26 @@ from nonebot.params import CommandArg, Depends, RegexMatched
 
 from ..constants import DIFFS, SONGS_PER_PAGE
 from ..core.clients.yuzuchan.client import YuzuChaNAPI
-from ..core.clients.yuzuchan.models import *
+from ..core.clients.yuzuchan.models import AliasStatus
 from ..core.database.qq import User
 from ..core.image.tools import text_to_bytes_io
 from ..core.search import draw_chart_info
 from ..core.service import mai
 from .extra import get_optional_user, get_user_db
 
-search_music        = on_command('查歌', aliases={'search'})
-search_base         = on_command('定数查歌', aliases={'search base'})
-search_bpm          = on_command('bpm查歌', aliases={'search bpm'})
-search_artist       = on_command('曲师查歌', aliases={'search artist'})
-search_designer     = on_command('谱师查歌', aliases={'search charter'})
-search_alias_song   = on_endswith(('是什么歌', '是啥歌'))
-query_chart         = on_regex(r'^id\s?([0-9]+)$', re.IGNORECASE)
+search_music = on_command("查歌", aliases={"search"})
+search_base = on_command("定数查歌", aliases={"search base"})
+search_bpm = on_command("bpm查歌", aliases={"search bpm"})
+search_artist = on_command("曲师查歌", aliases={"search artist"})
+search_designer = on_command("谱师查歌", aliases={"search charter"})
+search_alias_song = on_endswith(("是什么歌", "是啥歌"))
+query_chart = on_regex(r"^id\s?([0-9]+)$", re.IGNORECASE)
 
 
 def song_level(ds1: float, ds2: float) -> list[tuple[str, str, float, str]]:
     """
     查询定数范围内的乐曲
-    
+
     Params:
         `ds1`: 定数下限
         `ds2`: 定数上限
@@ -39,12 +39,16 @@ def song_level(ds1: float, ds2: float) -> list[tuple[str, str, float, str]]:
         if int(music.song_id) >= 100000:
             continue
         for d in music.difficulties:
-            result.append((music.song_id, music.song_name, d.level_value, DIFFS[d.level_index]))
+            result.append(
+                (music.song_id, music.song_name, d.level_value, DIFFS[d.level_index])
+            )
     return result
 
 
 @search_music.handle()
-async def _(message: Message = CommandArg(), user: User | None = Depends(get_optional_user)):
+async def _(
+    message: Message = CommandArg(), user: User | None = Depends(get_optional_user)
+):
     name = message.extract_plain_text().strip()
     page = 1
     if not name:
@@ -56,7 +60,7 @@ async def _(message: Message = CommandArg(), user: User | None = Depends(get_opt
         )
     if len(result) == 1:
         await search_music.finish(await draw_chart_info(result[0], user))
-    
+
     search_result = ""
     result.sort(key=lambda i: int(i.song_id))
     for i, music in enumerate(result):
@@ -96,12 +100,14 @@ async def _(message: Message = CommandArg()):
     result = song_level(float(ds1), float(ds2))
     if not result:
         await search_base.finish("没有找到这样的乐曲。")
-    
+
     search_result = ""
     for i, _result in enumerate(result):
         id, title, ds, diff = _result
         if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            search_result += f"{f'「{id}」':<7}{f'「{diff}」':<11}{f'「{ds}」'} {title}\n"
+            search_result += (
+                f"{f'「{id}」':<7}{f'「{diff}」':<11}{f'「{ds}」'} {title}\n"
+            )
     search_result += (
         f"第「{page}」页，"
         f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
@@ -127,17 +133,20 @@ async def _(message: Message = CommandArg()):
         page = int(args[2])
     else:
         await search_bpm.finish(
-            "命令格式：\nbpm查歌 「bpm」\nbpm查歌 「bpm下限」「bpm上限」「页数」", )
+            "命令格式：\nbpm查歌 「bpm」\nbpm查歌 「bpm下限」「bpm上限」「页数」",
+        )
     if not result:
         await search_bpm.finish("没有找到这样的乐曲。")
-    
+
     search_result = ""
     page = max(min(page, len(result) // SONGS_PER_PAGE + 1), 1)
     result.sort(key=lambda x: int(x.bpm))
-    
+
     for i, m in enumerate(result):
         if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            search_result += f"{f'「{m.song_id}」':<7}{f'「BPM {m.bpm}」':<9} {m.song_name} \n"
+            search_result += (
+                f"{f'「{m.song_id}」':<7}{f'「BPM {m.bpm}」':<9} {m.song_name} \n"
+            )
     search_result += (
         f"第「{page}」页，"
         f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
@@ -147,7 +156,7 @@ async def _(message: Message = CommandArg()):
 
 
 @search_artist.handle()
-async def _( message: Message = CommandArg()):
+async def _(message: Message = CommandArg()):
     args = message.extract_plain_text().strip().split()
     page = 1
     if len(args) == 1:
@@ -164,12 +173,14 @@ async def _( message: Message = CommandArg()):
     result = mai.total_list.filter(artist_search=name)
     if not result:
         await search_artist.finish("没有找到这样的乐曲。")
-    
+
     search_result = ""
     page = max(min(page, len(result) // SONGS_PER_PAGE + 1), 1)
     for i, m in enumerate(result):
         if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            search_result += f"{f'「{m.song_id}」':<7}{f'「{m.artist}」'} - {m.song_name}\n"
+            search_result += (
+                f"{f'「{m.song_id}」':<7}{f'「{m.artist}」'} - {m.song_name}\n"
+            )
     search_result += (
         f"第「{page}」页，"
         f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
@@ -192,20 +203,20 @@ async def _(message: Message = CommandArg()):
             await search_designer.finish("命令格式：\n谱师查歌「谱师名称」「页数」")
     else:
         await search_designer.finish("命令格式：\n谱师查歌「谱师名称」「页数」")
-    
+
     result = mai.total_list.filter(charter_search=name)
     if not result:
         await search_designer.finish("没有找到这样的乐曲。")
-    
+
     search_result = ""
     page = max(min(page, len(result) // SONGS_PER_PAGE + 1), 1)
     for i, m in enumerate(result):
         if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            diff_charter = zip([DIFFS[d] for d in m.difficulties], [d.note_designer for d in m.difficulties])
-            diff_parts = [
-                f"{f'「{d}」':<9}{f'「{c}」'}"
-                for d, c in diff_charter
-            ]
+            diff_charter = zip(
+                [DIFFS[d] for d in m.difficulties],
+                [d.note_designer for d in m.difficulties],
+            )
+            diff_parts = [f"{f'「{d}」':<9}{f'「{c}」'}" for d, c in diff_charter]
             diff_str = " ".join(diff_parts)
             line = f"{f'「{m.song_id}」':<7}{diff_str} {m.song_name}\n"
             search_result += line
@@ -227,7 +238,7 @@ async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
     if not alias_data:
         obj = await api.get_songs(name)
         if obj:
-            if type(obj[0]) == AliasStatus:
+            if isinstance(obj[0], AliasStatus):
                 await search_alias_song.finish(error_msg)
             else:
                 alias_data = obj
@@ -245,7 +256,7 @@ async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
             else:
                 msg = error_msg
             await search_alias_song.finish(msg)
-    
+
     # id
     if name.isdigit() and (song := mai.total_list.by_id(name)):
         await search_alias_song.finish(
@@ -256,7 +267,7 @@ async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
         await search_alias_song.finish(
             "您要找的是不是：" + await draw_chart_info(song, user)
         )
-    
+
     # 标题
     result = mai.total_list.filter(title_search=name)
     if len(result) == 0:
@@ -276,15 +287,11 @@ async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
 
 
 @query_chart.handle()
-async def _(
-    message: Message = CommandArg(), 
-    match = RegexMatched(), 
-    user: User | None = Depends(get_optional_user)
-):
+async def _(match=RegexMatched(), user: User | None = Depends(get_optional_user)):
     _id = match.group(1)
     if not _id.isdigit():
         await query_chart.finish("请输入正确的曲目ID")
-    
+
     song = mai.total_list.by_id(int(_id))
     if not song:
         msg = f"未找到ID「{_id}」的乐曲"

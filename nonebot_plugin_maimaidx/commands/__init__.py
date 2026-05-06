@@ -1,6 +1,103 @@
-from .mai_alias import *
-from .mai_base import *
-from .mai_guess import *
-from .mai_score import *
-from .mai_search import *
-from .mai_table import *
+from .mai_alias import (
+    alias_agree,
+    alias_apply,
+    alias_global_switch,
+    alias_local_apply,
+    alias_song,
+    alias_status,
+    alias_switch,
+    update_alias,
+)
+from .mai_base import (
+    bind,
+    help,
+    mai_what,
+    maimaidxrepo,
+    my_rating_ranking,
+    random_song,
+    rating_ranking,
+    rise_score,
+    source,
+    theme,
+    update_data,
+)
+from .mai_guess import (
+    guess_music_disable,
+    guess_music_enable,
+    guess_music_pic,
+    guess_music_reset,
+    guess_music_solve,
+    guess_music_start,
+)
+from .mai_score import (
+    dfb50,
+    dfinfo,
+    ginfo,
+    info,
+    lxb50,
+    lxinfo,
+    score,
+)
+from .mai_search import (
+    query_chart,
+    search_artist,
+    search_base,
+    search_bpm,
+    search_designer,
+    search_music,
+)
+from .mai_table import (
+    level_progress,
+    level_score_list,
+    plate_progress,
+    plate_table_pfm,
+    rating_table,
+    rating_table_pfm,
+)
+
+__all__ = [
+    "alias_agree",
+    "alias_apply",
+    "alias_global_switch",
+    "alias_local_apply",
+    "alias_song",
+    "alias_status",
+    "alias_switch",
+    "update_alias",
+    "bind",
+    "help",
+    "mai_what",
+    "maimaidxrepo",
+    "my_rating_ranking",
+    "random_song",
+    "rating_ranking",
+    "rise_score",
+    "source",
+    "theme",
+    "update_data",
+    "guess_music_disable",
+    "guess_music_enable",
+    "guess_music_pic",
+    "guess_music_reset",
+    "guess_music_solve",
+    "guess_music_start",
+    "dfb50",
+    "dfinfo",
+    "ginfo",
+    "info",
+    "lxb50",
+    "lxinfo",
+    "score",
+    "query_chart",
+    "search_artist",
+    "search_base",
+    "search_bpm",
+    "search_designer",
+    "search_music",
+    "level_progress",
+    "level_score_list",
+    "plate_progress",
+    "plate_table_pfm",
+    "rating_table",
+    "rating_table_pfm",
+]

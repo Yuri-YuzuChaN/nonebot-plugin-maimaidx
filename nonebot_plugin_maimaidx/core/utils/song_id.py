@@ -1,9 +1,6 @@
-
 def get_charts_id(id: int) -> int:
     """获取谱面id"""
-    if 10000 <= id < 100000:
-        id -= 10000
-    return id
+    return id % 10000
 
 
 def get_score_id(id: int) -> int:

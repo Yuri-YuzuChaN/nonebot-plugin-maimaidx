@@ -20,7 +20,7 @@ class TooManyRequestsError(HTTPError):
 
 class TokenError(HTTPError):
     """Token错误或失效"""
-    
+
 
 class OAuthError(HTTPError):
     """OAuth2错误"""

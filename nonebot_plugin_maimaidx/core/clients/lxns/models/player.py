@@ -4,7 +4,6 @@ from .collection import Collection
 
 
 class Player(BaseModel):
-    
     name: str
     rating: int
     friend_code: int

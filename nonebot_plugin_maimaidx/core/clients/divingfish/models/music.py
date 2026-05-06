@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 
 
 class Stats(BaseModel):
-    
     cnt: float = 0
     diff: str = ""
     fit_diff: float = 0
@@ -20,13 +19,11 @@ Notes2 = namedtuple("Notes", ["tap", "hold", "slide", "touch", "brk"])
 
 
 class Chart(BaseModel):
-    
     notes: Notes1 | Notes2
     charter: str | None = None
 
 
 class BasicInfo(BaseModel):
-    
     title: str
     artist: str
     genre: str
@@ -37,7 +34,6 @@ class BasicInfo(BaseModel):
 
 
 class Music(BaseModel):
-    
     id: str
     title: str
     type: str

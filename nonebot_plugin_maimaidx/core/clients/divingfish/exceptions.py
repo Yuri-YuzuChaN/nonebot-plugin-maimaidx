@@ -4,7 +4,6 @@ from ..exceptions import HTTPError, PlayerDataError, UserNotFoundError
 
 
 class DivingFishUserNotFoundError(UserNotFoundError):
-    
     def __str__(self) -> str:
         return dedent("""
             未找到此玩家，请确保此玩家的用户名和查分器中的用户名相同。

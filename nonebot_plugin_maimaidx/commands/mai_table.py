@@ -5,10 +5,10 @@ from nonebot.adapters.onebot.v11 import PrivateMessageEvent
 from nonebot.params import Depends, RegexMatched
 from nonebot.permission import SUPERUSER
 
-from ..constants import *
+from ..constants import COMBO_PLUS, LEVEL_LIST, PLATE_CN, RANK_PLUS, SYNC_PLUS
 from ..core.database.qq import User
 from ..core.image.update_table import UpdateTable
-from ..core.merge.models.category import Category
+from ..core.merge.models import Category
 from ..core.search import (
     draw_level_progress,
     draw_level_score_list,
@@ -25,7 +25,9 @@ TABLE_PATTERN = (
     r"([極极将舞神者]舞?){}\s?([12])?"
 )
 RISE_SCORE_PATTERN = r"^我要在?([0-9]+\+?)?[上加\+]([0-9]+)?分\s?(.+)?"
-LEVEL_PATTERN = r"([0-9]+\+?)\s?([abcdsfxp\+]+)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?\s?(.+)?"
+LEVEL_PATTERN = (
+    r"([0-9]+\+?)\s?([abcdsfxp\+]+)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?\s?(.+)?"
+)
 LEVEL_LIST_PATTERN = r"([0-9]+\.?[0-9]?\+?)\s?分数列表\s?([0-9]+)?\s?(.+)?"
 CATEGORY_ALIAS = {
     "已完成": Category.COMPLETED,
@@ -35,15 +37,14 @@ CATEGORY_ALIAS = {
 }
 
 
-update_table            = on_fullmatch("更新定数表", permission=SUPERUSER)
-update_plate            = on_fullmatch("更新完成表", permission=SUPERUSER)
-rating_table            = on_regex(r"([0-9]+\+?)定数表")
-rating_table_pfm        = on_regex(RATING_PATTERN, re.IGNORECASE)
-plate_table_pfm         = on_regex(TABLE_PATTERN.format("完成表"))
-rise_score              = on_regex(RISE_SCORE_PATTERN)
-plate_progress          = on_regex(TABLE_PATTERN.format("进度"))
-level_progress          = on_regex(LEVEL_PATTERN, re.IGNORECASE)
-level_score_list        = on_regex(LEVEL_LIST_PATTERN)
+update_table = on_fullmatch("更新定数表", permission=SUPERUSER)
+update_plate = on_fullmatch("更新完成表", permission=SUPERUSER)
+rating_table = on_regex(r"([0-9]+\+?)定数表")
+rating_table_pfm = on_regex(RATING_PATTERN, re.IGNORECASE)
+plate_table_pfm = on_regex(TABLE_PATTERN.format("完成表"))
+plate_progress = on_regex(TABLE_PATTERN.format("进度"))
+level_progress = on_regex(LEVEL_PATTERN, re.IGNORECASE)
+level_score_list = on_regex(LEVEL_LIST_PATTERN)
 
 
 @update_table.handle()
@@ -53,7 +54,7 @@ async def _(event: PrivateMessageEvent):
     await update.update_rating_table()
     await update.update_level_15_rating_table()
     await update_table.finish("定数表更新完成")
-    
+
 
 @update_plate.handle()
 async def _(event: PrivateMessageEvent):
@@ -65,7 +66,7 @@ async def _(event: PrivateMessageEvent):
 
 
 @rating_table.handle()
-async def _(match = RegexMatched()):
+async def _(match=RegexMatched()):
     rating = match.group(1).strip()
     if rating in LEVEL_LIST[:6]:
         result = "只支持查询lv7-15的定数表"
@@ -77,20 +78,22 @@ async def _(match = RegexMatched()):
 
 
 @rating_table_pfm.handle()
-async def _(match = RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
     ra = match.group(1)
     plan = match.group(2)
     if ra in LEVEL_LIST[:6]:
         await rating_table_pfm.finish("只支持查询lv7-15的完成表", reply_message=True)
     elif ra in LEVEL_LIST[6:]:
-        pic = await draw_rating_table(user, ra, True if plan and plan.lower() in COMBO_PLUS else False)
+        pic = await draw_rating_table(
+            user, ra, True if plan and plan.lower() in COMBO_PLUS else False
+        )
         await rating_table_pfm.finish(pic, reply_message=True)
     else:
         await rating_table_pfm.finish("无法识别的定数", reply_message=True)
 
 
 @plate_table_pfm.handle()
-async def _(match = RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
     ver = match.group(1)
     plan = match.group(2)
     page = match.group(3)
@@ -103,7 +106,7 @@ async def _(match = RegexMatched(), user: User = Depends(get_user_db)):
 
 
 @plate_progress.handle()
-async def _(match = RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
     username = None
     if not match:
         await plate_progress.finish("输入错误，请重新确定牌子")
@@ -117,15 +120,14 @@ async def _(match = RegexMatched(), user: User = Depends(get_user_db)):
 
 
 @level_progress.handle()
-async def _(match = RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
     if not match:
         await level_progress.finish("输入错误，请重新输入难度等级")
     level = match.group(1)
     plan = match.group(2)
     category_ = match.group(3)
     page = match.group(4) or 1
-    username = match.group(5)
-    
+
     if level not in LEVEL_LIST:
         await level_progress.finish("无此等级")
     if plan.lower() not in RANK_PLUS + COMBO_PLUS + SYNC_PLUS:
@@ -142,13 +144,13 @@ async def _(match = RegexMatched(), user: User = Depends(get_user_db)):
             await level_progress.finish(f"无法指定查询「{category_}」")
     else:
         category = Category.DEFAULT
-    
+
     data = await draw_level_progress(user, level, plan, category, int(page))
     await level_progress.send(data)
 
 
 @level_score_list.handle()
-async def _(match = RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
     if not match:
         await level_score_list.finish("输入错误，请重新输入指定等级")
     rating = match.group(1)

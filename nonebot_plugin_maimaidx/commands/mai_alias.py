@@ -21,28 +21,26 @@ from nonebot.permission import SUPERUSER
 
 from ..config import log, maiconfig
 from ..constants import SONGS_PER_PAGE, UUID, VOTE_URL
-from ..core.clients.exceptions import *
+from ..core.clients.exceptions import ServerError
 from ..core.clients.yuzuchan.client import YuzuChaNAPI
-from ..core.clients.yuzuchan.models import *
+from ..core.clients.yuzuchan.models import Alias, PushAliasStatus
 from ..core.image.tools import text_to_bytes_io
 from ..core.merge.alias import alias
 from ..core.search import draw_chart_info
 from ..core.service import mai
 
-update_alias        = on_command("更新别名库", permission=SUPERUSER)
-alias_local_apply   = on_command("添加本地别名", aliases={"添加本地别称"})
-alias_apply         = on_command(
-    "添加别名", 
-    aliases={"申请别名", "增加别名", "增添别名", "添加别称"}
+update_alias = on_command("更新别名库", permission=SUPERUSER)
+alias_local_apply = on_command("添加本地别名", aliases={"添加本地别称"})
+alias_apply = on_command(
+    "添加别名", aliases={"申请别名", "增加别名", "增添别名", "添加别称"}
 )
-alias_agree         = on_command("同意别名", aliases={"同意别称"})
-alias_status        = on_command("当前投票", aliases={"当前别名投票", "当前别称投票"})
-alias_switch        = on_regex(
-    r"^([开启关闭]+)别名推送$",
-    permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
+alias_agree = on_command("同意别名", aliases={"同意别称"})
+alias_status = on_command("当前投票", aliases={"当前别名投票", "当前别称投票"})
+alias_switch = on_regex(
+    r"^([开启关闭]+)别名推送$", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
 )
 alias_global_switch = on_regex(r"^全局([开启关闭]+)别名推送$", permission=SUPERUSER)
-alias_song          = on_regex(r"^(id)?\s?(.+)\s?有什么别[名称]$", re.IGNORECASE)
+alias_song = on_regex(r"^(id)?\s?(.+)\s?有什么别[名称]$", re.IGNORECASE)
 
 
 @update_alias.handle()
@@ -73,8 +71,7 @@ async def _(event: GroupMessageEvent, message: Message = CommandArg()):
         isexist = await api.get_songs_alias(song_id)
         if isinstance(isexist, Alias) and alias_name.lower() in isexist.Alias:
             await alias_apply.finish(
-                f"该曲目的别名「{alias_name}」已存在别名服务器", 
-                reply_message=True
+                f"该曲目的别名「{alias_name}」已存在别名服务器", reply_message=True
             )
 
         msg = await api.post_alias(song_id, alias_name, event.user_id, event.group_id)
@@ -103,7 +100,7 @@ async def _(message: Message = CommandArg()):
         status = await api.get_alias_status()
         if not status:
             await alias_status.finish("未查询到正在进行的别名投票", reply_message=True)
-        
+
         page = max(min(int(args), len(status) // SONGS_PER_PAGE + 1), 1) if args else 1
         result = []
         for num, _s in enumerate(status):
@@ -158,8 +155,8 @@ async def _(message: Message = CommandArg()):
             alias_list = "\n".join(songs.alias)
             msg.append(f"ID：{songs.song_id}\n{alias_list}")
         await alias_song.finish(
-            f"找到{len(aliases)}个相同别名的曲目：\n" + "\n======\n".join(msg), 
-            reply_message=True
+            f"找到{len(aliases)}个相同别名的曲目：\n" + "\n======\n".join(msg),
+            reply_message=True,
         )
 
     if len(aliases[0].alias) == 1:
@@ -171,7 +168,7 @@ async def _(message: Message = CommandArg()):
 
 
 @alias_switch.handle()
-async def _(event: GroupMessageEvent, match = RegexMatched()):
+async def _(event: GroupMessageEvent, match=RegexMatched()):
     if match.group(1) == "开启":
         msg = await alias.on(event.group_id)
     elif match.group(1) == "关闭":
@@ -183,7 +180,7 @@ async def _(event: GroupMessageEvent, match = RegexMatched()):
 
 
 @alias_global_switch.handle()
-async def _(bot: Bot, match = RegexMatched()):
+async def _(bot: Bot, match=RegexMatched()):
     group = await bot.get_group_list()
     group_id = [g["group_id"] for g in group]
     if match.group(1) == "开启":
@@ -201,9 +198,12 @@ async def push_alias(push: PushAliasStatus):
     song_id = str(push.Status.SongID)
     alias_name = push.Status.ApplyAlias
     music = mai.total_list.by_id(song_id)
-    
+
     if push.Type == "Approved":
-        message = MessageSegment.at(push.Status.ApplyUID) + "\n" + dedent(f"""\
+        message = (
+            MessageSegment.at(push.Status.ApplyUID)
+            + "\n"
+            + dedent(f"""\
             您申请的别名已通过审核
             =================
             {push.Status.Tag}：
@@ -212,17 +212,24 @@ async def push_alias(push: PushAliasStatus):
             别名：{alias_name}
             =================
             请使用指令「同意别名 {push.Status.Tag}」进行投票
-        """).strip() + await draw_chart_info(music)
+        """).strip()
+            + await draw_chart_info(music)
+        )
         await bot.send_group_msg(group_id=push.Status.GroupID, message=message)
         return
     if push.Type == "Reject":
-        message = MessageSegment.at(push.Status.ApplyUID) + "\n" + dedent(f"""\
+        message = (
+            MessageSegment.at(push.Status.ApplyUID)
+            + "\n"
+            + dedent(f"""\
             您申请的别名被拒绝
             =================
             ID：{song_id}
             标题：{push.Status.Name}
             别名：{alias_name}
-        """).strip() + await draw_chart_info(music)
+        """).strip()
+            + await draw_chart_info(music)
+        )
         await bot.send_group_msg(group_id=push.Status.GroupID, message=message)
         return
 
@@ -250,7 +257,7 @@ async def push_alias(push: PushAliasStatus):
             标题：{music.title}
             别名：{alias_name}
         """).strip() + await draw_chart_info(music)
-    
+
     for gid in group_ids:
         if gid in alias.push.disable:
             continue

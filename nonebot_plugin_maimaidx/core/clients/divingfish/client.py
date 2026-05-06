@@ -1,13 +1,10 @@
-from typing import overload
-
 from httpx import Response
 
 from ....config import dfconfig
 from ..exceptions import *
 from ..http import ApiClient
 from .exceptions import *
-from .models.music import *
-from .models.score import *
+from .models import UserInfo, PlayInfoDefault, UserInfoDev, PlayInfoDev, UserRanking
 
 
 class DivingFishAPI(ApiClient):
@@ -41,17 +38,18 @@ class DivingFishAPI(ApiClient):
     def _handle_400(self, error: dict):
         msg = error.get("message") or error.get("msg")
 
-        match msg:
-            case "no such user":
+        if msg is not None:
+            if msg == "no such user":
                 raise UserNotFoundError
-            case "user not exists":
+            if msg == "user not exists":
                 raise UserNotExistsError
-            case "开发者token有误":
+            if msg == "开发者token有误":
                 raise TokenError
-            case "开发者token被禁用":
+            if msg == "开发者token被禁用":
                 raise TokenDisableError
-            case _:
-                raise UnknownError
+            if msg == "请先联系水鱼申请开发者token":
+                raise TokenNotFoundError
+            raise UnknownError
     
     async def _request_data(
         self,
@@ -84,39 +82,12 @@ class DivingFishAPI(ApiClient):
         result = await self._request_data("POST", "/query/player", json=self.json)
         return UserInfo.model_validate(result)
 
-    @overload
-    async def query_user_plate(self, *, version: list[str]) -> list[PlayInfoDefault]:
-        """
-        获取用户所有曲目数据
-
-        Params:
-            `version`: 版本
-        Returns:
-            `List[PlayInfoDefault]` 数据列表
-        """
-    @overload
-    async def query_user_plate(self, *, version: list[str], song_id: int) -> list[PlayInfoDefault]: 
-        """
-        获取用户指定曲目数据
-
-        Params:
-            `version`: 版本
-            `song_id`: 曲目id
-        Returns:
-            `List[PlayInfoDefault]` 数据列表
-        """
-    async def query_user_plate(
-        self,
-        *,
-        version: list[str] | None = None,
-        song_id: int | None = None
-    ) -> list[PlayInfoDefault]:
+    async def query_user_plate(self, version: list[str]) -> list[PlayInfoDefault]:
         """
         请求用户数据
 
         Params:
             `version`: 版本
-            `song_id`: 曲目id
         Returns:
             `List[PlayInfoDefault]` 数据列表
         """
@@ -127,7 +98,6 @@ class DivingFishAPI(ApiClient):
         return [
             PlayInfoDefault.model_validate(d)
             for d in result["verlist"]
-            if song_id is None or d["id"] == song_id
         ]
 
     async def query_user_get_dev(self) -> UserInfoDev:

@@ -1,10 +1,9 @@
 from pydantic import BaseModel, field_validator
 
-from .enum import *
+from .enum import FCType, FSType, LevelIndex, RateType, SongType
 
 
 class BaseScore(BaseModel):
-    
     id: int
     song_name: str
     level: str
@@ -13,7 +12,7 @@ class BaseScore(BaseModel):
     fs: FSType | None = None
     rate: RateType | None = None
     type: SongType
-    
+
     @field_validator("fc", "fs", mode="before")
     @classmethod
     def to_none(cls, v: str):
@@ -23,7 +22,6 @@ class BaseScore(BaseModel):
 
 
 class Score(BaseScore):
-
     achievements: float
     dx_score: int
     dx_star: int
@@ -34,7 +32,6 @@ class Score(BaseScore):
 
 
 class RatingTrend(BaseModel):
-    
     total: int
     standard: int
     dx: int
@@ -42,7 +39,6 @@ class RatingTrend(BaseModel):
 
 
 class Best50(BaseModel):
-    
     standard_total: int
     dx_total: int
     standard: list[Score]

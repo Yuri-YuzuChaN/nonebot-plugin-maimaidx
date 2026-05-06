@@ -18,12 +18,19 @@ from ..core.search import draw_chart_info
 def is_now_playing_guess_music(event: GroupMessageEvent) -> bool:
     return event.group_id in guess._group
 
-guess_music_start   = on_command("猜歌")
-guess_music_pic     = on_command("猜曲绘")
-guess_music_solve   = on_message(rule=is_now_playing_guess_music)
-guess_music_reset   = on_command("重置猜歌", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN)
-guess_music_enable  = on_command("开启mai猜歌", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN)
-guess_music_disable = on_command("关闭mai猜歌", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN)
+
+guess_music_start = on_command("猜歌")
+guess_music_pic = on_command("猜曲绘")
+guess_music_solve = on_message(rule=is_now_playing_guess_music)
+guess_music_reset = on_command(
+    "重置猜歌", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
+)
+guess_music_enable = on_command(
+    "开启mai猜歌", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
+)
+guess_music_disable = on_command(
+    "关闭mai猜歌", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
+)
 
 
 @guess_music_start.handle()
@@ -43,26 +50,37 @@ async def _(event: GroupMessageEvent):
     )
     await asyncio.sleep(4)
     for cycle in range(7):
-        if event.group_id not in guess.switch.enable or gid not in guess._group or guess._group[gid].end:
+        if (
+            event.group_id not in guess.switch.enable
+            or gid not in guess._group
+            or guess._group[gid].end
+        ):
             break
         if cycle < 6:
-            await guess_music_start.send(f"{cycle + 1}/7 这首歌{guess._group[gid].options[cycle]}")
+            await guess_music_start.send(
+                f"{cycle + 1}/7 这首歌{guess._group[gid].options[cycle]}"
+            )
             await asyncio.sleep(8)
         else:
             await guess_music_start.send(
-                MessageSegment.text("7/7 这首歌封面的一部分是：\n") + 
-                MessageSegment.image(guess._group[gid].img) + 
-                MessageSegment.text("答案将在30秒后揭晓")
+                MessageSegment.text("7/7 这首歌封面的一部分是：\n")
+                + MessageSegment.image(guess._group[gid].img)
+                + MessageSegment.text("答案将在30秒后揭晓")
             )
             for _ in range(30):
                 await asyncio.sleep(1)
                 if gid in guess._group:
-                    if event.group_id not in guess.switch.enable or guess._group[gid].end:
+                    if (
+                        event.group_id not in guess.switch.enable
+                        or guess._group[gid].end
+                    ):
                         await guess_music_start.finish()
                 else:
                     await guess_music_start.finish()
             guess._group[gid].end = True
-            answer = MessageSegment.text("答案是：\n") + await draw_chart_info(guess._group[gid].song)
+            answer = MessageSegment.text("答案是：\n") + await draw_chart_info(
+                guess._group[gid].song
+            )
             guess.end(gid)
             await guess_music_start.finish(answer)
 
@@ -71,14 +89,18 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent):
     gid = event.group_id
     if gid not in guess.switch.enable:
-        await guess_music_pic.finish("该群已关闭猜歌功能，开启请输入 开启mai猜歌", reply_message=True)
+        await guess_music_pic.finish(
+            "该群已关闭猜歌功能，开启请输入 开启mai猜歌", reply_message=True
+        )
     if gid in guess._group:
-        await guess_music_pic.finish("该群已有正在进行的猜歌或猜曲绘", reply_message=True)
+        await guess_music_pic.finish(
+            "该群已有正在进行的猜歌或猜曲绘", reply_message=True
+        )
     guess.startpic(gid)
     await guess_music_pic.send(
-        MessageSegment.text("以下裁切图片是哪首谱面的曲绘：\n") +
-        MessageSegment.image(guess._group[gid].img) +
-        MessageSegment.text("请在30s内输入答案")
+        MessageSegment.text("以下裁切图片是哪首谱面的曲绘：\n")
+        + MessageSegment.image(guess._group[gid].img)
+        + MessageSegment.text("请在30s内输入答案")
     )
     for _ in range(30):
         await asyncio.sleep(1)
@@ -88,7 +110,9 @@ async def _(event: GroupMessageEvent):
         else:
             await guess_music_pic.finish()
     guess._group[gid].end = True
-    answer = MessageSegment.text("答案是：\n") + await draw_chart_info(guess._group[gid].song)
+    answer = MessageSegment.text("答案是：\n") + await draw_chart_info(
+        guess._group[gid].song
+    )
     guess.end(gid)
     await guess_music_pic.finish(answer)
 
@@ -101,8 +125,9 @@ async def _(event: GroupMessageEvent):
     ans = event.get_plaintext().strip()
     if ans.lower() in guess._group[gid].answer:
         guess._group[gid].end = True
-        answer = MessageSegment.text("猜对了，答案是：\n") + \
-            await draw_chart_info(guess._group[gid].song)
+        answer = MessageSegment.text("猜对了，答案是：\n") + await draw_chart_info(
+            guess._group[gid].song
+        )
         guess.end(gid)
         await guess_music_solve.finish(answer, reply_message=True)
 

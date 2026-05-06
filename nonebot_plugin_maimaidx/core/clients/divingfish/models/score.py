@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 
 
 class RaMusic(BaseModel):
-    
     id: str
     ds: float
     lv: str
@@ -11,7 +10,6 @@ class RaMusic(BaseModel):
 
 
 class PlayInfo(BaseModel):
-    
     achievements: float
     fc: str = ""
     fs: str = ""
@@ -26,19 +24,16 @@ class PlayInfo(BaseModel):
 
 
 class ChartInfo(PlayInfo):
-    
     level_label: str
     song_id: int
 
 
 class Charts(BaseModel):
-    
     sd: list[ChartInfo] = []
     dx: list[ChartInfo] = []
 
 
 class _UserInfo(BaseModel):
-    
     additional_rating: int | None
     nickname: str | None
     plate: str | None = None
@@ -47,12 +42,10 @@ class _UserInfo(BaseModel):
 
 
 class UserInfo(_UserInfo):
-    
     charts: Charts
 
 
 class PlayInfoDefault(PlayInfo):
-    
     song_id: int = Field(alias="id")
     table_level: list[int] = []
 
@@ -61,13 +54,11 @@ class PlayInfoDev(ChartInfo): ...
 
 
 class PlanInfo(BaseModel):
-    
     completed: PlayInfoDefault | PlayInfoDev = None
     unfinished: PlayInfoDefault | PlayInfoDev = None
 
 
 class RiseScore(BaseModel):
-    
     song_id: int
     title: str
     type: str
@@ -83,12 +74,10 @@ class RiseScore(BaseModel):
 
 ##### Dev
 class UserInfoDev(_UserInfo):
-    
     records: list[PlayInfoDev] = []
 
 
 ##### Rank
 class UserRanking(BaseModel):
-    
     username: str
     ra: int

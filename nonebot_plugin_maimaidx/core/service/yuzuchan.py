@@ -8,12 +8,12 @@ from ..clients.yuzuchan.models import Alias
 from ..tool import openfile, writefile
 
 alias_error = (
-    "本地暂存别名文件为空，请自行使用浏览器访问" 
+    "本地暂存别名文件为空，请自行使用浏览器访问"
     "「https://www.yuzuchan.moe/api/maimaidx/maimaidxalias」"
     "获取别名数据并保存在 'static/music_alias.json' 文件中并重启bot"
 )
 plate_error = (
-    "本地暂存牌子文件为空，请自行使用浏览器访问" 
+    "本地暂存牌子文件为空，请自行使用浏览器访问"
     "「https://www.yuzuchan.moe/api/maimaidx/maimaidxplate」"
     "获取牌子数据并保存在 'static/plate_data.json' 文件中并重启bot"
 )
@@ -41,7 +41,7 @@ async def get_music_alias_list() -> list[Alias]:
         if not alias_data:
             log.error(alias_error)
             raise ValueError
-    
+
     return [Alias.model_validate(_a) for _a in alias_data]
 
 

@@ -2,13 +2,11 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from ...clients.divingfish.models.music import Stats
-from ...clients.lxns.models.enum import LevelIndex
-from ...clients.lxns.models.music import Notes
+from ...clients.divingfish.models import Stats
+from ...clients.lxns.models import LevelIndex, Notes
 
 
 class Difficulties(BaseModel):
-    
     level_index: LevelIndex
     level: str
     level_value: float
@@ -19,7 +17,6 @@ class Difficulties(BaseModel):
 
 
 class SimpleSong(BaseModel):
-    
     song_id: int
     version_str: str
     version_int: int = 0
@@ -28,7 +25,6 @@ class SimpleSong(BaseModel):
 
 
 class Song(BaseModel):
-    
     song_id: int
     song_name: str
     artist: str

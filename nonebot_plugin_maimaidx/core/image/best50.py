@@ -33,7 +33,7 @@ class PlayerBest50(ScoreBaseImage):
             self.color = (124, 129, 255, 255)
         self.player = player
         self.best50 = best50
-        self.qqid = user.user_id
+        self.qqid = user.qqid
         self.icon = icon
 
     def _get_base_ra(self, achievements: float) -> float:
@@ -82,7 +82,7 @@ class PlayerBest50(ScoreBaseImage):
             return static / "mai" / type / f"UI_{type.capitalize()}_{endpoint}.png"
         return await lxns_assets(f"/{type}/{endpoint}")
     
-    async def draw(self) -> BytesIO:
+    async def draw(self) -> str:
         """
         绘制Best50
         """

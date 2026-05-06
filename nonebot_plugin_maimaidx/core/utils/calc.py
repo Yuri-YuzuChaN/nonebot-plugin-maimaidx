@@ -14,8 +14,8 @@ def get_base_ra(achievements: float) -> float:
 def calc_ds(rating: float, achievements: float) -> float:
     """
     计算谱面定数
-    
-    Params: 
+
+    Params:
         `rating`: 底分
         `achievements`: 成绩
     Returns:
@@ -28,7 +28,7 @@ def calc_ds(rating: float, achievements: float) -> float:
 def dx_score(dx: int) -> int:
     """
     获取DX评分星星数量
-    
+
     Params:
         `dx`: dx百分比
     Returns:
@@ -53,18 +53,20 @@ def dx_score(dx: int) -> int:
 def compute_rating(ds: float, achievement: float) -> int:
     """
     计算底分
-    
+
     Params:
         `ds`: 定数
         `achievement`: 成绩
     Returns:
         返回底分
     """
+
+
 @overload
 def compute_rating(ds: float, achievement: float, *, onlyrate: bool = False) -> str:
     """
     计算底分
-    
+
     Params:
         `ds`: 定数
         `achievement`: 成绩
@@ -72,11 +74,15 @@ def compute_rating(ds: float, achievement: float, *, onlyrate: bool = False) -> 
     Returns:
         返回评价
     """
+
+
 @overload
-def compute_rating(ds: float, achievement: float, *, israte: bool = False) -> tuple[int, str]:
+def compute_rating(
+    ds: float, achievement: float, *, israte: bool = False
+) -> tuple[int, str]:
     """
     计算底分
-    
+
     Params:
         `ds`: 定数
         `achievement`: 成绩
@@ -84,12 +90,10 @@ def compute_rating(ds: float, achievement: float, *, israte: bool = False) -> tu
     Returns:
         (底分, 评价)
     """
+
+
 def compute_rating(
-    ds: float, 
-    achievement: float, 
-    *, 
-    onlyrate: bool = False, 
-    israte: bool = False
+    ds: float, achievement: float, *, onlyrate: bool = False, israte: bool = False
 ) -> int | tuple[int, str]:
     if achievement < 50:
         base_rating = 7.0
