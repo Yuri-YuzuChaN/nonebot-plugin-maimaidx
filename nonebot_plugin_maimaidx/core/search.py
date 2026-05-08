@@ -20,6 +20,7 @@ from .clients.exceptions import MusicNotPlayError
 from .clients.lxns.client import LxnsAPI, OAuth2
 from .clients.lxns.models import BaseToken, OAuth2Token, SongType
 from .database.qq import User, update_user
+from .handler_error import handle_errors
 from .image import (
     DrawPlateTable,
     DrawRatingTable,
@@ -288,6 +289,7 @@ def draw_rating_table_text(rating: str) -> MessageSegment:
     return MessageSegment.image(image)
 
 
+@handle_errors
 async def draw_best50(
     user: User,
     *,
@@ -311,9 +313,8 @@ async def draw_best50(
     return MessageSegment.image(await b50.draw())
 
 
-async def draw_play_data(
-    user: User, song: Song, service: ServiceName | None = None
-) -> MessageSegment:
+@handle_errors
+async def draw_play_data(user: User, song: Song) -> MessageSegment:
     """
     绘制单曲游玩成绩
 
@@ -324,16 +325,14 @@ async def draw_play_data(
     Returns:
         `MessageSegment`
     """
-    if service is None:
-        service = user.service
-    if service == ServiceName.DIVINGFISH:
+    if user.service == ServiceName.DIVINGFISH:
         api = DivingFishAPI(qqid=user.qqid)
         data = await api.query_user_post_dev(song_id=song.song_id)
         if not data:
             raise MusicNotPlayError
 
         play_result = df_to_playresult(data, song=song)
-    elif service == ServiceName.LXNS:
+    elif user.service == ServiceName.LXNS:
         token = get_token(user)
         api = LxnsAPI(user.qqid, token)
         if song.song_id < 10000:
@@ -356,6 +355,7 @@ async def draw_play_data(
     return MessageSegment.image(image)
 
 
+@handle_errors
 async def get_mai_what(user: User) -> Song | None:
     """"""
     player, best50 = await get_best50(user)
@@ -380,6 +380,7 @@ async def get_mai_what(user: User) -> Song | None:
     return None
 
 
+@handle_errors
 async def draw_chart_info(song: Song, user: User | None = None) -> MessageSegment:
     """
     绘制谱面信息
@@ -425,6 +426,7 @@ async def draw_chart_info(song: Song, user: User | None = None) -> MessageSegmen
     return MessageSegment.image(image)
 
 
+@handle_errors
 async def draw_rating_table(
     user: User, rating: str, plan: bool = False
 ) -> MessageSegment:
@@ -446,6 +448,7 @@ async def draw_rating_table(
     return MessageSegment.image(image)
 
 
+@handle_errors
 async def draw_plate_table(
     user: User,
     version: str,
@@ -477,6 +480,7 @@ async def draw_plate_table(
     return MessageSegment.image(image)
 
 
+@handle_errors
 async def draw_plate_progress() -> MessageSegment:
     """
     绘制牌子完成进度
@@ -490,6 +494,7 @@ async def draw_plate_progress() -> MessageSegment:
     """
 
 
+@handle_errors
 async def draw_rise_score_list(
     user: User,
     username: str | None = None,
@@ -533,6 +538,7 @@ async def draw_rise_score_list(
     return MessageSegment.image(image)
 
 
+@handle_errors
 async def draw_level_progress(
     user: User, level: str, plan: str, category: Category, page: int = 1
 ) -> MessageSegment:
@@ -632,6 +638,7 @@ async def draw_level_progress(
     return MessageSegment.image(image)
 
 
+@handle_errors
 async def draw_level_score_list(
     user: User,
     rating: str | float,
@@ -680,6 +687,7 @@ async def draw_level_score_list(
     return MessageSegment.image(image)
 
 
+@handle_errors
 async def draw_rating_ranking(name: str, page: int) -> MessageSegment:
     """
     查看查分器排行榜（仅Diving-Fish）

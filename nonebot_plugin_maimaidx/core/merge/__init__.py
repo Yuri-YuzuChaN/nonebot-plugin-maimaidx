@@ -1,5 +1,7 @@
+from collections import defaultdict
+
 from ...resources import merge_alias_file, merge_music_file
-from ..clients.divingfish.models.music import Music, Notes1, Notes2, Stats
+from ..clients.divingfish.models import Music, Notes1, Notes2, Stats
 from ..clients.lxns.models import Aliases, Notes, SongDifficulty, Songs
 from ..clients.yuzuchan.models import Alias as YuzuAlias
 from ..tool import writefile
@@ -30,14 +32,15 @@ async def merge_music_data(
     diving_fish_list: list[Music],
     lxns_list: Songs | None,
     stats_map: dict[str, list[Stats]],
-) -> MusicList:
+) -> tuple[MusicList, dict[str, float]]:
     """
     合并 `lxns` 和 `diving-fish` 曲目数据
     """
-    song_map: dict[int, Song] = {}
+    song_map: defaultdict[int, Song] = defaultdict(Song)
+    level_value_map: defaultdict[str, float] = defaultdict(float)
 
     if diving_fish_list is None and lxns_list is None:
-        raise ValueError("")
+        raise ValueError
 
     # diving-fish
     if diving_fish_list is not None:
@@ -67,6 +70,7 @@ async def merge_music_data(
                     stats=None,
                 )
                 song.difficulties.append(difficulties)
+                level_value_map[f"{song_id}-{n}"] = ds
 
             song_map[song_id] = song
 
@@ -125,7 +129,7 @@ async def merge_music_data(
     result = MusicList(root=song_map.values())
     await writefile(merge_music_file, result.model_dump())
 
-    return result
+    return result, level_value_map
 
 
 async def merge_alias_data(

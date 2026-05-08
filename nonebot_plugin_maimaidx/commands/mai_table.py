@@ -17,7 +17,7 @@ from ..core.search import (
     draw_rating_table,
     draw_rating_table_text,
 )
-from .extra import get_user_db
+from .extra import GetUserAndAuth
 
 RATING_PATTERN = r"^([0-9]+\+?)(ap|app|fc|fcp|fs|fsp|fdx|fdxp)?\s?完成表$"
 TABLE_PATTERN = (
@@ -49,7 +49,7 @@ level_score_list = on_regex(LEVEL_LIST_PATTERN)
 
 @update_table.handle()
 async def _(event: PrivateMessageEvent):
-    await update_table.send("正在进行定数表更新...")
+    await update_table.send("正在进行更新定数表...")
     update = UpdateTable()
     await update.update_rating_table()
     await update.update_level_15_rating_table()
@@ -58,7 +58,7 @@ async def _(event: PrivateMessageEvent):
 
 @update_plate.handle()
 async def _(event: PrivateMessageEvent):
-    await update_plate.send("正在进行完成表更新...")
+    await update_plate.send("正在进行更新完成表...")
     update = UpdateTable()
     await update.update_plate_table()
     await update.update_wu_plate_table()
@@ -78,7 +78,7 @@ async def _(match=RegexMatched()):
 
 
 @rating_table_pfm.handle()
-async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(GetUserAndAuth)):
     ra = match.group(1)
     plan = match.group(2)
     if ra in LEVEL_LIST[:6]:
@@ -93,10 +93,10 @@ async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
 
 
 @plate_table_pfm.handle()
-async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(GetUserAndAuth)):
     ver = match.group(1)
     plan = match.group(2)
-    page = match.group(3)
+    page = match.group(3) or 1
     if ver in PLATE_CN:
         ver = PLATE_CN[ver]
     if f"{ver}{plan}" == "真将":
@@ -106,7 +106,7 @@ async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
 
 
 @plate_progress.handle()
-async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(GetUserAndAuth)):
     username = None
     if not match:
         await plate_progress.finish("输入错误，请重新确定牌子")
@@ -120,7 +120,7 @@ async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
 
 
 @level_progress.handle()
-async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(GetUserAndAuth)):
     if not match:
         await level_progress.finish("输入错误，请重新输入难度等级")
     level = match.group(1)
@@ -150,7 +150,7 @@ async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
 
 
 @level_score_list.handle()
-async def _(match=RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match=RegexMatched(), user: User = Depends(GetUserAndAuth)):
     if not match:
         await level_score_list.finish("输入错误，请重新输入指定等级")
     rating = match.group(1)

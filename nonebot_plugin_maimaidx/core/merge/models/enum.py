@@ -12,7 +12,7 @@ class ServiceName(str, Enum):
 
     @classmethod
     def get_help(cls) -> str:
-        return "\n".join([f"{i}: {item.value}" for i, item in enumerate(cls)])
+        return "\n".join([f"「{i}」：{item.value}" for i, item in enumerate(cls)])
 
 
 class Category(str, Enum):
@@ -33,4 +33,4 @@ class Theme(str, Enum):
 
     @classmethod
     def get_help(cls) -> str:
-        return "\n".join([f"{i}: {item.value}" for i, item in enumerate(cls)])
+        return "\n".join([f"「{i}」：{item.value}" for i, item in enumerate(cls)])

@@ -417,6 +417,8 @@ class DrawPlateTable:
             played_map[song.difficulties[3].level][song.song_id]
 
         for _d in self.result:
+            if _d.song_id not in song_id_to_level:
+                continue
             if self.slot_num == 4 and _d.level_index == 4:
                 continue
             target_level = song_id_to_level[_d.song_id]
@@ -539,7 +541,7 @@ class DrawPlateTable:
                     im.alpha_composite(self.complete_bg, (x + 1, y + 1))
 
                     icon = self._get_plate_icon(play, self.plan)
-                    dest = (x, y + 22) if self.plan == "将" else (x + 10, y + 15)
+                    dest = (x, y + 22) if self.plan == "将" else (x + 10, y + 12)
                     im.alpha_composite(icon, dest)
 
                 for s_idx in hit_slots:

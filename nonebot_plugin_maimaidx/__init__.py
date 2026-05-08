@@ -6,8 +6,7 @@ from nonebot.plugin import PluginMetadata, require
 
 from .commands import *  # noqa: F403
 from .commands.mai_alias import ws_alias_server
-from .config import BaseConfig, dfconfig, driver, log, maiconfig
-from .constants import ALL_VERSION_KEY, PLATE_CN
+from .config import BaseConfig, dfconfig, driver, log, lxnsconfig, maiconfig
 from .core.clients.divingfish.client import DivingFishAPI
 from .core.database.qq import create_database
 from .core.merge.guess import guess
@@ -58,7 +57,17 @@ async def get_music():
     log.info("正在获取maimai牌子数据")
     await mai.get_plate_json()
     guess.guess()
+    log.success("猜歌数据初始化完成")
     log.success("maimai数据获取完成")
+
+    if dfconfig.divingfish_token is None:
+        log.opt(colors=True).warning(
+            "<r>未配置水鱼查分器开发者Token，查分模块只能使用「b50」指令</r>"
+        )
+    if lxnsconfig.lxns_dev_token is None:
+        log.opt(colors=True).warning(
+            "<r>未配置落雪查分器开发者Token，无法使用落雪数据源</r>"
+        )
 
     if maiconfig.save_in_memory:
         # ScoreBaseImage._load_image()
@@ -70,15 +79,11 @@ async def get_music():
             "可能导致「定数表」「完成表」指令无法使用，"
             "请及时私聊BOT使用指令「更新定数表」进行生成。"
         )
-    plate_list = [name for name in ALL_VERSION_KEY[1:]]
-    plate_table_dir_list = [f.name.split(".")[0] for f in plate_table_dir.iterdir()]
-    cn_list = [name for name in list(PLATE_CN.keys())]
-    not_in = set(plate_list) - set(plate_table_dir_list) - set(cn_list)
-    if not_in:
-        anyname = "，".join(not_in)
+
+    if not list(plate_table_dir.iterdir()):
         log.opt(colors=True).warning(
-            f"<y>注意！注意！</y>未检测到牌子文件夹中的牌子：<y>{anyname}</y>，"
-            "可能导致这些牌子的「完成表」指令无法使用，"
+            "<y>注意！注意！</y>未检测到牌子文件夹为空！"
+            "可能导致「完成表」指令无法使用，"
             "请及时私聊BOT使用指令「更新完成表」进行生成。"
         )
 

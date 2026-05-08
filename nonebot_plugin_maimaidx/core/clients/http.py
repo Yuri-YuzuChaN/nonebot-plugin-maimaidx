@@ -10,14 +10,14 @@ class ApiClient(ABC):
         *,
         base_url: str,
         headers: dict | None = None,
-        timeout: int = 30,
+        timeout: int = 180,
     ):
         self.base_url = base_url
         self.headers = headers or {}
         self.timeout = timeout
 
     async def _request(self, method: str, endpoint: str, **kwargs) -> dict | list:
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with httpx.AsyncClient(proxy=None, timeout=self.timeout) as client:
             resp = await client.request(
                 method, self.base_url + endpoint, headers=self.headers, **kwargs
             )
@@ -47,7 +47,7 @@ async def qqlogo(qqid: int | None = None, icon: str | None = None) -> bytes | No
     session = httpx.AsyncClient(timeout=30)
     if qqid is not None:
         params = {"b": "qq", "nk": qqid, "s": 100}
-        res = await session.request("GET", "http://q1.qlogo.cn/g", params=params)
+        res = await session.request("GET", "https://q1.qlogo.cn/g", params=params)
     elif icon is not None:
         res = await session.request("GET", icon)
     else:
@@ -55,10 +55,13 @@ async def qqlogo(qqid: int | None = None, icon: str | None = None) -> bytes | No
     return res.content
 
 
-async def lxns_assets(endpoint: str) -> BytesIO:
+async def lxns_assets(endpoint: str) -> BytesIO | None:
     """获取 LXNS 资源文件"""
-    session = httpx.AsyncClient(timeout=30)
-    url = f"https://assets2.lxns.net/maimai{endpoint}"
-    resp = await session.get(url)
-    resp.raise_for_status()
-    return BytesIO(resp.content)
+    try:
+        session = httpx.AsyncClient(timeout=30)
+        url = f"https://assets2.lxns.net/maimai{endpoint}"
+        resp = await session.get(url)
+        resp.raise_for_status()
+        return BytesIO(resp.content)
+    except Exception:
+        return None

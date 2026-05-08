@@ -201,7 +201,6 @@ VERSION_MAP = {
     # "丸": ([DX_VERSION["丸"]], "丸"),
     # "": ([DX_VERSION["丸"]], "丸")
 }
-ALL_VERSION_KEY = list(VERSION_MAP.keys())
 PLATE_CN = {"晓": "暁", "樱": "櫻", "堇": "菫", "辉": "輝", "华": "華"}
 CATEGORY = {
     "流行&动漫": "anime",

@@ -17,6 +17,7 @@ class MaiMusic:
     """牌子ID列表数据"""
     total_level_data: dict[str, dict[str, list[SimpleSong]]]
     """等级列表数据"""
+    total_level_value_map: dict[str, float]
 
     def __init__(self) -> None:
         """封装所有曲目信息以及猜歌数据，便于更新"""
@@ -30,10 +31,12 @@ class MaiMusic:
             log.success("成功获取「落雪」查分器曲目数据")
         else:
             lxns_data = None
-            log.warning("未配置落雪开发者Token，跳过获取「落雪」曲目数据源")
+            log.opt(colors=True).warning(
+                "<r>未配置落雪开发者Token，跳过获取「落雪」曲目数据源</r>"
+            )
 
         log.info("正在合并曲目数据")
-        self.total_list = await merge_music_data(
+        self.total_list, self.total_level_value_map = await merge_music_data(
             diving_fish_list=df_music_data, lxns_list=lxns_data, stats_map=df_stats_data
         )
         log.success("曲目数据合并完成")
@@ -49,7 +52,9 @@ class MaiMusic:
             log.success("成功获取「落雪」别名数据")
         else:
             lxns_data = None
-            log.warning("未配置落雪开发者Token，跳过获取「落雪」别名数据源")
+            log.opt(colors=True).warning(
+                "<r>未配置落雪开发者Token，跳过获取「落雪」别名数据源</r>"
+            )
 
         log.info("正在合并别名数据")
         self.total_alias_list = await merge_alias_data(yuzu_data, lxns_data)

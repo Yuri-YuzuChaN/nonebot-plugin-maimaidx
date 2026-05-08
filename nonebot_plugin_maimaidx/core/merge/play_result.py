@@ -1,11 +1,9 @@
 from typing import overload
 
-from ..clients.divingfish.models.score import PlayInfoDefault, PlayInfoDev
-from ..clients.lxns.models.enum import SongType
-from ..clients.lxns.models.score import Score
-from ..utils.calc import calc_ds
-from .models.score import NotPlayedResult, PlayedResult
-from .models.song import Song
+from ..clients.divingfish.models import PlayInfoDefault, PlayInfoDev
+from ..clients.lxns.models import Score, SongType
+from ..service import mai
+from .models import NotPlayedResult, PlayedResult, Song
 
 
 def df_format_result(
@@ -58,19 +56,25 @@ def df_to_playresult(
 
 
 def lxns_format_result(v: Score) -> PlayedResult:
+    if v.type == SongType.STANDARD:
+        song_id = v.id
+    elif v.type == SongType.DX:
+        song_id = v.id + 10000
+    else:
+        song_id = v.id
     return PlayedResult(
-        song_id=v.id if v.type == SongType.STANDARD else v.id + 10000,
+        song_id=song_id,
         song_name=v.song_name,
         level=v.level,
         level_index=v.level_index,
         type=v.type,
-        rating=v.dx_rating,
+        rating=int(v.dx_rating),
         achievements=v.achievements,
         fc=v.fc,
         fs=v.fs,
         rate=v.rate,
         dx_score=v.dx_score,
-        level_value=calc_ds(v.dx_rating, v.achievements),
+        level_value=mai.total_level_value_map[f"{song_id}-{v.level_index}"],
     )
 
 

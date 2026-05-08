@@ -25,10 +25,19 @@ class Result(BaseResult):
 
     @field_validator("rate", mode="before")
     @classmethod
-    def rate_to_none(cls, v: str):
+    def rate_to_none(cls, v: str) -> str | None:
         if v == "":
             return None
         return v
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def type_to_abbr(cls, v: str) -> str:
+        if v == "standard":
+            return "SD"
+        if v == "utage":
+            return "DX"
+        return v.upper()
 
 
 class PlayedResult(Result):
@@ -47,7 +56,7 @@ class PlayedResult(Result):
 
     @field_validator("fc", "fs", mode="before")
     @classmethod
-    def to_none(cls, v: str):
+    def fc_to_none(cls, v: str) -> str | None:
         if v == "":
             return None
         return v
@@ -66,7 +75,7 @@ class RatingTableResult(BaseModel):
 
     @field_validator("fc", mode="before")
     @classmethod
-    def to_none(cls, v: str):
+    def fc_to_none(cls, v: str):
         if v == "":
             return None
         return v

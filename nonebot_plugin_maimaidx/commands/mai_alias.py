@@ -49,7 +49,7 @@ async def _(event: PrivateMessageEvent):
         await mai.get_music_alias()
         log.info("手动更新别名库成功")
         await update_alias.send("手动更新别名库成功")
-    except:
+    except Exception:
         log.error("手动更新别名库失败")
         await update_alias.send("手动更新别名库失败")
 
@@ -264,7 +264,7 @@ async def push_alias(push: PushAliasStatus):
         try:
             await bot.send_group_msg(group_id=gid, message=message)
             await asyncio.sleep(5)
-        except:
+        except Exception:
             continue
 
 
@@ -287,7 +287,7 @@ async def ws_alias_server():
                             newdata = json.loads(data)
                             status = PushAliasStatus.model_validate(newdata)
                             await push_alias(status)
-                        except:
+                        except Exception:
                             continue
         except (WebSocketDisconnect, httpx.LocalProtocolError) as e:
             log.warning(f"连接断开或异常: {e}，将在 60 秒后重连")

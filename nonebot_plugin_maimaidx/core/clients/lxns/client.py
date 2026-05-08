@@ -2,16 +2,16 @@ from httpx import Response
 
 from ....config import lxnsconfig
 from ...database.qq import update_user
-from ..exceptions import (
-    NotFoundError,
-    OAuthError,
-    ParamsError,
-    PermissionDeniedError,
-    TokenError,
-    TooManyRequestsError,
-    UnknownError,
-)
+from ..exceptions import UnknownError
 from ..http import ApiClient
+from .exceptions import (
+    LXNSNotFoundError,
+    LXNSOAuthError,
+    LXNSParamsError,
+    LXNSPermissionDeniedError,
+    LXNSTokenError,
+    LXNSTooManyRequestsError,
+)
 from .models import (
     Aliases,
     APIResult,
@@ -54,7 +54,7 @@ class OAuth2(ApiClient):
 
     async def refresh_token(self) -> OAuth2Token:
         if not self.token:
-            raise TokenError
+            raise LXNSTokenError
 
         json = {
             "client_id": self.client_id,
@@ -74,9 +74,9 @@ class OAuth2(ApiClient):
         if resp.status_code == 200:
             return
         elif resp.status_code == 401:
-            raise TokenError
+            raise LXNSTokenError
         else:
-            raise OAuthError
+            raise LXNSOAuthError
 
 
 class LxnsClient(ApiClient):
@@ -123,16 +123,16 @@ class LxnsClient(ApiClient):
         if resp.status_code == 200:
             return
         if resp.status_code == 400:
-            raise ParamsError
+            raise LXNSParamsError
         elif resp.status_code == 401:
             self._friend_code = None
-            raise OAuthError
+            raise LXNSOAuthError
         elif resp.status_code == 403:
-            raise PermissionDeniedError
+            raise LXNSPermissionDeniedError
         elif resp.status_code == 404:
-            raise NotFoundError
+            raise LXNSNotFoundError
         elif resp.status_code == 429:
-            raise TooManyRequestsError
+            raise LXNSTooManyRequestsError
         else:
             raise UnknownError
 
@@ -207,8 +207,8 @@ class LxnsAPI:
         """
         params = {
             "song_id": song_id,
-            "level_index": level_index,
-            "song_type": song_type,
+            "level_index": level_index.value,
+            "song_type": song_type.value,
         }
         result = await self._oauth_client._request_data("GET", "/best", params=params)
         return Score.model_validate(result.data)
@@ -233,7 +233,7 @@ class LxnsAPI:
         """
         获取指定曲目所有难度成绩
         """
-        params = {"song_id": song_id, "song_type": song_type}
+        params = {"song_id": song_id, "song_type": song_type.value}
         result = await self._oauth_client._request_data("GET", "/bests", params=params)
         return [Score.model_validate(s) for s in result.data]
 
@@ -274,8 +274,8 @@ class LxnsAPI:
         """
         params = {
             "song_id": song_id,
-            "song_type": song_type,
-            "level_index": level_index,
+            "song_type": song_type.value,
+            "level_index": level_index.value,
         }
         result = await self._oauth_client._request_data(
             "GET", "/score/history", params=params

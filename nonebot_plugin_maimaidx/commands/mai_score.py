@@ -7,44 +7,34 @@ from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, Depends
 
 from ..config import log
-from ..core.clients.exceptions import UserNotBindError
 from ..core.database.qq import User
 from ..core.image.tools import text_to_bytes_io
-from ..core.merge.models import ServiceName
 from ..core.search import draw_best50, draw_play_data, draw_song_galobal_data
 from ..core.service import mai
-from .extra import get_user_db
+from .extra import GetUserAndAuth
 
-dfb50 = on_command("b50", aliases={"B50"})
-lxb50 = on_command("lx50")
+best50 = on_command("b50", aliases={"B50"})
 info = on_command("info", aliases={"minfo", "Minfo", "MINFO", "info", "Info", "INFO"})
-dfinfo = on_command("dfinfo")
-lxinfo = on_command("lxinfo")
 ginfo = on_command("ginfo", aliases={"ginfo", "Ginfo", "GINFO"})
 score = on_command("分数线")
 
 
-@dfb50.handle()
-@lxb50.handle()
+@best50.handle()
 async def _(
-    matcher: Matcher, message: Message = CommandArg(), user: User = Depends(get_user_db)
+    matcher: Matcher,
+    message: Message = CommandArg(),
+    user: User = Depends(GetUserAndAuth),
 ):
-    try:
-        username = message.extract_plain_text().strip()
-        if isinstance(matcher, dfb50):
-            result = await draw_best50(user, username=username)
-        else:
-            result = await draw_best50(user)
-    except UserNotBindError as e:
-        result = str(e)
+    username = message.extract_plain_text().strip()
+    result = await draw_best50(user, username=username)
     await matcher.send(result, reply_message=True)
 
 
 @info.handle()
-@dfinfo.handle()
-@lxinfo.handle()
 async def _(
-    matcher: Matcher, message: Message = CommandArg(), user: User = Depends(get_user_db)
+    matcher: Matcher,
+    message: Message = CommandArg(),
+    user: User = Depends(GetUserAndAuth),
 ):
     data = message.extract_plain_text().strip()
     if not data:
@@ -67,13 +57,7 @@ async def _(
             song_id = aliases[0].song_id
     song = mai.total_list.by_id(int(song_id))
 
-    if isinstance(matcher, info):
-        service = None
-    elif isinstance(matcher, dfinfo):
-        service = ServiceName.DIVINGFISH
-    else:
-        service = ServiceName.LXNS
-    result = await draw_play_data(user, song, service=service)
+    result = await draw_play_data(user, song)
     await matcher.send(result, reply_message=True)
 
 

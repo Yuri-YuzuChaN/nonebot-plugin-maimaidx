@@ -1,28 +1,12 @@
 from ..clients.divingfish.models.score import ChartInfo, UserInfo
 from ..clients.lxns.models.score import Best50 as b50
 from ..clients.lxns.models.score import Score
-from ..utils.calc import calc_ds
 from .models import Best50, PlayedResult, Player
+from .play_result import lxns_format_result
 
 
 def lxns_play_list(score: list[Score]) -> list[PlayedResult]:
-    return [
-        PlayedResult(
-            song_id=v.id if v.type == "SD" else v.id + 10000,
-            song_name=v.song_name,
-            level=v.level,
-            level_index=v.level_index,
-            type=v.type,
-            rating=v.dx_rating,
-            achievements=v.achievements,
-            fc=v.fc,
-            fs=v.fs,
-            rate=v.rate,
-            dx_score=v.dx_score,
-            level_value=calc_ds(v.dx_rating, v.achievements),
-        )
-        for v in score
-    ]
+    return [lxns_format_result(v) for v in score]
 
 
 def lxns_to_best50(best50: b50) -> Best50:

@@ -1,4 +1,5 @@
 import re
+from re import Match
 from textwrap import dedent
 
 from nonebot import on_command, on_endswith, on_regex
@@ -12,7 +13,7 @@ from ..core.database.qq import User
 from ..core.image.tools import text_to_bytes_io
 from ..core.search import draw_chart_info
 from ..core.service import mai
-from .extra import get_optional_user, get_user_db
+from .extra import GetUserAndAuthOrNone
 
 search_music = on_command("查歌", aliases={"search"})
 search_base = on_command("定数查歌", aliases={"search base"})
@@ -47,7 +48,7 @@ def song_level(ds1: float, ds2: float) -> list[tuple[str, str, float, str]]:
 
 @search_music.handle()
 async def _(
-    message: Message = CommandArg(), user: User | None = Depends(get_optional_user)
+    message: Message = CommandArg(), user: User | None = Depends(GetUserAndAuthOrNone)
 ):
     name = message.extract_plain_text().strip()
     page = 1
@@ -229,7 +230,9 @@ async def _(message: Message = CommandArg()):
 
 
 @search_alias_song.handle()
-async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
+async def _(
+    message: Message = CommandArg(), user: User | None = Depends(GetUserAndAuthOrNone)
+):
     name = message.extract_plain_text().strip().lower()
     error_msg = f"未找到别名为「{name}」的歌曲"
     # 别名
@@ -287,7 +290,10 @@ async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
 
 
 @query_chart.handle()
-async def _(match=RegexMatched(), user: User | None = Depends(get_optional_user)):
+async def _(
+    match: Match[str] = RegexMatched(),
+    user: User | None = Depends(GetUserAndAuthOrNone),
+):
     _id = match.group(1)
     if not _id.isdigit():
         await query_chart.finish("请输入正确的曲目ID")

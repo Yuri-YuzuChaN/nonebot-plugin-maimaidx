@@ -30,12 +30,9 @@ from .mai_guess import (
     guess_music_start,
 )
 from .mai_score import (
-    dfb50,
-    dfinfo,
+    best50,
     ginfo,
     info,
-    lxb50,
-    lxinfo,
     score,
 )
 from .mai_search import (
@@ -81,12 +78,9 @@ __all__ = [
     "guess_music_reset",
     "guess_music_solve",
     "guess_music_start",
-    "dfb50",
-    "dfinfo",
+    "best50",
     "ginfo",
     "info",
-    "lxb50",
-    "lxinfo",
     "score",
     "query_chart",
     "search_artist",

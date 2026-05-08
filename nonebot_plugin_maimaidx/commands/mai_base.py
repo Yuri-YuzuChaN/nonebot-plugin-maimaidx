@@ -6,7 +6,6 @@ from textwrap import dedent
 from nonebot import on_command, on_regex
 from nonebot.adapters.onebot.v11 import (
     Message,
-    MessageEvent,
     MessageSegment,
     PrivateMessageEvent,
 )
@@ -31,16 +30,15 @@ from ..core.search import (
 from ..core.service import mai
 from ..core.tool import qqhash
 from ..resources import Root
-from .extra import get_optional_user, get_user_db
+from .extra import GetOrCreateUser, GetUserAndAuth, GetUserAndAuthOrNone
 
-RISE_SCORE_PATTERN = r"^我要在?([0-9]+\+?)?[上加\+]([0-9]+)?分\s?(.+)?"
 CODE_PATTERN = re.compile(r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
 AUTHORIZE_URL = (
     "https://maimai.lxns.net/oauth/authorize"
     "?response_type=code"
     f"&client_id={lxnsconfig.lx_client_id}"
     f"&redirect_uri={lxnsconfig.redirect_uri}"
-    f"&scope=read_player+read_user_profile+write_player"
+    "&scope=read_player+read_user_profile+write_player"
 )
 AUTHORIZE_MSG = dedent(f"""
     请点击以下链接进行授权
@@ -50,13 +48,14 @@ AUTHORIZE_MSG = dedent(f"""
     =======================
     点击授权后您应收到该格式的
     授权码：「XXXX-XXXX-XXXX」
-    请复制该授权码，并使用「/授权码」指令进行授权
+    请复制该授权码，并粘贴到该窗口完成授权
     =======================
     请注意！！您必须在落雪查分器的
     「账号设置 -> 常规设置」中的
     「隐私设置」开启允许读取成绩，否
     则BOT将无法查询您的成绩
 """).strip()
+LXNS_ERROR = "BOT管理员尚未配置落雪查分器相关信息"
 
 
 update_data = on_command("更新maimai数据", permission=SUPERUSER)
@@ -68,7 +67,7 @@ theme = on_command("主题")
 portune = on_command("今日舞萌")
 mai_what = on_regex(r".*mai.*什么(.+)?")
 random_song = on_regex(r"^[随来给]个((?:dx|sd|标准))?([绿黄红紫白]?)([0-9]+\+?).*")
-rise_score = on_regex(RISE_SCORE_PATTERN)
+rise_score = on_regex(r"^我要在?([0-9]+\+?)?[上加\+]([0-9]+)?分\s?(.+)?")
 rating_ranking = on_command("查看排名")
 my_rating_ranking = on_command("我的排名")
 
@@ -102,12 +101,16 @@ async def _():
 
 @bind.handle()
 async def _(matcher: Matcher, message: Message = CommandArg()):
+    if lxnsconfig.lxns_dev_token is None and (
+        lxnsconfig.lx_client_id is None or lxnsconfig.redirect_uri is None
+    ):
+        await bind.finish(LXNS_ERROR + "，无法进行绑定授权。", reply_message=True)
     if message:
         matcher.set_arg("code", message)
 
 
 @bind.got("code", prompt=AUTHORIZE_MSG)
-async def _(message: Message = Arg("code"), user: User = Depends(get_user_db)):
+async def _(message: Message = Arg("code"), user: User = Depends(GetOrCreateUser)):
     code = message.extract_plain_text().strip()
     if not CODE_PATTERN.fullmatch(code):
         await bind.reject("授权码格式错误，请重新发送。", reply_message=True)
@@ -116,12 +119,22 @@ async def _(message: Message = Arg("code"), user: User = Depends(get_user_db)):
 
 
 @source.handle()
-async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
+async def _(message: Message = CommandArg(), user: User = Depends(GetOrCreateUser)):
     args = message.extract_plain_text().strip()
     source_ = ServiceName.get_by_index(args)
     if source_ is None:
         await source.finish(
             f"未找到该主题：\n{ServiceName.get_help()}", reply_message=True
+        )
+    if (
+        source_ == ServiceName.LXNS
+        and lxnsconfig.lxns_dev_token is None
+        and (lxnsconfig.lx_client_id is None or lxnsconfig.redirect_uri is None)
+    ):
+        await update_user(user.qqid, service=ServiceName.DIVINGFISH)
+        await source.finish(
+            LXNS_ERROR + "。为防止无法查询成绩，已强制将数据源切换为水鱼查分器。",
+            reply_message=True,
         )
 
     await update_user(user.qqid, service=source_)
@@ -129,7 +142,7 @@ async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
 
 
 @theme.handle()
-async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
+async def _(message: Message = CommandArg(), user: User = Depends(GetOrCreateUser)):
     args = message.extract_plain_text().strip()
     theme_ = Theme.get_by_index(args)
     if theme_ is None:
@@ -140,7 +153,7 @@ async def _(message: Message = CommandArg(), user: User = Depends(get_user_db)):
 
 
 @portune.handle()
-async def _(user: User = Depends(get_user_db)):
+async def _(user: User = Depends(GetOrCreateUser)):
     h = qqhash(user.qqid)
     rp = h % 100
     wm_value = []
@@ -165,7 +178,10 @@ async def _(user: User = Depends(get_user_db)):
 
 
 @mai_what.handle()
-async def _(match: Match = RegexMatched(), user: User = Depends(get_optional_user)):
+async def _(
+    match: Match[str] = RegexMatched(),
+    user: User | None = Depends(GetUserAndAuthOrNone),
+):
     song = mai.total_list.random()
     if (point := match.group(1)) and (
         "推分" in point or "上分" in point or "加分" in point
@@ -178,7 +194,8 @@ async def _(match: Match = RegexMatched(), user: User = Depends(get_optional_use
 
 @random_song.handle()
 async def _(
-    match: Match = RegexMatched(), user: User | None = Depends(get_optional_user)
+    match: Match[str] = RegexMatched(),
+    user: User | None = Depends(GetUserAndAuthOrNone),
 ):
     if not match:
         await random_song.finish("参数错误，请重新发送随机谱面")
@@ -202,13 +219,15 @@ async def _(
 
 
 @rise_score.handle()
-async def _(match: Match = RegexMatched(), user: User = Depends(get_user_db)):
+async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndAuth)):
     if not match:
         rating = None
         score = None
     else:
         rating = match.group(1)
-        score = int(match.group(2))
+        score = match.group(2)
+    if score is not None:
+        score = int(score)
 
     if rating and rating not in LEVEL_LIST:
         await rise_score.finish("无此等级", reply_message=True)
@@ -231,11 +250,11 @@ async def _(message: Message = CommandArg()):
 
 
 @my_rating_ranking.handle()
-async def _(event: MessageEvent):
-    api = DivingFishAPI(qqid=event.user_id)
-    user = await api.query_user_b50()
+async def _(user: User = Depends(GetOrCreateUser)):
+    api = DivingFishAPI(qqid=user.qqid)
+    info = await api.query_user_b50()
     rank_data = await api.rating_ranking()
     for num, rank in enumerate(rank_data):
-        if rank.username == user.username:
+        if rank.username == info.username:
             result = f"您的Rating为「{rank.ra}」，排名第「{num + 1}」名"
             await my_rating_ranking.finish(result, reply_message=True)

@@ -1,68 +1,68 @@
 from httpx import Response
 
 from ....config import dfconfig
-from ..exceptions import *
+from ..exceptions import UnknownError
 from ..http import ApiClient
-from .exceptions import *
-from .models import UserInfo, PlayInfoDefault, UserInfoDev, PlayInfoDev, UserRanking
+from .exceptions import (
+    DivingFishTokenDisableError,
+    DivingFishTokenError,
+    DivingFishTokenNotFoundError,
+    DivingFishUserDisabledQueryError,
+    DivingFishUserNotFoundError,
+)
+from .models import PlayInfoDefault, PlayInfoDev, UserInfo, UserInfoDev, UserRanking
 
 
 class DivingFishAPI(ApiClient):
-    
     proxy_url = "https://proxy.yuzuchan.site"
     base_url = "https://maimai.diving-fish.com/api/maimaidxprober"
-    
+
     def __init__(self, qqid: int | None = None, username: str | None = None):
         super().__init__(
             base_url="https://maimai.diving-fish.com/api/maimaidxprober",
-            headers={
-                "developer-token": dfconfig.divingfish_token
-            } if dfconfig.divingfish_token else None
+            headers={"developer-token": dfconfig.divingfish_token}
+            if dfconfig.divingfish_token
+            else None,
         )
         self.json = {}
         if qqid:
             self.json["qq"] = qqid
         if username:
             self.json["username"] = username
-    
+
     def _handle_error(self, resp: Response):
         if resp.status_code == 200:
             return
         if resp.status_code == 400:
             self._handle_400(resp.json())
         elif resp.status_code == 403:
-            raise UserDisabledQueryError
+            raise DivingFishUserDisabledQueryError
         else:
             raise UnknownError
-    
+
     def _handle_400(self, error: dict):
         msg = error.get("message") or error.get("msg")
 
         if msg is not None:
             if msg == "no such user":
-                raise UserNotFoundError
+                raise DivingFishUserNotFoundError
             if msg == "user not exists":
-                raise UserNotExistsError
+                raise DivingFishUserDisabledQueryError
             if msg == "开发者token有误":
-                raise TokenError
+                raise DivingFishTokenError
             if msg == "开发者token被禁用":
-                raise TokenDisableError
+                raise DivingFishTokenDisableError
             if msg == "请先联系水鱼申请开发者token":
-                raise TokenNotFoundError
+                raise DivingFishTokenNotFoundError
             raise UnknownError
-    
-    async def _request_data(
-        self,
-        method: str, 
-        endpoint: str, 
-        **kwargs
-    ) -> dict | list:
+
+    async def _request_data(self, method: str, endpoint: str, **kwargs) -> dict | list:
         return await self._request(method, endpoint, **kwargs)
-    
+
     @classmethod
     def set_proxy(self) -> None:
         self.base_url = self.proxy_url + "/maimaidxprober"
-    
+
     async def music_data(self) -> list:
         """获取曲目数据"""
         return await self._request_data("GET", "/music_data")
@@ -74,7 +74,7 @@ class DivingFishAPI(ApiClient):
     async def query_user_b50(self) -> UserInfo:
         """
         获取玩家B50
-        
+
         Returns:
             `UserInfo` b50数据模型
         """
@@ -92,13 +92,10 @@ class DivingFishAPI(ApiClient):
             `List[PlayInfoDefault]` 数据列表
         """
         self.json["version"] = version
-        
+
         result = await self._request_data("POST", "/query/plate", json=self.json)
-        
-        return [
-            PlayInfoDefault.model_validate(d)
-            for d in result["verlist"]
-        ]
+
+        return [PlayInfoDefault.model_validate(d) for d in result["verlist"]]
 
     async def query_user_get_dev(self) -> UserInfoDev:
         """
@@ -107,13 +104,13 @@ class DivingFishAPI(ApiClient):
         Returns:
             `UserInfoDev` 开发者用户信息
         """
-        result = await self._request_data("GET", "/dev/player/records", params=self.json)
+        result = await self._request_data(
+            "GET", "/dev/player/records", params=self.json
+        )
         return UserInfoDev.model_validate(result)
 
     async def query_user_post_dev(
-        self,
-        *,
-        song_id: str | int | list[str | int]
+        self, *, song_id: str | int | list[str | int]
     ) -> list[PlayInfoDev]:
         """
         使用开发者接口获取用户指定曲目数据，请确保拥有和输入了开发者 `token`
@@ -126,23 +123,23 @@ class DivingFishAPI(ApiClient):
         if not isinstance(song_id, list):
             song_id = [song_id]
         self.json["music_id"] = song_id
-        
+
         result = await self._request_data("POST", "/dev/player/record", json=self.json)
         if result == {}:
-            raise MusicNotPlayError
-        
+            return []
+
         return [PlayInfoDev.model_validate(d) for k, v in result.items() for d in v]
 
     async def rating_ranking(self) -> list[UserRanking]:
         """
         获取查分器排行榜
-        
+
         Returns:
             `List[UserRanking]` 按`ra`从高到低排序后的查分器排行模型列表
         """
         result = await self._request_data("GET", "/rating_ranking")
         return sorted(
-            [UserRanking.model_validate(u) for u in result], 
-            key=lambda x: x.ra, 
-            reverse=True
+            [UserRanking.model_validate(u) for u in result],
+            key=lambda x: x.ra,
+            reverse=True,
         )
