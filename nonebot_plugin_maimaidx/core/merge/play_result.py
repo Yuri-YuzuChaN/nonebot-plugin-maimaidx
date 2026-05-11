@@ -9,12 +9,13 @@ from .models import NotPlayedResult, PlayedResult, Song
 def df_format_result(
     v: PlayInfoDefault | PlayInfoDev, level_value: float = 0
 ) -> PlayedResult:
+    ds = v.ds if level_value == 0 else level_value
     return PlayedResult(
         song_id=v.song_id,
         song_name=v.title,
         level=v.level,
         level_index=v.level_index,
-        level_value=level_value,
+        level_value=ds,
         type=v.type,
         rating=v.ra,
         achievements=v.achievements,

@@ -29,7 +29,7 @@ class SongDifficulty(BaseModel):
     notes: Notes
 
 
-class SongDifficultyUtage(BaseModel):
+class SongDifficultyUtage(SongDifficulty):
     kanji: str
     description: str
     is_buddy: bool

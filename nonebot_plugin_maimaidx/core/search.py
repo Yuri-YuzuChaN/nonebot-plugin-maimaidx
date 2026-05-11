@@ -26,6 +26,7 @@ from .image import (
     DrawRatingTable,
     DrawScore,
     PlayerBest50,
+    song_chart_banquet_info,
     song_chart_info,
     song_global_data,
     song_play_data,
@@ -47,7 +48,8 @@ from .merge.play_result import df_to_playresult, lxns_to_playresult
 from .merge.player import df_to_best50, df_to_player, lxns_to_best50
 from .service import mai
 from .utils.calc import compute_rating
-from .utils.song_id import get_charts_id
+
+message = "可使用「主题」指令更换主题，「数据源」指令更换指定查分器。"
 
 PLAN_MAP: dict[str, tuple[int, int | float]] = {
     **{p: (0, ACHIEVEMENT_LIST[i - 1]) for i, p in enumerate(RANK_PLUS)},
@@ -310,7 +312,7 @@ async def draw_best50(
     """
     player, best50 = await get_best50(user, username=username, all_perfect=all_perfect)
     b50 = PlayerBest50(user, player=player, best50=best50, icon=icon)
-    return MessageSegment.image(await b50.draw())
+    return MessageSegment.image(await b50.draw()) + MessageSegment.text(message)
 
 
 @handle_errors
@@ -341,7 +343,7 @@ async def draw_play_data(user: User, song: Song) -> MessageSegment:
             song_type = SongType.DX
         else:
             song_type = SongType.UTAGE
-        song_id = get_charts_id(song.song_id)
+        song_id = song.song_id % 10000
 
         data = await api.song_bests(song_id, song_type)
         if not data:
@@ -352,7 +354,7 @@ async def draw_play_data(user: User, song: Song) -> MessageSegment:
         raise ValueError
 
     image = song_play_data(user.service, user.theme, song=song, play_result=play_result)
-    return MessageSegment.image(image)
+    return MessageSegment.image(image) + MessageSegment.text(message)
 
 
 @handle_errors
@@ -391,39 +393,42 @@ async def draw_chart_info(song: Song, user: User | None = None) -> MessageSegmen
     Returns:
         `MessageSegment`
     """
-    calc = False
-    is_full = False
-    best_list = []
-    if user is not None:
-        theme = user.theme
-        try:
-            if user.service == ServiceName.DIVINGFISH:
-                api = DivingFishAPI(qqid=user.qqid)
-                userinfo = await api.query_user_b50()
-                best50 = df_to_best50(userinfo)
-                calc = True
-            elif user.service == ServiceName.LXNS:
-                token = get_token(user)
-                api = LxnsAPI(user.qqid, token)
-                best50 = lxns_to_best50(await api.best50())
-                calc = True
-            else:
-                raise ValueError
-
-            if calc:
-                if song.isnew:
-                    best_list = best50.dx
-                    is_full = bool(len(best_list) == 15)
+    if song.song_id < 100000:
+        calc = False
+        is_full = False
+        best_list = []
+        if user is not None:
+            theme = user.theme
+            try:
+                if user.service == ServiceName.DIVINGFISH:
+                    api = DivingFishAPI(qqid=user.qqid)
+                    userinfo = await api.query_user_b50()
+                    best50 = df_to_best50(userinfo)
+                    calc = True
+                elif user.service == ServiceName.LXNS:
+                    token = get_token(user)
+                    api = LxnsAPI(user.qqid, token)
+                    best50 = lxns_to_best50(await api.best50())
+                    calc = True
                 else:
-                    best_list = best50.sd
-                    is_full = bool(len(best_list) == 35)
-        except Exception:
-            calc = False
-    else:
-        theme = Theme.CIRCLE
+                    raise ValueError
 
-    image = song_chart_info(song, calc, is_full, best_list, theme)
-    return MessageSegment.image(image)
+                if calc:
+                    if song.isnew:
+                        best_list = best50.dx
+                        is_full = bool(len(best_list) == 15)
+                    else:
+                        best_list = best50.sd
+                        is_full = bool(len(best_list) == 35)
+            except Exception:
+                calc = False
+        else:
+            theme = Theme.CIRCLE
+
+        image = song_chart_info(song, calc, is_full, best_list, theme)
+    else:
+        image = song_chart_banquet_info(song)
+    return MessageSegment.image(image) + MessageSegment.text(message)
 
 
 @handle_errors
@@ -595,8 +600,8 @@ async def draw_level_progress(
                 )
 
     sort_key = {0: "achievements", 1: "fc", 2: "fs"}.get(plan_type, "achievements")
-    completed.sort(key=lambda x: getattr(x, sort_key), reverse=True)
-    unfinished.sort(key=lambda x: getattr(x, sort_key), reverse=True)
+    completed.sort(key=lambda x: getattr(x, sort_key) or "", reverse=True)
+    unfinished.sort(key=lambda x: getattr(x, sort_key) or "", reverse=True)
     notplayed.sort(key=lambda x: x.level_value, reverse=True)
 
     if category == Category.DEFAULT:
@@ -611,7 +616,7 @@ async def draw_level_progress(
         background_bg = tricolor_gradient_prism_plus(1400, 150 + c_y + u_y + n_y)
         ds = DrawScore(user.service, background_bg)
         image = ds.draw_plan(
-            completed, c_y, unfinished, u_y, notplayed, plan, comp_limit
+            level, completed, c_y, unfinished, u_y, notplayed, plan, comp_limit
         )
     elif category in [Category.COMPLETED, Category.UNFINISHED]:
         data = completed if category == Category.COMPLETED else unfinished
@@ -674,15 +679,15 @@ async def draw_level_score_list(
     to_page = 80 if page < end_page else (result_sum % 80 or 80)
     line = (to_page + 4) // 5
     if page < end_page:
-        plc = line * 109 + 140 * 4
+        plc = line * 109 + 130 * 4
     else:
         multiplier = (to_page + 19) // 20
         actual_line = 4 if to_page <= 20 else line
-        plc = actual_line * 109 + 140 * multiplier
+        plc = actual_line * 109 + 130 * multiplier
 
-    background_bg = tricolor_gradient_prism_plus(1400, 210 + plc)
+    background_bg = tricolor_gradient_prism_plus(1400, 280 + plc)
 
-    score = DrawScore(background_bg, user.theme)
+    score = DrawScore(user.service, background_bg)
     image = score.draw_score_list(rating, new_play_result, page, end_page)
     return MessageSegment.image(image)
 

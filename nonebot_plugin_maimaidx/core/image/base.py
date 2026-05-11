@@ -121,7 +121,7 @@ class ScoreBaseImage:
         Image.open(pic_dir / "rise_score_remaster.png"),
     ]
     _separator_bg = Image.open(pic_dir / "separator.png")
-    _chart_white_bg = Image.open(pic_dir / "chart_white_bg.png")
+    _chart_white_bg = Image.open(pic_dir / "chart_white.png")
     _cloud_bg = Image.open(pic_dir / "rainbow.png").convert("RGBA")
     _rainbow_bottom_bg = Image.open(pic_dir / "rainbow_bottom.png").convert("RGBA")
     _aurora_bg = Image.open(pic_dir / "aurora.png").convert("RGBA")

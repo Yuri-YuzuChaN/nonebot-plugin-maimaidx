@@ -2,7 +2,13 @@ from collections import defaultdict
 
 from ...resources import merge_alias_file, merge_music_file
 from ..clients.divingfish.models import Music, Notes1, Notes2, Stats
-from ..clients.lxns.models import Aliases, Notes, SongDifficulty, Songs
+from ..clients.lxns.models import (
+    Aliases,
+    Notes,
+    SongDifficulty,
+    SongDifficultyUtage,
+    Songs,
+)
 from ..clients.yuzuchan.models import Alias as YuzuAlias
 from ..tool import writefile
 from .alias_list import AliasList
@@ -77,23 +83,32 @@ async def merge_music_data(
     # lxns
     if lxns_list is not None:
 
-        def set_version(sid: int, type_: list[SongDifficulty]):
+        def set_version(
+            sid: int, type_: list[SongDifficulty] | list[SongDifficultyUtage]
+        ):
             song = song_map.get(sid)
-            if song:
-                song.version_int = type_[0].version
-                if len(song.difficulties) != len(type_):
-                    _s = type_[-1]
-                    song.difficulties.append(
-                        Difficulties(
-                            level_index=_s.difficulty,
-                            level=_s.level,
-                            level_value=_s.level_value,
-                            note_designer=_s.note_designer,
-                            notes=_s.notes,
-                            dx_score=_s.notes.total * 3,
-                            stats=None,
-                        )
+            if song is None:
+                return
+
+            base = type_[0]
+            song.version_int = base.version
+            if isinstance(base, SongDifficultyUtage):
+                song.kanji = base.kanji
+                song.description = base.description
+                song.is_buddy = base.is_buddy
+            elif len(song.difficulties) != len(type_):
+                _s = type_[-1]
+                song.difficulties.append(
+                    Difficulties(
+                        level_index=_s.difficulty,
+                        level=_s.level,
+                        level_value=_s.level_value,
+                        note_designer=_s.note_designer,
+                        notes=_s.notes,
+                        dx_score=_s.notes.total * 3,
+                        stats=None,
                     )
+                )
 
         for _raw in lxns_list.songs:
             song_id = _raw.id
@@ -112,8 +127,8 @@ async def merge_music_data(
                 if _raw.difficulties.standard:
                     set_version(song_id - 10000, _raw.difficulties.standard)
             else:
-                if _raw.difficulties.dx:
-                    set_version(song_id, _raw.difficulties.dx)
+                if _raw.difficulties.utage:
+                    set_version(song_id, _raw.difficulties.utage)
 
     for sid, stat_list in stats_map.items():
         song = song_map.get(int(sid))

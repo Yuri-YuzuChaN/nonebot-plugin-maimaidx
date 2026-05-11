@@ -13,7 +13,7 @@ from ..core.database.qq import User
 from ..core.image.tools import text_to_bytes_io
 from ..core.search import draw_chart_info
 from ..core.service import mai
-from .extra import GetUserAndAuthOrNone
+from .depend import GetUserAndAuthOrNone
 
 search_music = on_command("查歌", aliases={"search"})
 search_base = on_command("定数查歌", aliases={"search base"})

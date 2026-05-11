@@ -34,5 +34,8 @@ class Song(BaseModel):
     version_int: int = 0
     type: Literal["SD", "DX"]
     isnew: bool = False
-
     difficulties: list[Difficulties] = []
+    # 宴
+    kanji: str | None = None
+    description: str | None = None
+    is_buddy: bool | None = None

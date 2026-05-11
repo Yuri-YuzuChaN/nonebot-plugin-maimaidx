@@ -81,9 +81,8 @@ class PlateGridConfig:
 
 
 class DrawRatingTable:
-    # rating_bg = Image.open(pic_dir / "rating_bg.png")
-    unfinished_bg = Image.open(pic_dir / "unfinished_bg.png")
-    complete_bg = Image.open(pic_dir / "complete_bg.png")
+    unfinished_bg = Image.open(pic_dir / "unfinished_1.png")
+    complete_bg = Image.open(pic_dir / "complete_1.png")
 
     def __init__(
         self,
@@ -309,8 +308,8 @@ class DrawPlateTable:
     }
 
     finished_bg = [Image.open(pic_dir / f"t_{_}.png") for _ in range(5)]
-    unfinished_bg = Image.open(pic_dir / "unfinished_bg_2.png")
-    complete_bg = Image.open(pic_dir / "complete_bg_2.png")
+    unfinished_bg = Image.open(pic_dir / "unfinished_2.png")
+    complete_bg = Image.open(pic_dir / "complete_2.png")
     progress_big = Image.open(pic_dir / "progress_big.png")
 
     _progress_bg = Image.open(pic_dir / "plate_progress.png")

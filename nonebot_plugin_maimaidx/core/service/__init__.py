@@ -18,6 +18,7 @@ class MaiMusic:
     total_level_data: dict[str, dict[str, list[SimpleSong]]]
     """等级列表数据"""
     total_level_value_map: dict[str, float]
+    """定数字典数据，以`song_id-level_index`为key，例如`{"11451-3": 13.5}`"""
 
     def __init__(self) -> None:
         """封装所有曲目信息以及猜歌数据，便于更新"""

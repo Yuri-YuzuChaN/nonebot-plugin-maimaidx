@@ -47,6 +47,7 @@ def handle_errors(func):
             DivingFishTokenNotFoundError,
             DivingFishTokenError,
         ):
+            log.error("水鱼开发者Token异常，请自行检查。")
             return MessageSegment.text(
                 "请联系BOT管理员检查水鱼查分器相关信息，暂时无法查询。"
             )
@@ -63,13 +64,14 @@ def handle_errors(func):
                 "未找到落雪查分器相关资源，请联系BOT管理员检查相关信息。"
             )
         except LXNSTooManyRequestsError:
-            return MessageSegment.text("使用落雪查分器的请求数量过多，请稍后再试。")
+            return MessageSegment.text("使用落雪查分器的请求次数过多，请稍后再试。")
         except LXNSParamsError:
+            log.error(f"请求参数错误。\n{traceback.format_exc()}")
             return MessageSegment.text(
                 "使用落雪查分器请求时发生错误，请联系BOT管理员检查相关信息。"
             )
         except LXNSOAuthError:
-            return MessageSegment.text("落雪查分器授权错误，请尝试重新绑定授权。")
+            return MessageSegment.text("落雪查分器授权错误，请重试或重新绑定授权。")
 
         ### 其它
         except Exception as e:

@@ -2,6 +2,7 @@ import asyncio
 import json
 import re
 import traceback
+from re import Match
 from textwrap import dedent
 
 import httpx
@@ -168,7 +169,7 @@ async def _(message: Message = CommandArg()):
 
 
 @alias_switch.handle()
-async def _(event: GroupMessageEvent, match=RegexMatched()):
+async def _(event: GroupMessageEvent, match: Match[str] = RegexMatched()):
     if match.group(1) == "开启":
         msg = await alias.on(event.group_id)
     elif match.group(1) == "关闭":
@@ -180,7 +181,7 @@ async def _(event: GroupMessageEvent, match=RegexMatched()):
 
 
 @alias_global_switch.handle()
-async def _(bot: Bot, match=RegexMatched()):
+async def _(bot: Bot, match: Match[str] = RegexMatched()):
     group = await bot.get_group_list()
     group_id = [g["group_id"] for g in group]
     if match.group(1) == "开启":

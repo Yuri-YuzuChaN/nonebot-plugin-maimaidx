@@ -20,6 +20,8 @@ class GetUserModel:
         check_skip: bool = False,
     ):
         """
+        依赖注入类
+
         Params:
             `auto_create`: 自动创建用户数据
             `check_auth`: 是否检查落雪查分器 Token

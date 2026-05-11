@@ -11,7 +11,7 @@ from ..core.database.qq import User
 from ..core.image.tools import text_to_bytes_io
 from ..core.search import draw_best50, draw_play_data, draw_song_galobal_data
 from ..core.service import mai
-from .extra import GetUserAndAuth
+from .depend import GetUserAndAuth
 
 best50 = on_command("b50", aliases={"B50"})
 info = on_command("info", aliases={"minfo", "Minfo", "MINFO", "info", "Info", "INFO"})

@@ -20,7 +20,7 @@ class PlayerBest50(ScoreBaseImage):
     ) -> None:
         self.service = user.service
         self.theme = user.theme
-        path = pic_dir / self.theme.value / "b50_bg.png"
+        path = pic_dir / self.theme.value / "b50.png"
         super().__init__(Image.open(path).convert("RGBA"), self.theme)
         if self.theme == Theme.CIRCLE:
             self.color = (249, 62, 172, 255)

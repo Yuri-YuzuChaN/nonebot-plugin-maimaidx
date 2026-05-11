@@ -30,7 +30,7 @@ from ..core.search import (
 from ..core.service import mai
 from ..core.tool import qqhash
 from ..resources import Root
-from .extra import GetOrCreateUser, GetUserAndAuth, GetUserAndAuthOrNone
+from .depend import GetOrCreateUser, GetUserAndAuth, GetUserAndAuthOrNone
 
 CODE_PATTERN = re.compile(r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
 AUTHORIZE_URL = (
@@ -124,7 +124,7 @@ async def _(message: Message = CommandArg(), user: User = Depends(GetOrCreateUse
     source_ = ServiceName.get_by_index(args)
     if source_ is None:
         await source.finish(
-            f"未找到该主题：\n{ServiceName.get_help()}", reply_message=True
+            f"未找到该数据源：\n{ServiceName.get_help()}", reply_message=True
         )
     if (
         source_ == ServiceName.LXNS
