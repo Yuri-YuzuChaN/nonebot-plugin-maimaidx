@@ -189,7 +189,7 @@ async def _(
         _song = await get_mai_what(user)
         if _song is not None:
             song = _song
-    await mai_what.finish(await draw_chart_info(song, user))
+    await mai_what.finish(await draw_chart_info(song, user), reply_message=True)
 
 
 @random_song.handle()
@@ -198,7 +198,7 @@ async def _(
     user: User | None = Depends(GetUserAndAuthOrNone),
 ):
     if not match:
-        await random_song.finish("参数错误，请重新发送随机谱面")
+        await random_song.finish("参数错误，请重新发送随机谱面", reply_message=True)
     diff = match.group(1)
     if diff == "dx":
         type_ = ["DX"]

@@ -17,7 +17,7 @@ class FCType(str, Enum):
 
 
 class FSType(str, Enum):
-    FSDP = "fdxp"
+    FSDP = "fsdp"
     FSD = "fsd"
     FSP = "fsp"
     FS = "fs"

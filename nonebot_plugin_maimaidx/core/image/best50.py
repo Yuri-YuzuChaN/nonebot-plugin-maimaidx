@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image
 
 from ...config import maiconfig
-from ...resources import pic_dir, shougou_dir, static
+from ...resources import pic_dir, plate_version_dir, shougou_dir, static
 from ..clients.http import lxns_assets, qqlogo
 from ..clients.lxns.models.collection import Collection
 from ..database.qq import User
@@ -109,7 +109,7 @@ class PlayerBest50(ScoreBaseImage):
         elif isinstance(self.player.name_plate, Collection):
             plate_path = await self._fetch_image("plate", self.player.name_plate.id)
         else:
-            plate_path = pic_dir / f"{self.player.name_plate}.png"
+            plate_path = plate_version_dir / f"{self.player.name_plate}.png"
         self._im.alpha_composite(Image.open(plate_path).resize((800, 130)), (300, 60))
 
         # icon

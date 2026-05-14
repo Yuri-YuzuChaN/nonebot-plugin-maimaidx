@@ -38,7 +38,7 @@ async def _(
 ):
     data = message.extract_plain_text().strip()
     if not data:
-        await matcher.finish("请输入曲目id或曲名")
+        await matcher.finish("请输入曲目id或曲名", reply_message=True)
 
     if data.isdigit() and mai.total_list.by_id(int(data)):
         song_id = data
@@ -47,12 +47,12 @@ async def _(
     else:
         aliases = mai.total_alias_list.by_alias(data)
         if not aliases:
-            await matcher.finish("未找到曲目")
+            await matcher.finish("未找到曲目", reply_message=True)
         elif len(aliases) != 1:
             msg = "找到相同别名的曲目，请使用以下ID查询：\n"
             for alias in aliases:
                 msg += f"{alias.song_id}：{alias.alias[0]}\n"
-            await matcher.finish(msg.strip())
+            await matcher.finish(msg.strip(), reply_message=True)
         else:
             song_id = aliases[0].song_id
     song = mai.total_list.by_id(int(song_id))
@@ -65,7 +65,7 @@ async def _(
 async def _(message: Message = CommandArg()):
     args = message.extract_plain_text().strip()
     if not args:
-        await ginfo.finish("请输入曲目id或曲名")
+        await ginfo.finish("请输入曲目id或曲名", reply_message=True)
 
     if args[0] not in "绿黄红紫白":
         level_index = 3
@@ -73,7 +73,7 @@ async def _(message: Message = CommandArg()):
         level_index = "绿黄红紫白".index(args[0])
         args = args[1:].strip()
         if not args:
-            await ginfo.finish("请输入曲目id或曲名")
+            await ginfo.finish("请输入曲目id或曲名", reply_message=True)
     if mai.total_list.by_id(args):
         id = args
     elif by_t := mai.total_list.by_name(args):
@@ -81,12 +81,12 @@ async def _(message: Message = CommandArg()):
     else:
         alias = mai.total_alias_list.by_alias(args)
         if not alias:
-            await ginfo.finish("未找到曲目")
+            await ginfo.finish("未找到曲目", reply_message=True)
         elif len(alias) != 1:
             msg = "找到相同别名的曲目，请使用以下ID查询：\n"
             for songs in alias:
                 msg += f"{songs.song_id}：{songs.alias[0]}\n"
-            await ginfo.finish(msg.strip())
+            await ginfo.finish(msg.strip(), reply_message=True)
         else:
             id = str(alias[0].song_id)
 
@@ -94,9 +94,9 @@ async def _(message: Message = CommandArg()):
     stats = song.difficulties[level_index].stats
 
     if len(song.difficulties) == 4 and level_index == 4:
-        await ginfo.finish("该乐曲没有这个等级")
+        await ginfo.finish("该乐曲没有这个等级", reply_message=True)
     if not song.difficulties[level_index]:
-        await ginfo.finish("该等级没有统计信息")
+        await ginfo.finish("该等级没有统计信息", reply_message=True)
 
     data = await draw_song_galobal_data(song, level_index) + dedent(f"""\
         游玩次数：{round(stats.cnt)}
@@ -135,7 +135,7 @@ async def _(message: Message = CommandArg()):
             level_labels = ["绿", "黄", "红", "紫", "白"]
             level_labels2 = ["Basic", "Advanced", "Expert", "Master", "Re:MASTER"]
             level_index = level_labels.index(result.group(1))
-            chart_id = result.group(2)
+            chart_id = int(result.group(2))
             line = float(args[-1])
             song = mai.total_list.by_id(chart_id)
             chart = song.difficulties[level_index]

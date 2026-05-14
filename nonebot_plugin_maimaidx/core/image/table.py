@@ -510,6 +510,7 @@ class DrawPlateTable:
         )
         im.alpha_composite(Image.open(plate_bg).resize((1000, 161)), (200, 45))
         lv = [set() for _ in range(self.slot_num)]
+        finished_songs = set()
 
         current_y = PlateGridConfig.start_y
         for _index, songs_dict in played_map.items():
@@ -518,10 +519,16 @@ class DrawPlateTable:
 
             for idx, (song_id, result) in enumerate(songs_dict.items()):
                 hit_slots: list[int] = []
+                song_all_qualified = True
                 for _r, play in enumerate(result):
                     if self._is_qualified(play, self.plan):
                         hit_slots.append(_r)
                         lv[_r].add(song_id)
+                    else:
+                        song_all_qualified = False
+
+                if song_all_qualified:
+                    finished_songs.add(song_id)
 
                 row, col = divmod(idx, PlateGridConfig.row_count)
                 x = PlateGridConfig.start_x + col * PlateGridConfig.gap
@@ -557,7 +564,7 @@ class DrawPlateTable:
             if is_current_page:
                 current_y += rows * PlateGridConfig.gap + 30
 
-        complete_sum = len(set.intersection(*lv))
+        complete_sum = len(finished_songs)
         if complete_sum == plate_total_count:
             text = "COMPLETED!!!"
         else:
@@ -565,7 +572,7 @@ class DrawPlateTable:
 
         progress = complete_sum / plate_total_count
         if progress != 0:
-            bar = self.progress_big.crop((0, 0, int(470 * progress), 92))
+            bar = self.progress_big.crop((0, 0, int(993 * progress), 92))
             im.alpha_composite(bar, (204, 219))
 
         fot.draw(

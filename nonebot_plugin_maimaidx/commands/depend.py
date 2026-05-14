@@ -41,10 +41,6 @@ class GetUserModel:
         except UserNotBindError:
             if self.auto_create:
                 user = await update_user(user_id)
-            if self.check_skip:
-                return None
-            else:
-                await matcher.finish(AUTHORIZE_ERROR, reply_message=True)
 
         if self.check_auth and user:
             if (
@@ -55,6 +51,9 @@ class GetUserModel:
                 if self.check_skip:
                     return None
                 await matcher.finish(AUTHORIZE_ERROR, reply_message=True)
+
+        if self.check_skip:
+            return None
 
         return user
 

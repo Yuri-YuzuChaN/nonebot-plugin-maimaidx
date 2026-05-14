@@ -26,9 +26,8 @@ from ..core.clients.exceptions import ServerError
 from ..core.clients.yuzuchan.client import YuzuChaNAPI
 from ..core.clients.yuzuchan.models import Alias, PushAliasStatus
 from ..core.image.tools import text_to_bytes_io
-from ..core.merge.alias import alias
 from ..core.search import draw_chart_info
-from ..core.service import mai
+from ..core.service import alias, mai
 
 update_alias = on_command("更新别名库", permission=SUPERUSER)
 alias_local_apply = on_command("添加本地别名", aliases={"添加本地别称"})
@@ -126,17 +125,17 @@ async def _(message: Message = CommandArg()):
 
 
 @alias_song.handle()
-async def _(message: Message = CommandArg()):
-    args = message.extract_plain_text().strip()
-    match = re.search(r"^(id)?\s?(.+)", args, re.IGNORECASE)
-    if not match:
-        await alias_song.finish("指令错误，请重新输入", reply_message=True)
-    isid = match.group(1)
+async def _(match: Match[str] = RegexMatched()):
+    findid = bool(match.group(1))
     name = match.group(2)
-    if isid and name.isdigit():
+    aliases = None
+    if findid and name.isdigit():
         alias_id = mai.total_alias_list.by_id(name)
         if not alias_id:
-            await alias_song.finish("未找到此歌曲", reply_message=True)
+            await alias_song.finish(
+                "未找到此歌曲\n可以使用「添加别名」指令给该乐曲添加别名",
+                reply_message=True,
+            )
         else:
             aliases = alias_id
     else:
@@ -145,11 +144,17 @@ async def _(message: Message = CommandArg()):
             if name.isdigit():
                 alias_id = mai.total_alias_list.by_id(name)
                 if not alias_id:
-                    await alias_song.finish("未找到此歌曲", reply_message=True)
+                    await alias_song.finish(
+                        "未找到此歌曲\n可以使用「添加别名」指令给该乐曲添加别名",
+                        reply_message=True,
+                    )
                 else:
                     aliases = alias_id
             else:
-                await alias_song.finish("未找到此歌曲", reply_message=True)
+                await alias_song.finish(
+                    "未找到此歌曲\n可以使用「添加别名」指令给该乐曲添加别名",
+                    reply_message=True,
+                )
     if len(aliases) != 1:
         msg = []
         for songs in aliases:

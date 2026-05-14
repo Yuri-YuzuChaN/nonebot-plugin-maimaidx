@@ -10,8 +10,8 @@ from nonebot.adapters.onebot.v11 import (
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
 
-from ..core.merge.guess import guess
 from ..core.search import draw_chart_info
+from ..core.service import guess
 
 
 def is_now_playing_guess_music(event: GroupMessageEvent) -> bool:

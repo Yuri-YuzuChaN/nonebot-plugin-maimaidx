@@ -49,9 +49,10 @@ RANK_MAP = {
 }
 
 COMBO_SP = ["fc", "fcp", "ap", "app"]
-COMBO_PLUS = [k.replace("p", "+") for k in COMBO_SP]
+COMBO_PLUS = ["fc", "fc+", "ap", "ap+"]
 COMBO_MAP = {
-    k: (k[:-1].upper() + "p" if k.endswith("p") else k.upper()) for k in COMBO_SP
+    k: (k.upper()[:-1] + "p" if len(k) > 2 and k.endswith("p") else k.upper())
+    for k in COMBO_SP
 }
 
 SYNC_D_SP = ["fs", "fsp", "fsd", "fsdp"]

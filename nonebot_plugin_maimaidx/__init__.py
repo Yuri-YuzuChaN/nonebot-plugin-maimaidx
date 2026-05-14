@@ -9,8 +9,7 @@ from .commands.mai_alias import ws_alias_server
 from .config import BaseConfig, dfconfig, driver, log, lxnsconfig, maiconfig
 from .core.clients.divingfish.client import DivingFishAPI
 from .core.database.qq import create_database
-from .core.merge.guess import guess
-from .core.service import mai
+from .core.service import guess, mai
 from .resources import plate_table_dir, rating_table_dir
 
 scheduler = require("nonebot_plugin_apscheduler")
