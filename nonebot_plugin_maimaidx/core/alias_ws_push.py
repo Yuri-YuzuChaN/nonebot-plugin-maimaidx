@@ -13,7 +13,7 @@ from nonebot.adapters.onebot.v11 import (
 from ..config import log, maiconfig
 from ..constants import UUID, VOTE_URL
 from ..core.clients.yuzuchan.models import PushAliasStatus
-from ..core.search import draw_chart_info
+from ..core.handler import draw_chart_info
 from ..core.service import alias, mai
 
 

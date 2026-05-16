@@ -6,7 +6,7 @@ from .models import Alias
 def yuzu_alias_to_alias(data: list[YuzuAlias]) -> list[Alias]:
     new_alias_list = []
     for a in data:
-        new_alias_list.append(Alias(song_id=a.SongID, alias=a.Alias))
+        new_alias_list.append(Alias(song_id=a.SongID, song_name=a.Name, alias=a.Alias))
     return new_alias_list
 
 

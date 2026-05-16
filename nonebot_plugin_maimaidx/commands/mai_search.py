@@ -10,9 +10,9 @@ from ..constants import DIFFS, SONGS_PER_PAGE
 from ..core.clients.yuzuchan.client import YuzuChaNAPI
 from ..core.clients.yuzuchan.models import AliasStatus
 from ..core.database.qq import User
+from ..core.handler import draw_chart_info
 from ..core.image.tools import text_to_bytes_io
 from ..core.merge.alias import yuzu_alias_to_alias
-from ..core.search import draw_chart_info
 from ..core.service import mai
 from .depend import GetUserAndAuthOrNone
 
@@ -36,13 +36,13 @@ def song_level(ds1: float, ds2: float) -> list[tuple[str, str, float, str]]:
         `result`: 查询结果
     """
     result: list[tuple[str, str, float, str]] = []
-    music_data = mai.total_list.filter(level_value=(ds1, ds2))
-    for music in sorted(music_data, key=lambda x: int(x.song_id)):
-        if int(music.song_id) >= 100000:
+    songs = mai.total_list.filter(level_value=(ds1, ds2))
+    for song in sorted(songs, key=lambda x: int(x.song_id)):
+        if int(song.song_id) >= 100000:
             continue
-        for d in music.difficulties:
+        for d in song.difficulties:
             result.append(
-                (music.song_id, music.song_name, d.level_value, DIFFS[d.level_index])
+                (song.song_id, song.song_name, d.level_value, DIFFS[d.level_index])
             )
     return result
 
@@ -68,9 +68,9 @@ async def _(
 
     search_result = ""
     result.sort(key=lambda i: int(i.song_id))
-    for i, music in enumerate(result):
+    for i, song in enumerate(result):
         if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            search_result += f"{f'「{music.song_id}」':<7} {music.song_name}\n"
+            search_result += f"{f'「{song.song_id}」':<7} {song.song_name}\n"
     search_result += (
         f"第「{page}」页，"
         f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
@@ -279,8 +279,8 @@ async def _(
     if alias_data:
         if len(alias_data) != 1:
             msg = f"找到{len(alias_data)}个相同别名的曲目：\n"
-            for songs in alias_data:
-                msg += f"{songs.song_id}：{songs.alias[0]}\n"
+            for song in alias_data:
+                msg += f"{song.song_id}：{song.song_name}\n"
             msg += "※ 请使用「id xxxxx」查询指定曲目"
             await search_alias_song.finish(msg.strip(), reply_message=True)
         else:
@@ -313,8 +313,8 @@ async def _(
         )
     elif len(result) < 50:
         msg = f"未找到别名为「{name}」的歌曲，但找到{len(result)}个相似标题的曲目：\n"
-        for music in sorted(result, key=lambda x: int(x.song_id)):
-            msg += f"{f'「{music.song_id}」':<7} {music.song_name}\n"
+        for song in sorted(result, key=lambda x: int(x.song_id)):
+            msg += f"{f'「{song.song_id}」':<7} {song.song_name}\n"
         msg += "※ 请使用「id xxxxx」查询指定曲目"
         await search_alias_song.finish(msg.strip(), reply_message=True)
     else:

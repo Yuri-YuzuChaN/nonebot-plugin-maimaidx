@@ -10,7 +10,7 @@ from nonebot.adapters.onebot.v11 import (
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
 
-from ..core.search import draw_chart_info
+from ..core.handler import draw_chart_info
 from ..core.service import guess
 
 

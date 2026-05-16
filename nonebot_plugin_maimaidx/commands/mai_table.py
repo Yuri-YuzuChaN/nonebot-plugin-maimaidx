@@ -7,9 +7,7 @@ from nonebot.permission import SUPERUSER
 
 from ..constants import COMBO_PLUS, LEVEL_LIST, PLATE_CN, RANK_PLUS, SYNC_PLUS
 from ..core.database.qq import User
-from ..core.image.update_table import UpdateTable
-from ..core.merge.models import Category
-from ..core.search import (
+from ..core.handler import (
     draw_level_progress,
     draw_level_score_list,
     draw_plate_progress,
@@ -17,6 +15,8 @@ from ..core.search import (
     draw_rating_table,
     draw_rating_table_text,
 )
+from ..core.image.update_table import UpdateTable
+from ..core.merge.models import Category
 from .depend import GetUserAndAuth
 
 RATING_PATTERN = r"^([0-9]+\+?)(ap|app|fc|fcp|fs|fsp|fdx|fdxp)?\s?完成表$"

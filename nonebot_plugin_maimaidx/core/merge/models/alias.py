@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class Alias(BaseModel):
     song_id: int
+    song_name: str
     alias: list[str]
 
 
