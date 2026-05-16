@@ -262,17 +262,16 @@ def get_rise_score_list(
     return sampled, lowest_ra
 
 
-async def draw_song_galobal_data(song_id: int, level_index: int) -> MessageSegment:
+async def draw_song_galobal_data(song: Song, level_index: int) -> MessageSegment:
     """
     绘制谱面数据
 
     Params:
-        `song_id`: 曲目ID
+        `song`: 曲目
         `level_index`: 等级索引
     Returns:
         `MessageSegment`
     """
-    song = mai.total_list.by_id(song_id)
     image = await song_global_data(song, level_index)
     return MessageSegment.image(image)
 

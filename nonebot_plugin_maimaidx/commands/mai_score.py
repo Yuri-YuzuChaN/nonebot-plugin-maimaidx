@@ -14,51 +14,54 @@ from ..core.service import mai
 from .depend import GetUserAndAuth
 
 best50 = on_command("b50", aliases={"B50"})
+ap50 = on_command("ap50", aliases={"AP50"})
 info = on_command("info", aliases={"minfo", "Minfo", "MINFO", "info", "Info", "INFO"})
 ginfo = on_command("ginfo", aliases={"ginfo", "Ginfo", "GINFO"})
 score = on_command("分数线")
 
 
 @best50.handle()
+@ap50.handle()
 async def _(
     matcher: Matcher,
     message: Message = CommandArg(),
     user: User = Depends(GetUserAndAuth),
 ):
     username = message.extract_plain_text().strip()
-    result = await draw_best50(user, username=username)
+    result = await draw_best50(
+        user, username=username, all_perfect=type(matcher) is ap50
+    )
     await matcher.send(result, reply_message=True)
 
 
 @info.handle()
 async def _(
-    matcher: Matcher,
     message: Message = CommandArg(),
     user: User = Depends(GetUserAndAuth),
 ):
     data = message.extract_plain_text().strip()
     if not data:
-        await matcher.finish("请输入曲目id或曲名", reply_message=True)
+        await info.finish("请输入曲目id或曲名", reply_message=True)
 
-    if data.isdigit() and mai.total_list.by_id(int(data)):
-        song_id = data
+    if data.isdigit() and (by_id := mai.total_list.by_id(int(data))):
+        song = by_id
     elif by_t := mai.total_list.by_name(data):
-        song_id = by_t.song_id
+        song = by_t
     else:
         aliases = mai.total_alias_list.by_alias(data)
         if not aliases:
-            await matcher.finish("未找到曲目", reply_message=True)
+            await info.finish("未找到曲目", reply_message=True)
         elif len(aliases) != 1:
             msg = "找到相同别名的曲目，请使用以下ID查询：\n"
             for alias in aliases:
                 msg += f"{alias.song_id}：{alias.alias[0]}\n"
-            await matcher.finish(msg.strip(), reply_message=True)
+            await info.finish(msg.strip(), reply_message=True)
         else:
             song_id = aliases[0].song_id
-    song = mai.total_list.by_id(int(song_id))
+        song = mai.total_list.by_id(song_id)
 
     result = await draw_play_data(user, song)
-    await matcher.send(result, reply_message=True)
+    await info.send(result, reply_message=True)
 
 
 @ginfo.handle()
@@ -74,10 +77,10 @@ async def _(message: Message = CommandArg()):
         args = args[1:].strip()
         if not args:
             await ginfo.finish("请输入曲目id或曲名", reply_message=True)
-    if mai.total_list.by_id(args):
-        id = args
+    if args.isdigit() and (by_id := mai.total_list.by_id(int(args))):
+        song = by_id
     elif by_t := mai.total_list.by_name(args):
-        id = by_t.song_id
+        song = by_t
     else:
         alias = mai.total_alias_list.by_alias(args)
         if not alias:
@@ -88,9 +91,7 @@ async def _(message: Message = CommandArg()):
                 msg += f"{songs.song_id}：{songs.alias[0]}\n"
             await ginfo.finish(msg.strip(), reply_message=True)
         else:
-            id = str(alias[0].song_id)
-
-    song = mai.total_list.by_id(id)
+            song = mai.total_list.by_id(alias[0].song_id)
     stats = song.difficulties[level_index].stats
 
     if len(song.difficulties) == 4 and level_index == 4:

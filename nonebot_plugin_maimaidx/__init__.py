@@ -5,8 +5,8 @@ import nonebot
 from nonebot.plugin import PluginMetadata, require
 
 from .commands import *  # noqa: F403
-from .commands.mai_alias import ws_alias_server
 from .config import BaseConfig, dfconfig, driver, log, lxnsconfig, maiconfig
+from .core.alias_ws_push import ws_alias_server
 from .core.clients.divingfish.client import DivingFishAPI
 from .core.database.qq import create_database
 from .core.service import guess, mai
@@ -45,7 +45,7 @@ async def get_music():
 
     if maiconfig.maimaidx_alias_push:
         log.opt(colors=True).info("别名推送为「<g>开启</g>」状态")
-        asyncio.ensure_future(ws_alias_server())  # noqa: F405
+        asyncio.ensure_future(ws_alias_server())
     else:
         log.opt(colors=True).info("别名推送为「<r>关闭</r>」状态")
 
