@@ -120,21 +120,22 @@ class LxnsClient(ApiClient):
         return True
 
     def _handle_error(self, resp: Response):
-        if resp.status_code == 200:
-            return
-        if resp.status_code == 400:
-            raise LXNSParamsError
-        elif resp.status_code == 401:
-            self._friend_code = None
-            raise LXNSOAuthError
-        elif resp.status_code == 403:
-            raise LXNSPermissionDeniedError
-        elif resp.status_code == 404:
-            raise LXNSNotFoundError
-        elif resp.status_code == 429:
-            raise LXNSTooManyRequestsError
-        else:
-            raise UnknownError
+        match resp.status_code:
+            case 200:
+                return
+            case 400:
+                raise LXNSParamsError
+            case 401:
+                self._friend_code = None
+                raise LXNSOAuthError
+            case 403:
+                raise LXNSPermissionDeniedError
+            case 404:
+                raise LXNSNotFoundError
+            case 429:
+                raise LXNSTooManyRequestsError
+            case _:
+                raise UnknownError
 
     async def _request_data(self, method: str, endpoint: str, **kwargs) -> APIResult:
         data = await self._request(method, endpoint, **kwargs)

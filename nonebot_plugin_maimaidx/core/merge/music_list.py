@@ -76,9 +76,9 @@ class MusicList(RootModel):
         level: str | list[str] | None = None,
         level_value: float | tuple[float, float] | None = None,
         type: str | list[str] | None = None,
-        title_search: str | None = None,
-        artist_search: str | None = None,
-        charter_search: str | None = None,
+        title: str | None = None,
+        artist: str | None = None,
+        charter: str | None = None,
         genre: str | list[str] | None = None,
         bpm: float | tuple[float, float] | None = None,
         version_int: int | list[int] | None = None,
@@ -98,10 +98,10 @@ class MusicList(RootModel):
         new_list = MusicList()
 
         for song in self.root:
-            if title_search and title_search.lower() not in song.song_name.lower():
+            if title and title.lower() not in song.song_name.lower():
                 continue
-            if artist_search and (
-                not song.artist or artist_search.lower() not in song.artist.lower()
+            if artist and (
+                not song.artist or artist.lower() not in song.artist.lower()
             ):
                 continue
             if type and song.type not in type:
@@ -136,9 +136,9 @@ class MusicList(RootModel):
                         if song.bpm != bpm:
                             continue
 
-                if charter_search and (
+                if charter and (
                     not diff.note_designer
-                    or charter_search.lower() not in diff.note_designer.lower()
+                    or charter.lower() not in diff.note_designer.lower()
                 ):
                     continue
 

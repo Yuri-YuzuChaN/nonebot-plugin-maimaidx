@@ -90,6 +90,9 @@ class PlayerBest50(ScoreBaseImage):
     async def draw(self) -> str:
         """
         绘制Best50
+
+        Returns:
+            `base64 str`
         """
         logo = Image.open(self.logo).resize((249, 120))
         name = Image.open(pic_dir / "Name.png")

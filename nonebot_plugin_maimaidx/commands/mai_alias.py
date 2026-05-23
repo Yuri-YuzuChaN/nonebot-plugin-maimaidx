@@ -59,7 +59,7 @@ async def _(event: GroupMessageEvent, message: Message = CommandArg()):
         if not song_id.isdigit():
             await alias_apply.finish("请输入正确的ID", reply_message=True)
         alias_name = " ".join(args[1:])
-        if not mai.total_list.by_id(song_id):
+        if not mai.total_list.by_id(int(song_id)):
             await alias_apply.finish(f"未找到ID「{song_id}」的曲目", reply_message=True)
 
         api = YuzuChaNAPI()

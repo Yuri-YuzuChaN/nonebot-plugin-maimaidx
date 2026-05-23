@@ -1,258 +1,46 @@
 import re
 from re import Match
-from textwrap import dedent
 
-from nonebot import on_command, on_regex
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
-from nonebot.params import CommandArg, Depends, RegexMatched
+from nonebot import on_regex
+from nonebot.adapters.onebot.v11 import MessageSegment
+from nonebot.params import Depends, RegexMatched
 
-from ..constants import DIFFS, SONGS_PER_PAGE
 from ..core.clients.yuzuchan.client import YuzuChaNAPI
 from ..core.clients.yuzuchan.models import AliasStatus
 from ..core.database.qq import User
-from ..core.handler import draw_chart_info
-from ..core.image.tools import text_to_bytes_io
+from ..core.handler import draw_chart_info, draw_song_list
 from ..core.merge.alias import yuzu_alias_to_alias
+from ..core.merge.models import Song
 from ..core.service import mai
-from .depend import GetUserAndAuthOrNone
+from .depend import GetUserAndAuthOrNone, process_regex
 
-search_music = on_command("查歌", aliases={"search"})
-search_base = on_command("定数查歌", aliases={"search base"})
-search_bpm = on_command("bpm查歌", aliases={"search bpm"})
-search_artist = on_command("曲师查歌", aliases={"search artist"})
-search_designer = on_command("谱师查歌", aliases={"search charter"})
+search = on_regex(r"^(定数|bpm|曲师|谱师)?查歌\s?(.+)", re.IGNORECASE)
 search_alias_song = on_regex(r"(.+)是(?:什么|啥)歌[？?]?$", re.IGNORECASE)
 query_chart = on_regex(r"^id\s?([0-9]+)$", re.IGNORECASE)
 
 
-def song_level(ds1: float, ds2: float) -> list[tuple[str, str, float, str]]:
-    """
-    查询定数范围内的乐曲
-
-    Params:
-        `ds1`: 定数下限
-        `ds2`: 定数上限
-    Return:
-        `result`: 查询结果
-    """
-    result: list[tuple[str, str, float, str]] = []
-    songs = mai.total_list.filter(level_value=(ds1, ds2))
-    for song in sorted(songs, key=lambda x: int(x.song_id)):
-        if int(song.song_id) >= 100000:
-            continue
-        for d in song.difficulties:
-            result.append(
-                (song.song_id, song.song_name, d.level_value, DIFFS[d.level_index])
-            )
-    return result
-
-
-@search_music.handle()
+@search.handle()
 async def _(
-    message: Message = CommandArg(), user: User | None = Depends(GetUserAndAuthOrNone)
+    result: tuple[list[Song], int] = Depends(process_regex),
+    user: User | None = Depends(GetUserAndAuthOrNone),
 ):
-    name = message.extract_plain_text().strip()
-    page = 1
-    if not name:
-        await search_music.finish("请输入关键词", reply_message=True)
-    result = mai.total_list.filter(title_search=name)
-    if len(result) == 0:
-        await search_music.finish(
-            "没有找到这样的乐曲。\n※ 如果是别名请使用「别名查歌」指令进行查询哦。",
+    songs, page = result
+    if not songs:
+        await search.finish(
+            "没有找到这样的乐曲。\n※ 如果是别名请使用「XXX是什么歌」指令进行查询哦。",
             reply_message=True,
         )
-    if len(result) == 1:
-        await search_music.finish(
-            await draw_chart_info(result[0], user), reply_message=True
-        )
 
-    search_result = ""
-    result.sort(key=lambda i: int(i.song_id))
-    for i, song in enumerate(result):
-        if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            search_result += f"{f'「{song.song_id}」':<7} {song.song_name}\n"
-    search_result += (
-        f"第「{page}」页，"
-        f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
-        "请使用「id xxxxx」查询指定曲目。"
-    )
-    await search_music.send(
-        MessageSegment.image(text_to_bytes_io(search_result)), reply_message=True
-    )
-
-
-@search_base.handle()
-async def _(message: Message = CommandArg()):
-    args = message.extract_plain_text().strip().split()
-    if len(args) > 4 or len(args) == 0:
-        await search_base.finish(
-            dedent("""
-                命令格式：
-                定数查歌 「定数」「页数」
-                定数查歌 「定数下限」「定数上限」「页数」
-            """),
-            reply_message=True,
-        )
-    page = 1
-    if len(args) == 1:
-        ds1, ds2 = args[0], args[0]
-    elif len(args) == 2:
-        if "." in args[1]:
-            ds1, ds2 = args
-        else:
-            ds1, ds2 = args[0], args[0]
-            page = args[1]
+    if len(songs) == 1:
+        image = await draw_chart_info(songs[0], user)
+    elif len(songs) <= 5:
+        r = ""
+        for song in songs:
+            r += f"{f'「{song.song_id}」':<7} {song.song_name}\n"
+        image = MessageSegment.text(r)
     else:
-        ds1, ds2, page = args
-    page = int(page)
-    result = song_level(float(ds1), float(ds2))
-    if not result:
-        await search_base.finish("没有找到这样的乐曲。", reply_message=True)
-
-    search_result = ""
-    for i, _result in enumerate(result):
-        id, title, ds, diff = _result
-        if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            search_result += (
-                f"{f'「{id}」':<7}{f'「{diff}」':<11}{f'「{ds}」'} {title}\n"
-            )
-    search_result += (
-        f"第「{page}」页，"
-        f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
-        "请使用「id xxxxx」查询指定曲目。"
-    )
-    await search_base.send(
-        MessageSegment.image(text_to_bytes_io(search_result)), reply_message=True
-    )
-
-
-@search_bpm.handle()
-async def _(message: Message = CommandArg()):
-    args = message.extract_plain_text().strip().split()
-    page = 1
-    if len(args) == 1:
-        result = mai.total_list.filter(bpm=int(args[0]))
-    elif len(args) == 2:
-        if (bpm := int(args[0])) > int(args[1]):
-            page = int(args[1])
-            result = mai.total_list.filter(bpm=bpm)
-        else:
-            result = mai.total_list.filter(bpm=(bpm, int(args[1])), reply_message=True)
-    elif len(args) == 3:
-        result = mai.total_list.filter(
-            bpm=(int(args[0]), int(args[1])), reply_message=True
-        )
-        page = int(args[2])
-    else:
-        await search_bpm.finish(
-            "命令格式：\nbpm查歌 「bpm」\nbpm查歌 「bpm下限」「bpm上限」「页数」",
-            reply_message=True,
-        )
-    if not result:
-        await search_bpm.finish("没有找到这样的乐曲。", reply_message=True)
-
-    search_result = ""
-    page = max(min(page, len(result) // SONGS_PER_PAGE + 1), 1)
-    result.sort(key=lambda x: int(x.bpm))
-
-    for i, m in enumerate(result):
-        if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            search_result += (
-                f"{f'「{m.song_id}」':<7}{f'「BPM {m.bpm}」':<9} {m.song_name} \n"
-            )
-    search_result += (
-        f"第「{page}」页，"
-        f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
-        "请使用「id xxxxx」查询指定曲目。"
-    )
-    await search_bpm.send(
-        MessageSegment.image(text_to_bytes_io(search_result)), reply_message=True
-    )
-
-
-@search_artist.handle()
-async def _(message: Message = CommandArg()):
-    args = message.extract_plain_text().strip().split()
-    page = 1
-    if len(args) == 1:
-        name = args[0]
-    elif len(args) == 2:
-        name = args[0]
-        if args[1].isdigit():
-            page = int(args[1])
-        else:
-            await search_artist.finish(
-                "命令格式：\n曲师查歌「曲师名称」「页数」", reply_message=True
-            )
-    else:
-        await search_artist.finish(
-            "命令格式：\n曲师查歌「曲师名称」「页数」", reply_message=True
-        )
-
-    result = mai.total_list.filter(artist_search=name)
-    if not result:
-        await search_artist.finish("没有找到这样的乐曲。", reply_message=True)
-
-    search_result = ""
-    page = max(min(page, len(result) // SONGS_PER_PAGE + 1), 1)
-    for i, m in enumerate(result):
-        if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            search_result += (
-                f"{f'「{m.song_id}」':<7}{f'「{m.artist}」'} - {m.song_name}\n"
-            )
-    search_result += (
-        f"第「{page}」页，"
-        f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
-        "请使用「id xxxxx」查询指定曲目。"
-    )
-    await search_artist.send(
-        MessageSegment.image(text_to_bytes_io(search_result)), reply_message=True
-    )
-
-
-@search_designer.handle()
-async def _(message: Message = CommandArg()):
-    args = message.extract_plain_text().strip().split()
-    page = 1
-    if len(args) == 1:
-        name = args[0]
-    elif len(args) == 2:
-        name = args[0]
-        if args[1].isdigit():
-            page = int(args[1])
-        else:
-            await search_designer.finish(
-                "命令格式：\n谱师查歌「谱师名称」「页数」", reply_message=True
-            )
-    else:
-        await search_designer.finish(
-            "命令格式：\n谱师查歌「谱师名称」「页数」", reply_message=True
-        )
-
-    result = mai.total_list.filter(charter_search=name)
-    if not result:
-        await search_designer.finish("没有找到这样的乐曲。", reply_message=True)
-
-    search_result = ""
-    page = max(min(page, len(result) // SONGS_PER_PAGE + 1), 1)
-    for i, m in enumerate(result):
-        if (page - 1) * SONGS_PER_PAGE <= i < page * SONGS_PER_PAGE:
-            diff_charter = zip(
-                [DIFFS[d] for d in m.difficulties],
-                [d.note_designer for d in m.difficulties],
-            )
-            diff_parts = [f"{f'「{d}」':<9}{f'「{c}」'}" for d, c in diff_charter]
-            diff_str = " ".join(diff_parts)
-            line = f"{f'「{m.song_id}」':<7}{diff_str} {m.song_name}\n"
-            search_result += line
-    search_result += (
-        f"第「{page}」页，"
-        f"共「{len(result) // SONGS_PER_PAGE + 1}」页。"
-        "请使用「id xxxxx」查询指定曲目。"
-    )
-    await search_designer.send(
-        MessageSegment.image(text_to_bytes_io(search_result)), reply_message=True
-    )
+        image = await draw_song_list(songs, page)
+    await search.send(image, reply_message=True)
 
 
 @search_alias_song.handle()
@@ -261,7 +49,11 @@ async def _(
     user: User | None = Depends(GetUserAndAuthOrNone),
 ):
     name = match.group(1).strip()
-    error_msg = f"未找到别名为「{name}」的歌曲"
+    error_msg = (
+        f"未找到别名为「{name}」的歌曲, "
+        "※ 可以使用「添加别名」指令给该乐曲添加别名"
+        "※ 如果是歌名的一部分，请使用「查歌」指令查询哦。"
+    )
     # 别名
     alias_data = mai.total_alias_list.by_alias(name)
     api = YuzuChaNAPI()
@@ -271,7 +63,7 @@ async def _(
             if isinstance(obj[0], AliasStatus):
                 msg = f"未找到别名为「{name}」的歌曲，但找到与此相同别名的投票：\n"
                 for _s in obj:
-                    msg += f"- {_s.Tag}\n    ID {_s.SongID}: {name}\n"
+                    msg += f"- {_s.Tag}\n    ID {_s.SongID}: {_s.Name}\n"
                 msg += "※ 可以使用指令「同意别名 XXXXX」进行投票"
                 await search_alias_song.finish(msg.strip(), reply_message=True)
             else:
@@ -303,13 +95,13 @@ async def _(
         )
 
     # 标题
-    result = mai.total_list.filter(title_search=name)
+    result = mai.total_list.filter(title=name)
     if len(result) == 0:
         await search_alias_song.finish(error_msg, reply_message=True)
     elif len(result) == 1:
         await search_alias_song.finish(
-            "您要找的是不是："
-            + await draw_chart_info(result[0], user, reply_message=True)
+            "您要找的是不是：" + await draw_chart_info(result[0], user),
+            reply_message=True,
         )
     elif len(result) < 50:
         msg = f"未找到别名为「{name}」的歌曲，但找到{len(result)}个相似标题的曲目：\n"
@@ -328,13 +120,13 @@ async def _(
     match: Match[str] = RegexMatched(),
     user: User | None = Depends(GetUserAndAuthOrNone),
 ):
-    _id = match.group(1)
-    if not _id.isdigit():
+    song_id = match.group(1)
+    if not song_id.isdigit():
         await query_chart.finish("请输入正确的曲目ID", reply_message=True)
 
-    song = mai.total_list.by_id(int(_id))
+    song = mai.total_list.by_id(int(song_id))
     if not song:
-        msg = f"未找到ID「{_id}」的乐曲"
+        msg = f"未找到ID「{song_id}」的乐曲"
     else:
         msg = await draw_chart_info(song, user)
     await query_chart.finish(msg, reply_message=True)

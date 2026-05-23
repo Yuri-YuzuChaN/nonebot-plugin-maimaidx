@@ -27,7 +27,7 @@ class User(UserBase, table=True):
     service: ServiceName = Field(
         default=ServiceName.DIVINGFISH, sa_column=Column(Enum(ServiceName))
     )
-    theme: Theme = Field(default=Theme.CIRCLE, sa_column=Column(Enum(Theme)))
+    theme: Theme = Field(default=Theme.PRISM_PLUS, sa_column=Column(Enum(Theme)))
 
 
 engine = create_async_engine(f"sqlite+aiosqlite:///{str(db)}", echo=False)

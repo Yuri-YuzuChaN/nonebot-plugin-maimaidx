@@ -31,7 +31,7 @@ class DrawScore(ScoreBaseImage):
         self._pic_theme_path = pic_dir / self.theme.value
         self._im.alpha_composite(self._aurora_bg)
         self._im.alpha_composite(self._shines_bg, (11, 6))
-        self._im.alpha_composite(self._cloud_bg, (318, self._im.size[1] - 545))
+        self._im.alpha_composite(self._rainbow_bg, (318, self._im.size[1] - 545))
         self._im.alpha_composite(self._rainbow_bottom_bg, (122, self._im.size[1] - 305))
         for h in range((self._im.size[1] // 358) + 1):
             self._im.alpha_composite(self._pattern_bg, (0, (358 + 7) * h))
@@ -154,7 +154,7 @@ class DrawScore(ScoreBaseImage):
             `sd`: `新版本谱面`
             `dx_score`: `新版本最低分`
         Returns:
-            `Image.Image`
+            `base64 str`
         """
         title_bg = self._title_bg.copy().resize((273, 80))
         self._im.alpha_composite(title_bg, (314, 30))
@@ -208,7 +208,7 @@ class DrawScore(ScoreBaseImage):
             `plan`: `目标`
             `completed_len`: `已完成谱面数量`
         Returns:
-            `Image.Image`
+            `base64 str`
         """
         max = len(completed + unfinished + notstarted)
 
@@ -305,7 +305,7 @@ class DrawScore(ScoreBaseImage):
             `page`: `页数`
             `end_page`: `总页数`
         Returns:
-            `Image.Image`
+            `base64 str`
         """
         lendata = len(data)
         newdata = data[(page - 1) * 80 : page * 80]
@@ -364,7 +364,7 @@ class DrawScore(ScoreBaseImage):
             `page`: `页数`
             `end_page`: `总页数`
         Returns:
-            `Image.Image`
+            `base64 str`
         """
         start_offset = (page - 1) * 80
         current_page_result = play_result[start_offset : page * 80]

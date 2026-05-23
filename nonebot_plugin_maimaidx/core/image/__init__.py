@@ -9,6 +9,7 @@ from .chart import (
 )
 from .info import song_play_data
 from .score import DrawScore
+from .song import song_list
 from .table import DrawPlateTable, DrawRatingTable, PlateGridConfig, RatingGridConfig
 from .tools import (
     DrawText,
@@ -31,6 +32,7 @@ __all__ = [
     "get_char_width",
     "PlayerBest50",
     "song_global_data",
+    "song_list",
     "get_best_rating",
     "new_best_score",
     "song_chart_banquet_info",

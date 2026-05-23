@@ -66,7 +66,9 @@ source = on_command("数据源")
 theme = on_command("主题")
 portune = on_command("今日舞萌")
 mai_what = on_regex(r".*mai.*什么(.+)?")
-random_song = on_regex(r"^[随来给]个((?:dx|sd|标准))?([绿黄红紫白]?)([0-9]+\+?).*")
+random_song = on_regex(
+    r"^[随来给]个((?:dx|sd|标准))?([绿黄红紫白]?)([0-9]+\+?).*", re.IGNORECASE
+)
 rise_score = on_regex(r"^我要在?([0-9]+\+?)?[上加\+]([0-9]+)?分\s?(.+)?")
 rating_ranking = on_command("查看排名")
 my_rating_ranking = on_command("我的排名")
@@ -74,9 +76,7 @@ my_rating_ranking = on_command("我的排名")
 
 @update_data.handle()
 async def _(event: PrivateMessageEvent):
-    await mai.get_music()
-    await mai.get_music_alias()
-    await mai.get_plate_json()
+    await mai.update()
     await update_data.finish("maimai数据更新完成")
 
 
@@ -160,7 +160,7 @@ async def _(user: User = Depends(GetOrCreateUser)):
     for i in range(11):
         wm_value.append(h & 3)
         h >>= 2
-    msg = f"\n今日人品值：{rp}\n"
+    msg = f"今日人品值：{rp}\n"
     for i in range(11):
         if wm_value[i] == 3:
             msg += f"宜 {FORTUNE[i]}\n"
@@ -168,13 +168,16 @@ async def _(user: User = Depends(GetOrCreateUser)):
             msg += f"忌 {FORTUNE[i]}\n"
     song = mai.total_list.root[h % len(mai.total_list.root)]
     ds = "/".join([str(d.level_value) for d in song.difficulties])
-    msg += (
-        f"{maiconfig.bot_name} Bot提醒您：打机时不要大力拍打或滑动哦\n今日推荐歌曲："
-        f"ID.{song.song_id} - {song.song_name}"
-        f"{MessageSegment.image(song_chart(song.song_id))}"
-        f"{ds}"
+    result = (
+        MessageSegment.text(
+            msg
+            + f"{maiconfig.bot_name} Bot提醒您：打机时不要大力拍打或滑动哦\n今日推荐歌曲："
+            + f"ID.{song.song_id} - {song.song_name}"
+        )
+        + MessageSegment.image(song_chart(song.song_id))
+        + MessageSegment.text(ds)
     )
-    await portune.send(msg, reply_message=True)
+    await portune.send(result, reply_message=True)
 
 
 @mai_what.handle()

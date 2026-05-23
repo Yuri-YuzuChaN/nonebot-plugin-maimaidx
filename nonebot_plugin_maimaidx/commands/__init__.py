@@ -30,19 +30,13 @@ from .mai_guess import (
     guess_music_start,
 )
 from .mai_score import (
+    ap50,
     best50,
     ginfo,
     info,
     score,
 )
-from .mai_search import (
-    query_chart,
-    search_artist,
-    search_base,
-    search_bpm,
-    search_designer,
-    search_music,
-)
+from .mai_search import query_chart, search, search_alias_song
 from .mai_table import (
     level_progress,
     level_score_list,
@@ -60,6 +54,7 @@ __all__ = [
     "alias_song",
     "alias_status",
     "alias_switch",
+    "ap50",
     "update_alias",
     "bind",
     "help",
@@ -83,11 +78,8 @@ __all__ = [
     "info",
     "score",
     "query_chart",
-    "search_artist",
-    "search_base",
-    "search_bpm",
-    "search_designer",
-    "search_music",
+    "search",
+    "search_alias_song",
     "level_progress",
     "level_score_list",
     "plate_progress",

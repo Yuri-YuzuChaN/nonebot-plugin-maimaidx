@@ -29,6 +29,7 @@ from .image import (
     song_chart_banquet_info,
     song_chart_info,
     song_global_data,
+    song_list,
     song_play_data,
     text_to_bytes_io,
     tricolor_gradient_prism_plus,
@@ -287,6 +288,19 @@ def draw_rating_table_text(rating: str) -> MessageSegment:
     """
     table = DrawRatingTable(rating, level_text=True)
     image = table.draw()
+    return MessageSegment.image(image)
+
+
+async def draw_song_list(songs: list[Song], page: int) -> MessageSegment:
+    """
+    绘制曲目列表
+
+    Params:
+        `songs`: 曲目列表
+    Returns:
+        `MessageSegment`
+    """
+    image = song_list(songs, page)
     return MessageSegment.image(image)
 
 

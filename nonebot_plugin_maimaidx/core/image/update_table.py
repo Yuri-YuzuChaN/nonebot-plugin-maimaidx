@@ -3,7 +3,7 @@ from io import BytesIO
 from pathlib import Path
 
 import aiofiles
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 from ...config import log, maiconfig
 from ...constants import DX_VERSION, LEVEL_LIST, PLATE_CN, VERSION_MAP
@@ -11,7 +11,12 @@ from ...resources import FOTNEWRODIN, TBFONT, pic_dir, plate_table_dir, rating_t
 from ..merge.models import Song
 from ..service import mai
 from .base import ScoreBaseImage
-from .tools import DrawText, song_chart, tricolor_gradient_prism_plus
+from .tools import (
+    DrawText,
+    generate_frosted_card,
+    song_chart,
+    tricolor_gradient_prism_plus,
+)
 
 
 class UpdateTable:
@@ -50,58 +55,12 @@ class UpdateTable:
         im = tricolor_gradient_prism_plus(1400, height)
         im.alpha_composite(ScoreBaseImage._aurora_bg)
         im.alpha_composite(ScoreBaseImage._shines_bg, (11, 6))
-        im.alpha_composite(ScoreBaseImage._cloud_bg, (318, height - 545))
+        im.alpha_composite(ScoreBaseImage._rainbow_bg, (318, height - 545))
         im.alpha_composite(ScoreBaseImage._rainbow_bottom_bg, (122, height - 305))
         for h in range((height // 358) + 1):
             im.alpha_composite(ScoreBaseImage._pattern_bg, (0, (358 + 7) * h))
         im.alpha_composite(ScoreBaseImage._separator_bg, (100, separator_height))
         return im
-
-    def _generate_frosted_card(
-        self,
-        im: Image.Image,
-        box: tuple[int, int, int, int],
-        shadow_offset: tuple[int, int] = (10, 10),
-    ) -> Image.Image:
-        """
-        绘制毛玻璃
-
-        Params:
-            `im`: `Image` 图像
-            `box`: 方形毛玻璃的坐标
-            `shadow_offset`: 投影像素
-        Returns:
-            `Image.Image`
-        """
-        roi = im.crop(box)
-        roi_w, roi_h = roi.size
-
-        frosted = roi.filter(ImageFilter.GaussianBlur(4))
-        white_layer = Image.new("RGBA", (roi_w, roi_h), (255, 255, 255, 100))
-        card = Image.alpha_composite(frosted, white_layer)
-
-        mask = Image.new("L", (roi_w, roi_h), 0)
-        draw = ImageDraw.Draw(mask)
-        draw.rounded_rectangle((0, 0, roi_w, roi_h), radius=25, fill=255)
-
-        # 投影
-        shadow_w = roi_w + 5 * 2 + abs(shadow_offset[0])
-        shadow_h = roi_h + 5 * 2 + abs(shadow_offset[1])
-        shadow = Image.new("RGBA", (shadow_w, shadow_h), (0, 0, 0, 0))
-
-        draw_shadow = ImageDraw.Draw(shadow)
-        draw_shadow.rounded_rectangle(
-            (15, 15, 15 + roi_w, 15 + roi_h), radius=25, fill=(0, 0, 0, 50)
-        )
-        shadow_layer = shadow.filter(ImageFilter.GaussianBlur(3))
-
-        temp_layer = Image.new("RGBA", im.size, (0, 0, 0, 0))
-        shadow_pos = (box[0] + shadow_offset[0] - 15, box[1] + shadow_offset[1] - 15)
-        temp_layer.paste(shadow_layer, shadow_pos)
-        temp_layer.paste(card, (box[0], box[1]), mask=mask)
-
-        new_im = Image.alpha_composite(im, temp_layer)
-        return new_im
 
     async def _save_image(self, im: Image.Image, path: Path) -> None:
         """
@@ -206,10 +165,10 @@ class UpdateTable:
             height = current_y + 230
 
             _im = self._generate_bg(height, 360)
-            im = self._generate_frosted_card(_im, (50, 404, 1350, current_y))
+            im = generate_frosted_card(_im, (50, 404, 1350, current_y))
 
             dr = ImageDraw.Draw(im)
-            ts = DrawText(dr, TBFONT)
+            tb = DrawText(dr, TBFONT)
             fot = DrawText(dr, FOTNEWRODIN)
 
             fot.draw(
@@ -259,7 +218,7 @@ class UpdateTable:
                     im.alpha_composite(
                         self._diff_bg[song.difficulties.level_index], (x - 5, y - 5)
                     )
-                    ts.draw(
+                    tb.draw(
                         x + 56,
                         y + 4,
                         13,
@@ -320,10 +279,10 @@ class UpdateTable:
         height = current_y + 180
 
         _im = self._generate_bg(height, 400)
-        im = self._generate_frosted_card(_im, (50, 444, 1350, current_y))
+        im = generate_frosted_card(_im, (50, 444, 1350, current_y))
 
         dr = ImageDraw.Draw(im)
-        ts = DrawText(dr, TBFONT)
+        tb = DrawText(dr, TBFONT)
         fot = DrawText(dr, FOTNEWRODIN)
 
         if pages is not None:
@@ -388,7 +347,7 @@ class UpdateTable:
                 id_color = (255, 255, 255, 255)
                 if remaster_song_list is not None and song in remaster_song_list:
                     id_color = (138, 0, 226, 255)
-                ts.draw(x + 56, y + 4, 16, song.song_id, id_color, "mm")
+                tb.draw(x + 56, y + 4, 16, song.song_id, id_color, "mm")
             start_y += (max_row + 1) * GRID_STEP + 30
         return im
 
@@ -422,9 +381,12 @@ class UpdateTable:
 
         log.info(f"舞/霸者完成表更新完成，耗时：{time.time() - single_time:.3f}s")
 
-    async def update_plate_table(self):
+    async def update_plate_table(self) -> str:
         """
         更新版本牌子
+
+        Returns:
+            `str`
         """
         all_time = 0
         for name in self.version_list:

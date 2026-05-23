@@ -178,6 +178,9 @@ class DrawRatingTable:
     def draw(self) -> str:
         """
         绘制定数表
+
+        Returns:
+            `base64 str`
         """
         im = Image.open(rating_table_dir / f"{self.rating}.png").convert("RGBA")
         dr = ImageDraw.Draw(im)
@@ -425,7 +428,7 @@ class DrawPlateTable:
 
         return len(plate_id_list), played_map
 
-    def _process_plate_table_wu_data(self) -> tuple[int, PlateResultMap]:
+    def _process_plate_table_wu_data(self) -> tuple[int, int, PlateResultMap]:
         """
         处理牌子 `舞` 和 `霸者` 的数据
         """
@@ -477,15 +480,21 @@ class DrawPlateTable:
                 if _d.level_index < len(current_slots):
                     current_slots[_d.level_index] = _d
 
-        return len(wu_id_list), played_map
+        return len(wu_id_list), len(wu_re_id_set), played_map
 
     def draw(self) -> str:
         """
         绘制完成表
+
+        Returns:
+            `base64 str`
         """
         plan = self.plan
+        plate_wu_total_count = 0
         if self.is_wu:
-            plate_total_count, played_map = self._process_plate_table_wu_data()
+            plate_total_count, plate_wu_total_count, played_map = (
+                self._process_plate_table_wu_data()
+            )
             if self.version == "霸":
                 plan = "者" if self.plan == "者" else self.plan
 
@@ -520,14 +529,18 @@ class DrawPlateTable:
             for idx, (song_id, result) in enumerate(songs_dict.items()):
                 hit_slots: list[int] = []
                 song_all_qualified = True
+                has_any_play = False
                 for _r, play in enumerate(result):
+                    if play is None:
+                        continue
+                    has_any_play = True
                     if self._is_qualified(play, self.plan):
                         hit_slots.append(_r)
                         lv[_r].add(song_id)
                     else:
                         song_all_qualified = False
 
-                if song_all_qualified:
+                if song_all_qualified and has_any_play:
                     finished_songs.add(song_id)
 
                 row, col = divmod(idx, PlateGridConfig.row_count)
@@ -610,12 +623,26 @@ class DrawPlateTable:
                 _progress_text_x = 115
                 _progress_x = 115
 
-            progress_group = complete_sum_group / plate_total_count
+            plate_count = plate_total_count if _l != 4 else plate_wu_total_count
+
+            progress_group = complete_sum_group / plate_count
             if progress_group != 0:
                 bar_group_rounded = self.progress_small.crop(
                     (0, 0, int(self.progress_width * progress_group), 46)
                 )
                 im.alpha_composite(bar_group_rounded, (x - _progress_x, 326))
+
+            if complete_sum_group == plate_count:
+                fot.draw(
+                    x,
+                    stats_start_y,
+                    24,
+                    "COMPLETED!!!",
+                    ScoreBaseImage._id_text_color[_l],
+                    "mm",
+                    4,
+                    (255, 255, 255, 255),
+                )
 
             fot.draw(
                 x,
@@ -631,7 +658,7 @@ class DrawPlateTable:
                 x + _progress_text_x,
                 stats_start_y + 20,
                 14,
-                f"/{plate_total_count}",
+                f"/{plate_count}",
                 ScoreBaseImage._id_text_color[_l],
                 "rd",
                 3,

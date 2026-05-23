@@ -44,17 +44,19 @@ class DivingFishAPI(ApiClient):
         msg = error.get("message") or error.get("msg")
 
         if msg is not None:
-            if msg == "no such user":
-                raise DivingFishUserNotFoundError
-            if msg == "user not exists":
-                raise DivingFishUserDisabledQueryError
-            if msg == "开发者token有误":
-                raise DivingFishTokenError
-            if msg == "开发者token被禁用":
-                raise DivingFishTokenDisableError
-            if msg == "请先联系水鱼申请开发者token":
-                raise DivingFishTokenNotFoundError
-            raise UnknownError
+            match msg:
+                case "no such user":
+                    raise DivingFishUserNotFoundError
+                case "user not exists":
+                    raise DivingFishUserDisabledQueryError
+                case "开发者token有误":
+                    raise DivingFishTokenError
+                case "开发者token被禁用":
+                    raise DivingFishTokenDisableError
+                case "请先联系水鱼申请开发者token":
+                    raise DivingFishTokenNotFoundError
+                case _:
+                    raise UnknownError
 
     async def _request_data(self, method: str, endpoint: str, **kwargs) -> dict | list:
         return await self._request(method, endpoint, **kwargs)

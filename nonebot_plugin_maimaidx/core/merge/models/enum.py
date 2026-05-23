@@ -2,8 +2,8 @@ from enum import Enum
 
 
 class ServiceName(str, Enum):
-    LXNS = "Lxns-Network"
     DIVINGFISH = "Diving-Fish"
+    LXNS = "Lxns-Network"
 
     @classmethod
     def get_by_index(cls, index_str: str) -> "ServiceName | None":
@@ -23,8 +23,8 @@ class Category(str, Enum):
 
 
 class Theme(str, Enum):
-    CIRCLE = "circle"
     PRISM_PLUS = "prism_plus"
+    CIRCLE = "circle"
 
     @classmethod
     def get_by_index(cls, index_str: str) -> "Theme | None":

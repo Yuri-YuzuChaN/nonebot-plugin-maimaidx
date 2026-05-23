@@ -120,15 +120,21 @@ class ScoreBaseImage:
         Image.open(pic_dir / "rise_score_master.png"),
         Image.open(pic_dir / "rise_score_remaster.png"),
     ]
+    _sl_diff_bg = Image.open(pic_dir / "sl_diff.png")
+    _sl_diff_utg = Image.open(pic_dir / "sl_diff_utg.png")
+    _card_bg = Image.open(pic_dir / "song_card.png")
     _separator_bg = Image.open(pic_dir / "separator.png")
     _chart_white_bg = Image.open(pic_dir / "chart_white.png")
-    _cloud_bg = Image.open(pic_dir / "rainbow.png").convert("RGBA")
+    _rainbow_bg = Image.open(pic_dir / "rainbow.png").convert("RGBA")
     _rainbow_bottom_bg = Image.open(pic_dir / "rainbow_bottom.png").convert("RGBA")
     _aurora_bg = Image.open(pic_dir / "aurora.png").convert("RGBA")
     _shines_bg = Image.open(pic_dir / "bg_shines.png").convert("RGBA")
     _pattern_bg = Image.open(pic_dir / "pattern.png").convert("RGBA")
+    _moon_bg = Image.open(pic_dir / "moon.png").convert("RGBA")
 
-    def __init__(self, image: Image.Image = None, theme: Theme = Theme.CIRCLE) -> None:
+    def __init__(
+        self, image: Image.Image = None, theme: Theme = Theme.PRISM_PLUS
+    ) -> None:
         self._im = image
         self.theme = theme
         dr = ImageDraw.Draw(self._im)
@@ -156,7 +162,7 @@ class ScoreBaseImage:
             y = initial_y + row * gap
 
             cover = Image.open(song_chart(info.song_id)).resize((75, 75))
-            version = Image.open(pic_dir / f"{info.type.upper()}.png").resize((37, 14))
+            type_ = Image.open(pic_dir / f"{info.type.upper()}.png").resize((37, 14))
             if info.rate.islower():
                 rate = Image.open(
                     pic_dir
@@ -170,7 +176,7 @@ class ScoreBaseImage:
 
             self._im.alpha_composite(self._diff_bg[info.level_index], (x, y))
             self._im.alpha_composite(cover, (x + 12, y + 12))
-            self._im.alpha_composite(version, (x + 51, y + 91))
+            self._im.alpha_composite(type_, (x + 51, y + 91))
             self._im.alpha_composite(rate, (x + 92, y + 78))
             if info.fc:
                 fc = Image.open(
