@@ -16,12 +16,13 @@ from ..constants import (
     VERSION_MAP,
 )
 from .clients.divingfish.client import DivingFishAPI
-from .clients.exceptions import MusicNotPlayError
+from .clients.exceptions import MusicNotPlayError, NotMusicRecommendationError
 from .clients.lxns.client import LxnsAPI, OAuth2
 from .clients.lxns.models import BaseToken, OAuth2Token, SongType
 from .database.qq import User, update_user
 from .handler_error import handle_errors
 from .image import (
+    DrawPlateProgress,
     DrawPlateTable,
     DrawRatingTable,
     DrawScore,
@@ -50,7 +51,7 @@ from .merge.player import df_to_best50, df_to_player, lxns_to_best50
 from .service import mai
 from .utils.calc import compute_rating
 
-message = "可使用「主题」指令更换主题，「数据源」指令更换指定查分器。"
+MESSAGE = "可使用「主题」指令更换主题，「数据源」指令更换指定查分器。"
 
 PLAN_MAP: dict[str, tuple[int, int | float]] = {
     **{p: (0, ACHIEVEMENT_LIST[i - 1]) for i, p in enumerate(RANK_PLUS)},
@@ -325,7 +326,7 @@ async def draw_best50(
     """
     player, best50 = await get_best50(user, username=username, all_perfect=all_perfect)
     b50 = PlayerBest50(user, player=player, best50=best50, icon=icon)
-    return MessageSegment.image(await b50.draw()) + MessageSegment.text(message)
+    return MessageSegment.image(await b50.draw()) + MessageSegment.text(MESSAGE)
 
 
 @handle_errors
@@ -367,7 +368,7 @@ async def draw_play_data(user: User, song: Song) -> MessageSegment:
         raise ValueError
 
     image = song_play_data(user.service, user.theme, song=song, play_result=play_result)
-    return MessageSegment.image(image) + MessageSegment.text(message)
+    return MessageSegment.image(image) + MessageSegment.text(MESSAGE)
 
 
 @handle_errors
@@ -441,7 +442,7 @@ async def draw_chart_info(song: Song, user: User | None = None) -> MessageSegmen
         image = song_chart_info(song, calc, is_full, best_list, theme)
     else:
         image = song_chart_banquet_info(song)
-    return MessageSegment.image(image) + MessageSegment.text(message)
+    return MessageSegment.image(image) + MessageSegment.text(MESSAGE)
 
 
 @handle_errors
@@ -499,23 +500,40 @@ async def draw_plate_table(
 
 
 @handle_errors
-async def draw_plate_progress() -> MessageSegment:
+async def draw_plate_progress(
+    user: User,
+    version: str,
+    plan: str,
+    page: int,
+) -> MessageSegment:
     """
     绘制牌子完成进度
 
     Params:
         `user`: 用户 `User` 模型
-        `level`: 定数
-        `plan`: 评价等级
+        `version`: 版本
+        `plan`: 指定计划
+        `page`: 页数
     Returns:
         `MessageSegment`
     """
+    _version, version_name = VERSION_MAP.get(version)
+    play_result = await get_player_result(user, _version)
+    table = DrawPlateProgress(
+        user.service,
+        play_result,
+        plan=plan,
+        version=version,
+        version_name=version_name,
+        page=page,
+    )
+    image = table.draw()
+    return MessageSegment.image(image)
 
 
 @handle_errors
 async def draw_rise_score_list(
     user: User,
-    username: str | None = None,
     level: str | None = None,
     score: int | None = None,
 ) -> MessageSegment:
@@ -530,7 +548,7 @@ async def draw_rise_score_list(
     Returns:
         `MessageSegment`
     """
-    player, best50 = await get_best50(user, username=username)
+    player, best50 = await get_best50(user)
     play_result = await get_player_result(user)
 
     old_records = {(v.song_id, v.level_index): v for v in play_result}
@@ -543,7 +561,7 @@ async def draw_rise_score_list(
     )
 
     if not sd and not dx:
-        raise ValueError
+        raise NotMusicRecommendationError
 
     max_count = max(len(sd), len(dx))
     total_height = max_count * 140 + 260

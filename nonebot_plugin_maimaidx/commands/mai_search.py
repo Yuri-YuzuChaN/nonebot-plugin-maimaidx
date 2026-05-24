@@ -15,7 +15,7 @@ from ..core.service import mai
 from .depend import GetUserAndAuthOrNone, process_regex
 
 search = on_regex(r"^(定数|bpm|曲师|谱师)?查歌\s?(.+)", re.IGNORECASE)
-search_alias_song = on_regex(r"(.+)是(?:什么|啥)歌[？?]?$", re.IGNORECASE)
+search_alias_song = on_regex(r"(.+)是(?:什么|啥)歌[？?]?([0-9]+)?$", re.IGNORECASE)
 query_chart = on_regex(r"^id\s?([0-9]+)$", re.IGNORECASE)
 
 
@@ -49,6 +49,7 @@ async def _(
     user: User | None = Depends(GetUserAndAuthOrNone),
 ):
     name = match.group(1).strip()
+    page = match.group(2) or 1
     error_msg = (
         f"未找到别名为「{name}」的歌曲, "
         "※ 可以使用「添加别名」指令给该乐曲添加别名"
@@ -97,22 +98,23 @@ async def _(
     # 标题
     result = mai.total_list.filter(title=name)
     if len(result) == 0:
-        await search_alias_song.finish(error_msg, reply_message=True)
+        msg = error_msg
     elif len(result) == 1:
-        await search_alias_song.finish(
-            "您要找的是不是：" + await draw_chart_info(result[0], user),
-            reply_message=True,
+        msg = "您要找的是不是：" + await draw_chart_info(result[0], user)
+    elif len(result) <= 5:
+        msg_ = (
+            f"未找到别名为「{name}」的歌曲，但找到「{len(result)}」个相似标题的曲目：\n"
         )
-    elif len(result) < 50:
-        msg = f"未找到别名为「{name}」的歌曲，但找到{len(result)}个相似标题的曲目：\n"
         for song in sorted(result, key=lambda x: int(x.song_id)):
-            msg += f"{f'「{song.song_id}」':<7} {song.song_name}\n"
-        msg += "※ 请使用「id xxxxx」查询指定曲目"
-        await search_alias_song.finish(msg.strip(), reply_message=True)
+            msg_ += f"{f'「{song.song_id}」':<7} {song.song_name}\n"
+        msg_ += "※ 请使用「id xxxxx」查询指定曲目"
+        msg = msg_
     else:
-        await search_alias_song.finish(
-            f"结果过多「{len(result)}」条，请缩小查询范围。", reply_message=True
+        msg = (
+            f"未找到别名为「{name}」的歌曲，但找到「{len(result)}」个相似标题的曲目：\n"
         )
+        msg += await draw_song_list(result, int(page))
+    await search_alias_song.finish(msg, reply_message=True)
 
 
 @query_chart.handle()

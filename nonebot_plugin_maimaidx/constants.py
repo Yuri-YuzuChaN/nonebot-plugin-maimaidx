@@ -43,6 +43,24 @@ RANK_SP = [
     "sss",
     "sssp",
 ]
+STATISTICS_KEYS = [
+    "clear",
+    "s",
+    "sp",
+    "ss",
+    "ssp",
+    "sss",
+    "sssp",
+    "sync",
+    "fc",
+    "fcp",
+    "ap",
+    "app",
+    "fs",
+    "fsp",
+    "fsd",
+    "fsdp",
+]
 RANK_PLUS = [k.replace("p", "+") for k in RANK_SP]
 RANK_MAP = {
     k: (k[:-1].upper() + "p" if k.endswith("p") else k.upper()) for k in RANK_SP

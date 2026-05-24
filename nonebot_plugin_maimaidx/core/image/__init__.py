@@ -1,3 +1,4 @@
+from .assets import AssetsImage
 from .base import ScoreBaseImage, change_column_width, coloum_width, get_char_width
 from .best50 import PlayerBest50
 from .chart import (
@@ -10,7 +11,14 @@ from .chart import (
 from .info import song_play_data
 from .score import DrawScore
 from .song import song_list
-from .table import DrawPlateTable, DrawRatingTable, PlateGridConfig, RatingGridConfig
+from .table import (
+    DrawPlateProgress,
+    DrawPlateTable,
+    DrawRatingTable,
+    PlateGridConfig,
+    PlateTable,
+    RatingGridConfig,
+)
 from .tools import (
     DrawText,
     base64_to_bytesio,
@@ -26,6 +34,7 @@ from .tools import (
 from .update_table import UpdateTable
 
 __all__ = [
+    "AssetsImage",
     "ScoreBaseImage",
     "change_column_width",
     "coloum_width",
@@ -42,7 +51,9 @@ __all__ = [
     "RatingGridConfig",
     "PlateGridConfig",
     "DrawRatingTable",
+    "PlateTable",
     "DrawPlateTable",
+    "DrawPlateProgress",
     "DrawText",
     "hex_to_rgb",
     "tricolor_gradient_prism_plus",

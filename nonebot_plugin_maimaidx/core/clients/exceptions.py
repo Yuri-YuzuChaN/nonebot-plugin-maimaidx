@@ -23,6 +23,10 @@ class MusicNotPlayError(PlayerDataError):
     """未游玩曲目"""
 
 
+class NotMusicRecommendationError(PlayerDataError):
+    """没有乐曲推荐"""
+
+
 class UserNotExistsError(PlayerDataError):
     """用户不存在"""
 

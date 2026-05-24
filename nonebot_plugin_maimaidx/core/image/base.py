@@ -5,6 +5,7 @@ from ...resources import FOTNEWRODIN, SIYUAN, TBFONT, pic_dir
 from ..merge.models import PlayedResult, Theme
 from ..service import mai
 from ..utils.calc import dx_score
+from .assets import AssetsImage
 from .tools import DrawText, song_chart
 
 
@@ -74,67 +75,13 @@ def change_column_width(s: str, len: int) -> str:
     return "".join(slist)
 
 
-class ScoreBaseImage:
-    theme = Theme.CIRCLE
-
-    _default_text_color = (124, 129, 255, 255)
-    _diff_text_color = [
-        (255, 255, 255, 255),
-        (255, 255, 255, 255),
-        (255, 255, 255, 255),
-        (255, 255, 255, 255),
-        (138, 0, 226, 255),
-    ]
-    _id_text_color = [
-        (129, 217, 85, 255),
-        (245, 189, 21, 255),
-        (255, 129, 141, 255),
-        (159, 81, 220, 255),
-        (138, 0, 226, 255),
-    ]
-    _bg_color = [
-        (111, 212, 61, 255),
-        (248, 183, 9, 255),
-        (255, 129, 141, 255),
-        (159, 81, 220, 255),
-        (219, 170, 255, 255),
-    ]
-
-    # 预存图片
-    _id_diff_im = [Image.new("RGBA", (55, 10), color) for color in _bg_color]
-    _dx_star_bg = [
-        Image.open(pic_dir / f"UI_GAM_Gauge_DXScoreIcon_0{num}.png")
-        for num in range(1, 6)
-    ]
-    _diff_bg = [
-        Image.open(pic_dir / "b50_score_basic.png"),
-        Image.open(pic_dir / "b50_score_advanced.png"),
-        Image.open(pic_dir / "b50_score_expert.png"),
-        Image.open(pic_dir / "b50_score_master.png"),
-        Image.open(pic_dir / "b50_score_remaster.png"),
-    ]
-    _rise_bg = [
-        Image.open(pic_dir / "rise_score_basic.png"),
-        Image.open(pic_dir / "rise_score_advanced.png"),
-        Image.open(pic_dir / "rise_score_expert.png"),
-        Image.open(pic_dir / "rise_score_master.png"),
-        Image.open(pic_dir / "rise_score_remaster.png"),
-    ]
-    _sl_diff_bg = Image.open(pic_dir / "sl_diff.png")
-    _sl_diff_utg = Image.open(pic_dir / "sl_diff_utg.png")
-    _card_bg = Image.open(pic_dir / "song_card.png")
-    _separator_bg = Image.open(pic_dir / "separator.png")
-    _chart_white_bg = Image.open(pic_dir / "chart_white.png")
-    _rainbow_bg = Image.open(pic_dir / "rainbow.png").convert("RGBA")
-    _rainbow_bottom_bg = Image.open(pic_dir / "rainbow_bottom.png").convert("RGBA")
-    _aurora_bg = Image.open(pic_dir / "aurora.png").convert("RGBA")
-    _shines_bg = Image.open(pic_dir / "bg_shines.png").convert("RGBA")
-    _pattern_bg = Image.open(pic_dir / "pattern.png").convert("RGBA")
-    _moon_bg = Image.open(pic_dir / "moon.png").convert("RGBA")
+class ScoreBaseImage(AssetsImage):
+    theme = Theme.PRISM_PLUS
 
     def __init__(
         self, image: Image.Image = None, theme: Theme = Theme.PRISM_PLUS
     ) -> None:
+        super().__init__()
         self._im = image
         self.theme = theme
         dr = ImageDraw.Draw(self._im)
@@ -142,10 +89,8 @@ class ScoreBaseImage:
         self._tb = DrawText(dr, TBFONT)
         self._fot = DrawText(dr, FOTNEWRODIN)
 
-        self._title_bg = Image.open(pic_dir / theme.value / "title.png")
-        self._title_lengthen_bg = Image.open(
-            pic_dir / theme.value / "title_lengthen.png"
-        )
+        self._title_bg = self._themed_image(theme, "title.png")
+        self._title_lengthen_bg = self._themed_image(theme, "title_lengthen.png")
 
     def whiledraw(self, data: list[PlayedResult], dx: bool = False, list_y: int = 0):
         gap = 114

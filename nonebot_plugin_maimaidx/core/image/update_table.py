@@ -10,7 +10,7 @@ from ...constants import DX_VERSION, LEVEL_LIST, PLATE_CN, VERSION_MAP
 from ...resources import FOTNEWRODIN, TBFONT, pic_dir, plate_table_dir, rating_table_dir
 from ..merge.models import Song
 from ..service import mai
-from .base import ScoreBaseImage
+from .assets import AssetsImage
 from .tools import (
     DrawText,
     generate_frosted_card,
@@ -19,26 +19,11 @@ from .tools import (
 )
 
 
-class UpdateTable:
-    _type_bg = {
-        "SD": Image.open(pic_dir / "SD.png").convert("RGBA"),
-        "DX": Image.open(pic_dir / "DX.png").convert("RGBA"),
-    }
-    _dx_small_bg = _type_bg["DX"].resize((44, 16))
-    _complete_bg = Image.open(pic_dir / "complete.png").convert("RGBA")
-    _id_bg = Image.open(pic_dir / "border_table_base.png")
-    _wu_rms_id_bg = Image.open(pic_dir / "border_table_remaster.png")
-    _diff_bg = [
-        Image.open(pic_dir / "border_basic.png"),
-        Image.open(pic_dir / "border_advanced.png"),
-        Image.open(pic_dir / "border_expert.png"),
-        Image.open(pic_dir / "border_master.png"),
-        Image.open(pic_dir / "border_remaster.png"),
-    ]
-
+class UpdateTable(AssetsImage):
     _font_color = (114, 188, 254, 255)
 
     def __init__(self):
+        super().__init__()
         self.level_list = LEVEL_LIST[6:]
         self.version_list = list(_ for _ in DX_VERSION.keys())[1:]
 
@@ -53,13 +38,13 @@ class UpdateTable:
             `Image.Image`
         """
         im = tricolor_gradient_prism_plus(1400, height)
-        im.alpha_composite(ScoreBaseImage._aurora_bg)
-        im.alpha_composite(ScoreBaseImage._shines_bg, (11, 6))
-        im.alpha_composite(ScoreBaseImage._rainbow_bg, (318, height - 545))
-        im.alpha_composite(ScoreBaseImage._rainbow_bottom_bg, (122, height - 305))
+        im.alpha_composite(self._aurora_bg)
+        im.alpha_composite(self._shines_bg, (11, 6))
+        im.alpha_composite(self._rainbow_bg, (318, height - 545))
+        im.alpha_composite(self._rainbow_bottom_bg, (122, height - 305))
         for h in range((height // 358) + 1):
-            im.alpha_composite(ScoreBaseImage._pattern_bg, (0, (358 + 7) * h))
-        im.alpha_composite(ScoreBaseImage._separator_bg, (100, separator_height))
+            im.alpha_composite(self._pattern_bg, (0, (358 + 7) * h))
+        im.alpha_composite(self._separator_bg, (100, separator_height))
         return im
 
     async def _save_image(self, im: Image.Image, path: Path) -> None:
@@ -109,7 +94,7 @@ class UpdateTable:
             "mm",
         )
 
-        im.alpha_composite(self._complete_bg, (251, 190))
+        im.alpha_composite(self._table_complete_bg, (251, 190))
         unknown_chart = Image.open(song_chart(0)).convert("RGBA").resize((330, 330))
         for i in range(lines * 3):
             row, col = divmod(i, 3)
@@ -117,12 +102,12 @@ class UpdateTable:
             x = 100 + col * 425
             y = 500 + row * 450
 
-            im.alpha_composite(ScoreBaseImage._chart_white_bg, (x, y))
+            im.alpha_composite(self._chart_white_bg, (x, y))
             if i < count:
                 song = lv15[i]
                 chart = Image.open(song_chart(song.song_id)).convert("RGBA")
                 im.alpha_composite(chart.resize((330, 330)), (x + 10, y + 10))
-                im.alpha_composite(self._type_bg[song.type], (x + 200, y + 345))
+                im.alpha_composite(self._table_type_bg[song.type], (x + 200, y + 345))
                 im.alpha_composite(
                     Image.open(pic_dir / f"{song.version_str}.png").resize((332, 160)),
                     (x + 9, y - 80),
@@ -130,7 +115,7 @@ class UpdateTable:
                 fot.draw(x + 100, y + 370, 35, song.song_id, self._font_color, "mm")
             else:
                 im.alpha_composite(unknown_chart, (x + 10, y + 10))
-                im.alpha_composite(self._type_bg["DX"], (x + 200, y + 345))
+                im.alpha_composite(self._table_type_bg["DX"], (x + 200, y + 345))
                 fot.draw(x + 100, y + 370, 35, "????", self._font_color, "mm")
                 fot.draw(
                     x + 175,
@@ -216,18 +201,19 @@ class UpdateTable:
                     cover = Image.open(song_chart(song.song_id)).resize((75, 75))
                     im.alpha_composite(cover, (x, y))
                     im.alpha_composite(
-                        self._diff_bg[song.difficulties.level_index], (x - 5, y - 5)
+                        self._table_diff_bg[song.difficulties.level_index],
+                        (x - 5, y - 5),
                     )
                     tb.draw(
                         x + 56,
                         y + 4,
                         13,
                         song.song_id,
-                        ScoreBaseImage._diff_text_color[song.difficulties.level_index],
+                        self._diff_text_color[song.difficulties.level_index],
                         "mm",
                     )
                     # if song.type == "DX":
-                    #     im.alpha_composite(self._dx_small_bg, (x, y))
+                    #     im.alpha_composite(self._table_dx_small_bg, (x, y))
                 start_y += (max_row + 1) * GRID_STEP + 30
 
             await self._save_image(im, rating_table_dir / f"{lv}.png")
@@ -340,9 +326,9 @@ class UpdateTable:
                 cover = song_chart(song.song_id)
                 im.alpha_composite(Image.open(cover).resize((80, 80)), (x, y))
                 if remaster_song_list is not None and song in remaster_song_list:
-                    _id_bg = self._wu_rms_id_bg
+                    _id_bg = self._table_wu_rms_id_bg
                 else:
-                    _id_bg = self._id_bg
+                    _id_bg = self._table_id_bg
                 im.alpha_composite(_id_bg, (x - 5, y - 5))
                 id_color = (255, 255, 255, 255)
                 if remaster_song_list is not None and song in remaster_song_list:

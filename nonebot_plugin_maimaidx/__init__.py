@@ -9,6 +9,7 @@ from .config import BaseConfig, dfconfig, driver, log, lxnsconfig, maiconfig
 from .core.alias_ws_push import ws_alias_server
 from .core.clients.divingfish.client import DivingFishAPI
 from .core.database.qq import create_database
+from .core.image import AssetsImage
 from .core.service import guess, mai
 from .resources import plate_table_dir, rating_table_dir
 
@@ -69,7 +70,7 @@ async def get_music():
         )
 
     if maiconfig.save_in_memory:
-        # ScoreBaseImage._load_image()
+        AssetsImage._load_image()
         log.success("已将图片保存在内存中")
 
     if not list(rating_table_dir.iterdir()):

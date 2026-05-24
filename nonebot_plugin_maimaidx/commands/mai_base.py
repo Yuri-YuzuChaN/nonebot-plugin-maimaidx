@@ -235,7 +235,7 @@ async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndA
     if rating and rating not in LEVEL_LIST:
         await rise_score.finish("无此等级", reply_message=True)
 
-    data = await draw_rise_score_list(user, None, rating, score)
+    data = await draw_rise_score_list(user, rating, score)
     await rise_score.send(data, reply_message=True)
 
 

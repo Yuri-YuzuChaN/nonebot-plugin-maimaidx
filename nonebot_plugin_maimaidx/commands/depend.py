@@ -109,10 +109,13 @@ async def process_regex(
                     ds1, ds2, page = float(ds1_raw), float(ds2_raw), int(p_raw)
                 case _:
                     await matcher.finish(
-                        "定数查歌参数格式错误，请输如: [定数] 或 [最小定数 最大定数] [页码]",
+                        (
+                            "定数查歌参数错误，请输入正确格式，页数为可选：\n"
+                            "定数查歌「定数」「页数」\n"
+                            "定数查歌「最小定数」「最大定数」「页数」\n"
+                        ),
                         reply_message=True,
                     )
-
             result = mai.total_list.filter(level_value=(ds1, ds2))
         case "bpm":
             match a_list:
@@ -128,7 +131,14 @@ async def process_regex(
                     result = mai.total_list.filter(bpm=(float(b1), float(b2)))
                     page = int(p_raw)
                 case _:
-                    await matcher.finish("BPM查歌参数错误", reply_message=True)
+                    await matcher.finish(
+                        (
+                            "bpm查歌参数错误，请输入正确格式，页数为可选：\n"
+                            "bpm查歌「bpm」「页数」\n"
+                            "bpm查歌「最小bpm」「最大bpm」「页数」\n"
+                        ),
+                        reply_message=True,
+                    )
         case "曲师" | "谱师":
             match a_list:
                 case [name]:
@@ -137,10 +147,12 @@ async def process_regex(
                     page = int(p_raw)
                 case _:
                     await matcher.finish(
-                        f"{cmd}查歌参数错误，请输入: [{cmd}名字] [页码(可选)]",
+                        (
+                            f"{cmd}查歌参数错误，请输入正确格式，页数为可选：\n"
+                            f"{cmd}查歌「{cmd}」「页数」"
+                        ),
                         reply_message=True,
                     )
-
             if cmd == "曲师":
                 result = mai.total_list.filter(artist=name)
             else:

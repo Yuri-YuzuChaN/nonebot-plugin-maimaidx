@@ -12,7 +12,11 @@ from .clients.divingfish.exceptions import (
     DivingFishUserDisabledQueryError,
     DivingFishUserNotFoundError,
 )
-from .clients.exceptions import MusicNotPlayError, UserNotExistsError
+from .clients.exceptions import (
+    MusicNotPlayError,
+    NotMusicRecommendationError,
+    UserNotExistsError,
+)
 from .clients.lxns.exceptions import (
     LXNSNotFoundError,
     LXNSOAuthError,
@@ -71,11 +75,15 @@ def handle_errors(func):
                 "使用落雪查分器请求时发生错误，请联系BOT管理员检查相关信息。"
             )
         except LXNSOAuthError:
-            return MessageSegment.text("落雪查分器授权错误，请重试或重新绑定授权。")
+            return MessageSegment.text(
+                "落雪查分器授权错误，请重试，依旧错误请重新绑定授权。"
+            )
 
         ### 其它
         except MusicNotPlayError:
-            return MessageSegment.text("您未游玩过当前曲目。")
+            return MessageSegment.text("您未游玩过曲目。")
+        except NotMusicRecommendationError:
+            return MessageSegment.text("没有乐曲推荐呢。可能是您太强了。")
         except Exception as e:
             log.error(f"发生错误: {traceback.format_exc()}")
             return MessageSegment.text(

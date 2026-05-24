@@ -3,6 +3,7 @@ from re import Match
 
 from nonebot import on_fullmatch, on_regex
 from nonebot.adapters.onebot.v11 import PrivateMessageEvent
+from nonebot.matcher import Matcher
 from nonebot.params import Depends, RegexMatched
 from nonebot.permission import SUPERUSER
 
@@ -23,10 +24,12 @@ from .depend import GetUserAndAuth
 RATING_PATTERN = r"^([0-9]+\+?)(ap|app|fc|fcp|fs|fsp|fdx|fdxp)?\s?完成表$"
 TABLE_PATTERN = (
     r"^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉舞霸熊華华爽煌星宙祭祝双宴镜彩])"
-    r"([極极将舞神者]舞?){}\s?([12])?$"
+    r"([極极将舞神者]舞?){}表?\s?([0-9]+)?$"
 )
-LEVEL_PATTERN = r"([0-9]+\+?)\s?(ap|app|fc|fcp|fs|fsp|fdx|fdxp)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?\s?(.+)?"
-LEVEL_LIST_PATTERN = r"([0-9]+\.?[0-9]?\+?)\s?分数列表\s?([0-9]+)?\s?(.+)?"
+LEVEL_PATTERN = (
+    r"([0-9]+\+?)\s?(ap|app|fc|fcp|fs|fsp|fdx|fdxp)\s?([\u4e00-\u9fa5]+)?\s?进度?$"
+)
+LEVEL_LIST_PATTERN = r"([0-9]+\.?[0-9]?\+?)\s?分数列表\s?([0-9]+)?$"
 CATEGORY_ALIAS = {
     "已完成": Category.COMPLETED,
     "未完成": Category.UNFINISHED,
@@ -39,7 +42,7 @@ update_table = on_fullmatch("更新定数表", permission=SUPERUSER)
 update_plate = on_fullmatch("更新完成表", permission=SUPERUSER)
 rating_table = on_regex(r"([0-9]+\+?)定数表")
 rating_table_pfm = on_regex(RATING_PATTERN, re.IGNORECASE)
-plate_table_pfm = on_regex(TABLE_PATTERN.format("完成表"))
+plate_table_pfm = on_regex(TABLE_PATTERN.format("完成"))
 plate_progress = on_regex(TABLE_PATTERN.format("进度"))
 level_progress = on_regex(LEVEL_PATTERN, re.IGNORECASE)
 level_score_list = on_regex(LEVEL_LIST_PATTERN)
@@ -91,30 +94,24 @@ async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndA
 
 
 @plate_table_pfm.handle()
-async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndAuth)):
+@plate_progress.handle()
+async def _(
+    matcher: Matcher,
+    match: Match[str] = RegexMatched(),
+    user: User = Depends(GetUserAndAuth),
+):
     ver = match.group(1)
     plan = match.group(2)
     page = match.group(3) or 1
     if ver in PLATE_CN:
         ver = PLATE_CN[ver]
     if f"{ver}{plan}" == "真将":
-        await plate_table_pfm.finish("真系没有真将哦。", reply_message=True)
-    pic = await draw_plate_table(user, ver, plan, page)
-    await plate_table_pfm.finish(pic, reply_message=True)
-
-
-@plate_progress.handle()
-async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndAuth)):
-    username = None
-    if not match:
-        await plate_progress.finish("输入错误，请重新确定牌子。", reply_message=True)
-    ver = match.group(1)
-    plan = match.group(2)
-    if f"{ver}{plan}" == "真将":
-        await plate_progress.finish("真系没有真将哦。", reply_message=True)
-
-    data = await draw_plate_progress(user, username, ver, plan)
-    await plate_progress.send(data, reply_message=True)
+        await matcher.finish("真系没有真将哦。", reply_message=True)
+    if isinstance(matcher, plate_table_pfm):
+        pic = await draw_plate_table(user, ver, plan, int(page))
+    else:
+        pic = await draw_plate_progress(user, ver, plan, int(page))
+    await matcher.finish(pic, reply_message=True)
 
 
 @level_progress.handle()
