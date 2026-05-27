@@ -6,7 +6,7 @@ from ..exceptions import ServerError, UnknownError
 from ..http import ApiClient
 from .models import Alias, AliasStatus, APIResult
 
-DOMAIN_NAME = "site" if maiconfig.maimaidx_alias_proxy else "moe"
+DOMAIN_NAME = "cn" if maiconfig.maimaidx_alias_proxy else "moe"
 BASE_URL = f"https://www.yuzuchan.{DOMAIN_NAME}/api/maimaidx"
 
 

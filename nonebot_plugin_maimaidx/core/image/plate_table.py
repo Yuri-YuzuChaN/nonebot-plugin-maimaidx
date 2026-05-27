@@ -3,32 +3,26 @@ from collections import defaultdict
 from PIL import Image, ImageDraw
 from pydantic import BaseModel
 
-from ...constants import (
-    ACHIEVEMENT_LIST,
-    COMBO_MAP,
-    COMBO_SP,
-    LEVEL_LIST,
-    RANK_MAP,
-    RANK_SP,
-    STATISTICS_KEYS,
-    SYNC_D_SP,
-    SYNC_MAP,
-)
+from ...constants import COMBO_MAP, COMBO_SP, DIFFS, LEVEL_LIST, SYNC_MAP
 from ...resources import (
     FOTNEWRODIN,
     TBFONT,
     pic_dir,
     plate_table_dir,
     plate_version_dir,
-    rating_table_dir,
 )
-from ..merge.models import PlayedResult, RatingTableResult, ServiceName, Song, Theme
+from ..merge.models import PlayedResult, ServiceName, Song, Theme
 from ..service import mai
 from ..utils.calc import compute_rating
 from .assets import AssetsImage
-from .tools import DrawText, image_to_base64, tricolor_gradient_prism_plus
+from .tools import (
+    DrawText,
+    generate_frosted_card,
+    image_to_base64,
+    song_chart,
+    tricolor_gradient_prism_plus,
+)
 
-PlayedResultMap = defaultdict[int, dict[int, RatingTableResult]]
 PlateResultMap = dict[str, dict[int, list[PlayedResult | None]]]
 
 
@@ -39,32 +33,22 @@ class PlateSongProgress(BaseModel):
     completed: bool
 
 
+class PlateChartProgress(BaseModel):
+    song_id: int
+    level: str
+    level_value: float
+    result: PlayedResult | None
+    qualified: bool
+
+
 class PlateProgressData(BaseModel):
     total_count: int
     remaster_count: int
     levels: dict[str, list[PlateSongProgress]]
+    difficulty_results: dict[int, list[PlateChartProgress]]
     display_levels: list[str]
     slot_counts: list[int]
     completed_count: int
-
-
-class RatingGridConfig:
-    start_x = 140
-    """作图 `x` 轴起点"""
-    start_y = 450
-    """作图 `y` 轴起点"""
-    gap = 85
-    """间距"""
-    row_count = 14
-    """`x` 轴数量"""
-    stats_first_line_x = 534
-    """统计数据第一行 `x` 轴起点"""
-    stats_first_line_y = 238
-    """统计数据第一行 `y` 轴起点"""
-    stats_second_line_x = 292
-    """统计数据第二行 `x` 轴起点"""
-    stats_second_line_y = 323
-    """统计数据第二行 `y` 轴起点"""
 
 
 class PlateGridConfig:
@@ -75,219 +59,7 @@ class PlateGridConfig:
     gap = 96
     """`x` 和 `y` 轴间距"""
     row_count = 12
-    """数量"""
-
-
-class DrawRatingTable(AssetsImage):
-    def __init__(
-        self,
-        rating: str,
-        *,
-        service: ServiceName | None = None,
-        play_result: list[PlayedResult] | None = None,
-        plan: bool = False,
-        level_text: bool = False,
-    ):
-        """
-        Params:
-            `rating`: 定数
-            `service`: 数据源
-            `play_result`: 游玩数据列表
-            `plan`: 可选，是否指定目标
-            `level_text`: 可选，是否只画定数标题，例如：`Level.13+`
-        """
-        super().__init__()
-        self.rating = rating
-        self.service = service
-        self.result = play_result
-        self.plan = plan
-        self.level_text = level_text
-
-        self._rank_cache: dict[str, Image.Image] = {}
-        self._fc_cache: dict[str, Image.Image] = {}
-
-    def _get_rank_icon(self, rate: str) -> Image.Image:
-        """按需加载并缓存图标"""
-        if rate not in self._rank_cache:
-            path = pic_dir / Theme.PRISM_PLUS.value / f"UI_TTR_Rank_{rate}.png"
-            if path.exists():
-                self._rank_cache[rate] = self._open_image(path)
-        return self._rank_cache.get(rate)
-
-    def _get_fc_icon(self, fc: str) -> Image.Image:
-        if fc not in self._fc_cache:
-            path = pic_dir / f"UI_MSS_MBase_Icon_{COMBO_MAP[fc]}.png"
-            if path.exists():
-                self._fc_cache[fc] = self._open_image(path).resize((50, 50))
-        return self._fc_cache.get(fc)
-
-    def _calc_achievements_fc(
-        self, score_list: list[float] | list[str], lvlist_num: int
-    ) -> int:
-        r = -1
-        thresholds = range(4) if self.plan else ACHIEVEMENT_LIST[-6:]
-        for _t in thresholds:
-            count = sum(1 for s in score_list if s >= _t)
-            if count == lvlist_num:
-                r += 1
-            else:
-                break
-        return r
-
-    def _process_rating_table_data(self) -> tuple[dict[str, int], PlayedResultMap]:
-        """
-        处理定数表数据
-        """
-        statistics = {k: 0 for k in STATISTICS_KEYS}
-        played_map: PlayedResultMap = defaultdict(dict)
-        rank_sp = RANK_SP[-6:]
-
-        for _d in self.result:
-            if _d.level != self.rating:
-                continue
-            played_map[_d.song_id][_d.level_index] = RatingTableResult(
-                achievements=_d.achievements, level=_d.level, fc=_d.fc
-            )
-            rate = compute_rating(
-                _d.level_value, _d.achievements, onlyrate=True
-            ).lower()
-            if _d.achievements >= 80:
-                statistics["clear"] += 1
-
-            if rate in rank_sp:
-                for r in rank_sp[: rank_sp.index(rate) + 1]:
-                    statistics[r] += 1
-
-            if _d.fc and _d.fc.value in COMBO_SP:
-                for f in COMBO_SP[: COMBO_SP.index(_d.fc.value) + 1]:
-                    statistics[f] += 1
-
-            if _d.fs:
-                if _d.fs.value == "sync":
-                    statistics["sync"] += 1
-                elif _d.fs.value in SYNC_D_SP:
-                    for s in SYNC_D_SP[: SYNC_D_SP.index(_d.fs.value) + 1]:
-                        statistics[s] += 1
-
-        return statistics, played_map
-
-    def draw(self) -> str:
-        """
-        绘制定数表
-
-        Returns:
-            `base64 str`
-        """
-        im = Image.open(rating_table_dir / f"{self.rating}.png").convert("RGBA")
-        dr = ImageDraw.Draw(im)
-        tb = DrawText(dr, TBFONT)
-        fot = DrawText(dr, FOTNEWRODIN)
-
-        font_color = (114, 188, 254, 255)
-
-        if self.level_text:
-            fot.draw(495, 220, 70, "Level.", font_color, "ld", 8, (255, 255, 255, 255))
-            fot.draw(
-                750, 220, 100, self.rating, font_color, "ld", 8, (255, 255, 255, 255)
-            )
-            return image_to_base64(im)
-
-        fot.draw(495, 160, 70, "Level.", font_color, "ld", 8, (255, 255, 255, 255))
-        fot.draw(750, 160, 100, self.rating, font_color, "ld", 8, (255, 255, 255, 255))
-
-        statistics, played_map = self._process_rating_table_data()
-
-        lv_data = mai.total_level_data.get(self.rating)
-        total_songs_count = sum(len(v) for v in lv_data.values())
-        achievements_or_fc_list: list[float | int] = []
-
-        im.alpha_composite(self._table_complete_bg, (251, 190))
-
-        tb.draw(
-            394,
-            RatingGridConfig.stats_first_line_y,
-            30,
-            f"{statistics['clear']}/{total_songs_count}",
-            self._default_text_color,
-            "mm",
-            5,
-            (255, 255, 255, 255),
-        )
-
-        for n, key in enumerate(STATISTICS_KEYS[1:]):
-            if n < 6:
-                col = n % 6
-                x = RatingGridConfig.stats_first_line_x + col * 102
-                y = RatingGridConfig.stats_first_line_y
-            else:
-                col = (n - 6) % 9
-                x = RatingGridConfig.stats_second_line_x + col * 102
-                y = RatingGridConfig.stats_second_line_y
-            tb.draw(
-                x,
-                y,
-                30,
-                statistics[key],
-                self._default_text_color,
-                "mm",
-                2,
-                (255, 255, 255, 255),
-            )
-
-        current_y = RatingGridConfig.start_y
-        for ra, songs in lv_data.items():
-            for num, song in enumerate(lv_data[ra]):
-                row, col = divmod(num, RatingGridConfig.row_count)
-                x = RatingGridConfig.start_x + col * RatingGridConfig.gap
-                y = current_y + row * RatingGridConfig.gap
-
-                _record = played_map.get(song.song_id)
-                if _record is None:
-                    continue
-
-                record = _record.get(song.difficulties.level_index)
-                if record is None:
-                    continue
-
-                if not self.plan:
-                    achievements_or_fc_list.append(record.achievements)
-                    bg = (
-                        self._rating_complete_bg
-                        if record.achievements >= 100
-                        else self._rating_unfinished_bg
-                    )
-                    im.alpha_composite(bg, (x + 1, y + 1))
-
-                    rate = compute_rating(
-                        song.difficulties.level_value,
-                        record.achievements,
-                        onlyrate=True,
-                    )
-                    im.alpha_composite(
-                        self._get_rank_icon(rate).resize((78, 35)), (x, y + 20)
-                    )
-                    continue
-
-                if record.fc:
-                    achievements_or_fc_list.append(COMBO_SP.index(record.fc))
-                    im.alpha_composite(self._rating_complete_bg, (x + 1, y + 1))
-                    im.alpha_composite(self._get_fc_icon(record.fc), (x + 15, y + 13))
-
-            group_rows = (len(songs) - 1) // RatingGridConfig.row_count + 1
-            current_y += group_rows * RatingGridConfig.gap + 30
-
-        if len(achievements_or_fc_list) == total_songs_count:
-            r = self._calc_achievements_fc(achievements_or_fc_list, total_songs_count)
-            if r != -1:
-                pic = COMBO_MAP[COMBO_SP[r]] if self.plan else RANK_MAP[RANK_SP[-6:][r]]
-                im.alpha_composite(
-                    Image.open(pic_dir / f"UI_MSS_Allclear_Icon_{pic}.png"), (40, 40)
-                )
-
-        final_im = im.resize(
-            (int(im.size[0] * 0.8), int(im.size[1] * 0.8)), Image.Resampling.LANCZOS
-        )
-        return image_to_base64(final_im)
+    """每行数量"""
 
 
 class PlateTable(AssetsImage):
@@ -335,7 +107,7 @@ class PlateTable(AssetsImage):
         self.is_wu = version in ["舞", "霸"]
 
         if self.is_wu:
-            self.plate_name = f"{version}-{page}"
+            self.plate_name = f"舞-{page}"
             self.slot_num = 5
         else:
             self.plate_name = version
@@ -359,7 +131,9 @@ class PlateTable(AssetsImage):
             return val >= 80
         return val in cfg["values"]
 
-    def _process_plate_table_data(self) -> tuple[int, PlateResultMap]:
+    def _process_plate_table_data(
+        self,
+    ) -> tuple[int, PlateResultMap, dict[int, Song]]:
         """
         处理牌子表数据
         """
@@ -386,9 +160,15 @@ class PlateTable(AssetsImage):
             target_level = song_id_to_level[_d.song_id]
             played_map[target_level][_d.song_id][_d.level_index] = _d
 
-        return len(plate_id_list), played_map
+        return (
+            len(plate_id_list),
+            played_map,
+            {song.song_id: song for song in song_list},
+        )
 
-    def _process_plate_table_wu_data(self) -> tuple[int, int, PlateResultMap]:
+    def _process_plate_table_wu_data(
+        self,
+    ) -> tuple[int, int, PlateResultMap, dict[int, Song]]:
         """
         处理牌子 `舞` 和 `霸者` 的数据
         """
@@ -440,7 +220,12 @@ class PlateTable(AssetsImage):
                 if _d.level_index < len(current_slots):
                     current_slots[_d.level_index] = _d
 
-        return len(wu_id_list), len(wu_re_id_set), played_map
+        return (
+            len(wu_id_list),
+            len(wu_re_id_set),
+            played_map,
+            {song.song_id: song for song in wu_song_list},
+        )
 
     def process(self) -> PlateProgressData:
         """
@@ -448,7 +233,7 @@ class PlateTable(AssetsImage):
         """
         plate_wu_total_count = 0
         if self.is_wu:
-            plate_total_count, plate_wu_total_count, played_map = (
+            plate_total_count, plate_wu_total_count, played_map, songs_by_id = (
                 self._process_plate_table_wu_data()
             )
 
@@ -459,10 +244,14 @@ class PlateTable(AssetsImage):
             else:
                 display_levels = keys[idx:]
         else:
-            plate_total_count, played_map = self._process_plate_table_data()
+            plate_total_count, played_map, songs_by_id = (
+                self._process_plate_table_data()
+            )
             display_levels = list(played_map.keys())
 
-        slot_songs = [set() for _ in range(self.slot_num)]
+        difficulty_results: dict[int, list[PlateChartProgress]] = {
+            index: [] for index in range(self.slot_num)
+        }
         finished_songs: set[int] = set()
         levels: dict[str, list[PlateSongProgress]] = {}
         for level, songs_dict in played_map.items():
@@ -473,14 +262,19 @@ class PlateTable(AssetsImage):
                     for idx, play in enumerate(results)
                     if self._is_qualified(play, self.plan)
                 ]
-                for slot in qualified_slots:
-                    slot_songs[slot].add(song_id)
+                for slot, result in enumerate(results):
+                    chart = songs_by_id[song_id].difficulties[slot]
+                    difficulty_results[slot].append(
+                        PlateChartProgress(
+                            song_id=song_id,
+                            level=chart.level,
+                            level_value=chart.level_value,
+                            result=result,
+                            qualified=slot in qualified_slots,
+                        )
+                    )
 
-                has_any_play = any(play is not None for play in results)
-                completed = has_any_play and all(
-                    play is None or idx in qualified_slots
-                    for idx, play in enumerate(results)
-                )
+                completed = len(qualified_slots) == len(results)
                 if completed:
                     finished_songs.add(song_id)
 
@@ -494,12 +288,19 @@ class PlateTable(AssetsImage):
                 )
             levels[level] = level_progress
 
+        for charts in difficulty_results.values():
+            charts.sort(key=lambda chart: chart.level_value, reverse=True)
+
         return PlateProgressData(
             total_count=plate_total_count,
             remaster_count=plate_wu_total_count,
             levels=levels,
+            difficulty_results=difficulty_results,
             display_levels=display_levels,
-            slot_counts=[len(songs) for songs in slot_songs],
+            slot_counts=[
+                sum(chart.qualified for chart in difficulty_results[index])
+                for index in range(self.slot_num)
+            ],
             completed_count=len(finished_songs),
         )
 
@@ -542,7 +343,7 @@ class DrawPlateTable(PlateTable):
         return self._open_image(path).resize((60, 60))
 
     def draw(self) -> str:
-        """绘制逐曲完成表。"""
+        """绘制牌子完成表。"""
         data = self.process()
         im = Image.open(plate_table_dir / f"{self.plate_name}.png")
         draw = ImageDraw.Draw(im)
@@ -685,7 +486,25 @@ class DrawPlateTable(PlateTable):
 
 
 class DrawPlateProgress(PlateTable):
-    """绘制按等级聚合的牌子进度图。"""
+    def _generate_bg(self, height: int, separator_height: int) -> Image.Image:
+        """
+        生成背景
+
+        Params:
+            `height`: 背景高度
+            `separator_height`: 分割线高度
+        Returns:
+            `Image.Image`
+        """
+        im = tricolor_gradient_prism_plus(1400, height)
+        im.alpha_composite(self._aurora_bg)
+        im.alpha_composite(self._shines_bg, (11, 6))
+        im.alpha_composite(self._rainbow_bg, (318, height - 545))
+        im.alpha_composite(self._rainbow_bottom_bg, (122, height - 305))
+        for h in range((height // 358) + 1):
+            im.alpha_composite(self._pattern_bg, (0, (358 + 7) * h))
+        im.alpha_composite(self._separator_bg, (100, separator_height))
+        return im
 
     def _draw_bar(
         self,
@@ -694,7 +513,6 @@ class DrawPlateProgress(PlateTable):
         progress: float,
         fill: tuple[int, int, int, int],
     ) -> None:
-        draw.rounded_rectangle(box, radius=15, fill=(255, 255, 255, 180))
         if progress:
             left, top, right, bottom = box
             width = max(30, int((right - left) * progress))
@@ -703,67 +521,157 @@ class DrawPlateProgress(PlateTable):
             )
 
     def draw(self) -> str:
+        """绘制牌子进度表。"""
         data = self.process()
-        height = max(650, 440 + len(data.levels) * 58)
-        im = tricolor_gradient_prism_plus(1400, height)
+        results = {
+            index: [
+                chart for chart in data.difficulty_results[index] if not chart.qualified
+            ]
+            for index in reversed(data.difficulty_results)
+        }
+        unfinished_counts = [
+            len(charts) for charts in reversed(data.difficulty_results.values())
+        ]
+
+        current_y = 395
+        for count in unfinished_counts:
+            rows, cols = divmod(count, 13)
+            if rows > 4:
+                row = 4
+            elif cols == 1:
+                row = rows + cols
+            else:
+                row = rows
+            current_y += row * PlateGridConfig.gap + 100
+
+        height = current_y + 180
+        _im = self._generate_bg(height, 305)
+        im = generate_frosted_card(_im, (50, 349, 1350, current_y))
+
+        im.alpha_composite(self._plate_progress_2, (175, 20))
+        im.alpha_composite(self._plate_background().resize((1000, 161)), (200, 35))
+
         draw = ImageDraw.Draw(im)
         fot = DrawText(draw, FOTNEWRODIN)
         tb = DrawText(draw, TBFONT)
 
-        im.alpha_composite(self._plate_background().resize((1000, 161)), (200, 35))
+        START_X = 84
+        START_Y = 455
+        complete_sum = data.completed_count
 
-        total_progress = data.completed_count / data.total_count
-        fot.draw(175, 222, 30, "TOTAL PROGRESS", self._default_text_color, "lm")
+        end = None if len(data.slot_counts) == 5 else -1
+        new_slot_counts = data.slot_counts[::-1]
+        new_color = self._id_text_color[:end][::-1]
+        new_diffs = DIFFS[:end][::-1]
+        for n, result in enumerate(results.values()):
+            im.alpha_composite(self._plate_progress_bottom_bg, (198, START_Y - 85))
+
+            # 进度条
+            complete_sum_group = new_slot_counts[n]
+            plate_count = unfinished_counts[n]
+            progress_group = complete_sum_group / plate_count
+            if progress_group != 0:
+                _bar = self._plate_progress_big.crop(
+                    (0, 0, int(993 * progress_group), 92)
+                )
+                im.alpha_composite(_bar, (204, START_Y - 79))
+            if complete_sum == plate_count:
+                fot.draw(
+                    700,
+                    START_Y - 57,
+                    24,
+                    "COMPLETED!!!",
+                    new_color[n],
+                    "mm",
+                    4,
+                    (255, 255, 255, 255),
+                )
+            fot.draw(
+                220,
+                START_Y - 57,
+                34,
+                new_diffs[n],
+                new_color[n],
+                "lm",
+                4,
+                (255, 255, 255, 255),
+            )
+            fot.draw(
+                700,
+                START_Y - 57,
+                36,
+                f"{complete_sum_group}/{plate_count}",
+                new_color[n],
+                "mm",
+                4,
+                (255, 255, 255, 255),
+            )
+            fot.draw(
+                1190,
+                START_Y - 57,
+                20,
+                f"{round(progress_group * 100, 2)}%",
+                new_color[n],
+                "rm",
+                2,
+                (255, 255, 255, 255),
+            )
+
+            # 曲绘
+            max_row = 0
+            for num, song in enumerate(result):
+                row, col = divmod(num, 13)
+                max_row = max(max_row, row)
+                x = START_X + col * PlateGridConfig.gap
+                y = START_Y + row * PlateGridConfig.gap
+
+                if num >= 51 and len(result[num:]) != 1:
+                    fot.draw(
+                        x,
+                        y + 35,
+                        20,
+                        f"余「{len(result[num:])}」\n个未完成",
+                        self._default_text_color,
+                        "lm",
+                        multiline=True,
+                    )
+                    break
+                cover = song_chart(song.song_id)
+                im.alpha_composite(Image.open(cover).resize((80, 80)), (x, y))
+                im.alpha_composite(self._table_id_bg, (x - 5, y - 5))
+                tb.draw(x + 56, y + 4, 16, song.song_id, anchor="mm")
+            START_Y += (max_row + 1) * PlateGridConfig.gap + 100
+
+        complete_sum = data.completed_count
+        if complete_sum == data.total_count:
+            text = "COMPLETED!!!"
+        else:
+            text = f"{complete_sum}/{data.total_count}"
+
+        progress = complete_sum / data.total_count
+        if progress != 0:
+            bar = self._plate_progress_big.crop((0, 0, int(993 * progress), 92))
+            im.alpha_composite(bar, (204, 219))
+
         fot.draw(
-            1225,
-            222,
+            700,
+            240,
             30,
-            f"{data.completed_count}/{data.total_count}  {total_progress:.2%}",
+            text,
+            self._default_text_color,
+            "mm",
+            3,
+            (255, 255, 255, 255),
+        )
+        fot.draw(
+            1190,
+            240,
+            30,
+            f"{round(progress * 100, 2)}%",
             self._default_text_color,
             "rm",
+            3,
+            (255, 255, 255, 255),
         )
-        self._draw_bar(
-            draw, (175, 252, 1225, 286), total_progress, (100, 193, 255, 255)
-        )
-
-        slot_width = 232 if self.slot_num == 4 else 180
-        slot_gap = 18
-        start_x = (
-            1400 - (slot_width * self.slot_num + slot_gap * (self.slot_num - 1))
-        ) // 2
-        for index, count in enumerate(data.slot_counts):
-            total = data.remaster_count if index == 4 else data.total_count
-            progress = count / total if total else 0
-            x = start_x + index * (slot_width + slot_gap)
-            tb.draw(
-                x,
-                315,
-                22,
-                f"{count}/{total}",
-                self._id_text_color[index],
-                "lt",
-            )
-            self._draw_bar(
-                draw,
-                (x, 349, x + slot_width, 373),
-                progress,
-                self._id_text_color[index],
-            )
-
-        start_y = 422
-        for index, (level, songs) in enumerate(data.levels.items()):
-            complete_count = sum(song.completed for song in songs)
-            progress = complete_count / len(songs)
-            y = start_y + index * 58
-            tb.draw(175, y + 16, 26, level, self._default_text_color, "lm")
-            self._draw_bar(draw, (275, y, 1050, y + 32), progress, (100, 193, 255, 255))
-            tb.draw(
-                1225,
-                y + 16,
-                22,
-                f"{complete_count}/{len(songs)}  {progress:.2%}",
-                self._default_text_color,
-                "rm",
-            )
 
         return image_to_base64(im)

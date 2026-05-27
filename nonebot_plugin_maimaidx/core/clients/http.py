@@ -55,13 +55,14 @@ async def qqlogo(qqid: int | None = None, icon: str | None = None) -> bytes | No
     return res.content
 
 
-async def lxns_assets(endpoint: str) -> BytesIO | None:
+async def online_assets(endpoint: str) -> BytesIO | None:
     """获取 LXNS 资源文件"""
     try:
-        session = httpx.AsyncClient(timeout=30)
-        url = f"https://assets2.lxns.net/maimai{endpoint}"
-        resp = await session.get(url)
-        resp.raise_for_status()
-        return BytesIO(resp.content)
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(
+                f"https://www.yuzuchan.moe/assets/maimaidx{endpoint}"
+            )
+            resp.raise_for_status()
+            return BytesIO(resp.content)
     except Exception:
         return None

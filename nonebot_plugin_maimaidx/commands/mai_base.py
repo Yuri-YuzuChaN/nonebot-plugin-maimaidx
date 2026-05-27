@@ -138,7 +138,7 @@ async def _(message: Message = CommandArg(), user: User = Depends(GetOrCreateUse
         )
 
     await update_user(user.qqid, service=source_)
-    await source.send(f"主题已切换为：「{source_.value}」", reply_message=True)
+    await source.send(f"数据源已切换为：「{source_.value}」", reply_message=True)
 
 
 @theme.handle()

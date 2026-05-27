@@ -6,7 +6,7 @@ from PIL import Image
 
 from ...config import maiconfig
 from ...resources import pic_dir, plate_version_dir, shougou_dir, static
-from ..clients.http import lxns_assets, qqlogo
+from ..clients.http import online_assets, qqlogo
 from ..clients.lxns.models.collection import Collection
 from ..database.qq import User
 from ..merge.models import Best50, Player, Theme
@@ -85,7 +85,7 @@ class PlayerBest50(ScoreBaseImage):
     async def _fetch_image(self, type: str, file_name: str) -> BytesIO | Path | None:
         if not maiconfig.assets_online:
             return static / "mai" / type / f"UI_{type.capitalize()}_{file_name}.png"
-        return await lxns_assets(f"/{type}/{file_name}.png")
+        return await online_assets(f"/{type}/{file_name}.png")
 
     async def draw(self) -> str:
         """

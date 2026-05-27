@@ -41,6 +41,8 @@ class AssetsImage:
     _diff_bg: list[Image.Image] = []
     _rise_bg: list[Image.Image] = []
     _diff_pg_bg: list[Image.Image] = []
+
+    # 定数表、完成表图
     _table_type_bg: dict[str, Image.Image] = {}
     _table_dx_small_bg: Image.Image | None = None
     _table_complete_bg: Image.Image | None = None
@@ -48,8 +50,10 @@ class AssetsImage:
     _rating_complete_bg: Image.Image | None = None
     _plate_finished_bg: list[Image.Image] = []
     _plate_complete_bg: Image.Image | None = None
+    _plate_progress_bottom_bg: Image.Image | None = None
     _plate_progress_big: Image.Image | None = None
     _plate_progress_bg: Image.Image | None = None
+    _plate_progress_2: Image.Image | None = None
     _plate_progress_wu_bg: Image.Image | None = None
     _plate_progress_small: Image.Image | None = None
     _plate_progress_small_wu: Image.Image | None = None
@@ -58,9 +62,13 @@ class AssetsImage:
     _table_diff_bg: list[Image.Image] = []
     _separator_bg: Image.Image | None = None
     _chart_white_bg: Image.Image | None = None
+
+    # 曲目列表
     _sl_diff_bg: Image.Image | None = None
     _sl_diff_utg: Image.Image | None = None
     _card_bg: Image.Image | None = None
+
+    # 背景图
     _rainbow_bg: Image.Image | None = None
     _rainbow_bottom_bg: Image.Image | None = None
     _aurora_bg: Image.Image | None = None
@@ -124,8 +132,10 @@ class AssetsImage:
                 cls._open_image(pic_dir / f"t_{index}.png") for index in range(5)
             ],
             "_plate_complete_bg": cls._open_image(pic_dir / "complete_2.png"),
+            "_plate_progress_bottom_bg": cls._open_image(pic_dir / "progress_bg.png"),
             "_plate_progress_big": cls._open_image(pic_dir / "progress_big.png"),
             "_plate_progress_bg": cls._open_image(pic_dir / "plate_progress.png"),
+            "_plate_progress_2": cls._open_image(pic_dir / "plate_progress_2.png"),
             "_plate_progress_wu_bg": cls._open_image(pic_dir / "plate_progress_wu.png"),
             "_plate_progress_small": cls._open_image(pic_dir / "progress_small.png"),
             "_plate_progress_small_wu": cls._open_image(

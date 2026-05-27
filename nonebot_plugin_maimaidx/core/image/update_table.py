@@ -173,7 +173,7 @@ class UpdateTable(AssetsImage):
                 "mm",
             )
 
-            start_y = 450  # 曲绘起始y轴坐标
+            START_Y = 450  # 曲绘起始y轴坐标
             for ds, songs in lvlist.items():
                 if not songs:
                     continue
@@ -181,7 +181,7 @@ class UpdateTable(AssetsImage):
                 _ds = ds.split(".")[-1]
                 fot.draw(
                     70,
-                    start_y + 35,
+                    START_Y + 35,
                     40,
                     f".{_ds}",
                     self._font_color,
@@ -196,7 +196,7 @@ class UpdateTable(AssetsImage):
                     max_row = max(max_row, row)
 
                     x = START_X + col * GRID_STEP
-                    y = start_y + row * GRID_STEP
+                    y = START_Y + row * GRID_STEP
 
                     cover = Image.open(song_chart(song.song_id)).resize((75, 75))
                     im.alpha_composite(cover, (x, y))
@@ -212,9 +212,7 @@ class UpdateTable(AssetsImage):
                         self._diff_text_color[song.difficulties.level_index],
                         "mm",
                     )
-                    # if song.type == "DX":
-                    #     im.alpha_composite(self._table_dx_small_bg, (x, y))
-                start_y += (max_row + 1) * GRID_STEP + 30
+                START_Y += (max_row + 1) * GRID_STEP + 30
 
             await self._save_image(im, rating_table_dir / f"{lv}.png")
             log.info(f"lv.{lv} 定数表更新完成，耗时：{time.time() - single_time:.3f}s")
@@ -292,7 +290,7 @@ class UpdateTable(AssetsImage):
             "mm",
         )
 
-        start_y = 490  # 曲绘起始y轴坐标
+        START_Y = 490  # 曲绘起始y轴坐标
         for ds, songs in level_dict.items():
             if not songs:
                 continue
@@ -306,7 +304,7 @@ class UpdateTable(AssetsImage):
             songs.sort(key=get_ds_sort_key, reverse=True)
             fot.draw(
                 72,
-                start_y + 40,
+                START_Y + 40,
                 40,
                 ds,
                 self._font_color,
@@ -321,7 +319,7 @@ class UpdateTable(AssetsImage):
                 max_row = max(max_row, row)
 
                 x = START_X + col * GRID_STEP
-                y = start_y + row * GRID_STEP
+                y = START_Y + row * GRID_STEP
 
                 cover = song_chart(song.song_id)
                 im.alpha_composite(Image.open(cover).resize((80, 80)), (x, y))
@@ -334,7 +332,7 @@ class UpdateTable(AssetsImage):
                 if remaster_song_list is not None and song in remaster_song_list:
                     id_color = (138, 0, 226, 255)
                 tb.draw(x + 56, y + 4, 16, song.song_id, id_color, "mm")
-            start_y += (max_row + 1) * GRID_STEP + 30
+            START_Y += (max_row + 1) * GRID_STEP + 30
         return im
 
     async def update_wu_plate_table(self):

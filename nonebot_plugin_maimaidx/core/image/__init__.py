@@ -9,16 +9,10 @@ from .chart import (
     song_global_data,
 )
 from .info import song_play_data
+from .plate_table import DrawPlateProgress, DrawPlateTable
+from .rating_table import DrawRatingTable
 from .score import DrawScore
 from .song import song_list
-from .table import (
-    DrawPlateProgress,
-    DrawPlateTable,
-    DrawRatingTable,
-    PlateGridConfig,
-    PlateTable,
-    RatingGridConfig,
-)
 from .tools import (
     DrawText,
     base64_to_bytesio,
@@ -48,10 +42,7 @@ __all__ = [
     "song_chart_info",
     "song_play_data",
     "DrawScore",
-    "RatingGridConfig",
-    "PlateGridConfig",
     "DrawRatingTable",
-    "PlateTable",
     "DrawPlateTable",
     "DrawPlateProgress",
     "DrawText",
