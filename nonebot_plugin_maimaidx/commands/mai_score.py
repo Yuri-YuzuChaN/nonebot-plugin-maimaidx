@@ -143,7 +143,7 @@ async def _(message: Message = CommandArg()):
             tap = int(chart.notes.tap)
             slide = int(chart.notes.slide)
             hold = int(chart.notes.hold)
-            touch = int(chart.notes.touch) if len(chart.notes) == 5 else 0
+            touch = int(chart.notes.touch)
             brk = int(chart.notes.brk)
             total_score = (
                 tap * 500 + slide * 1500 + hold * 1000 + touch * 500 + brk * 2500

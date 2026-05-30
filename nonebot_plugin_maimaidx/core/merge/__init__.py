@@ -157,9 +157,9 @@ async def merge_alias_data(
     song_name_map: dict[int, str] = {}
 
     for item in yuzu_aliases:
-        alias_map.setdefault(item.SongID, set()).update(item.Alias)
-        if item.Name:
-            song_name_map.setdefault(item.SongID, item.Name)
+        alias_map.setdefault(item.song_id, set()).update(item.alias)
+        if item.name:
+            song_name_map.setdefault(item.song_id, item.name)
 
     if lxns_aliases is not None:
         for item in lxns_aliases.aliases:

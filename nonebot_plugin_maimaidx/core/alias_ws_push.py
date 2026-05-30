@@ -19,42 +19,42 @@ from ..core.service import alias, mai
 
 async def push_alias(push: PushAliasStatus):
     bot: Bot = get_bot()
-    song_id = push.Status.SongID
-    alias_name = push.Status.ApplyAlias
+    song_id = push.status.song_id
+    alias_name = push.status.apply_alias
     song = mai.total_list.by_id(song_id)
 
-    if push.Type == "Approved":
+    if push.type == "Approved":
         message = (
-            MessageSegment.at(push.Status.ApplyUID)
+            MessageSegment.at(push.status.apply_uid)
             + "\n"
             + dedent(f"""\
             您申请的别名已通过审核
             =================
-            {push.Status.Tag}：
+            {push.status.tag}：
             ID：{song_id}
-            标题：{push.Status.Name}
+            标题：{push.status.name}
             别名：{alias_name}
             =================
-            请使用指令「同意别名 {push.Status.Tag}」进行投票
+            请使用指令「同意别名 {push.status.tag}」进行投票
         """).strip()
             + await draw_chart_info(song)
         )
-        await bot.send_group_msg(group_id=push.Status.GroupID, message=message)
+        await bot.send_group_msg(group_id=push.status.group_id, message=message)
         return
-    if push.Type == "Reject":
+    if push.type == "Reject":
         message = (
-            MessageSegment.at(push.Status.ApplyUID)
+            MessageSegment.at(push.status.apply_uid)
             + "\n"
             + dedent(f"""\
             您申请的别名被拒绝
             =================
             ID：{song_id}
-            标题：{push.Status.Name}
+            标题：{push.status.name}
             别名：{alias_name}
         """).strip()
             + await draw_chart_info(song)
         )
-        await bot.send_group_msg(group_id=push.Status.GroupID, message=message)
+        await bot.send_group_msg(group_id=push.status.group_id, message=message)
         return
 
     if not maiconfig.maimaidx_alias_push:
@@ -67,7 +67,7 @@ async def push_alias(push: PushAliasStatus):
         message = dedent(f"""\
             检测到新的别名申请
             =================
-            {push.Status.Tag}：
+            {push.status.tag}：
             ID：{song_id}
             标题：{song.song_name}
             别名：{alias_name}

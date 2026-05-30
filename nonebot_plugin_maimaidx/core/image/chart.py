@@ -388,7 +388,3 @@ def song_chart_banquet_info(song: Song) -> str:
     )
 
     return image_to_base64(im)
-
-
-def song_chart_list(song: list[Song]):
-    pass

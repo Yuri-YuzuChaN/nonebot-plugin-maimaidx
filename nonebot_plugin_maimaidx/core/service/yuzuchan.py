@@ -1,8 +1,5 @@
-import asyncio
-
 from ...config import log
 from ...resources import alias_file, plate_file
-from ..clients.exceptions import ServerError
 from ..clients.yuzuchan.client import YuzuChaNAPI
 from ..clients.yuzuchan.models import Alias
 from ..tool import openfile, writefile
@@ -24,17 +21,9 @@ async def get_music_alias_list() -> list[Alias]:
     alias_data: list[dict[str, int | str | list[str]]] = []
     try:
         api = YuzuChaNAPI()
-        alias_data = await api.get_alias()
+        data = await api.get_aliases()
+        alias_data = [a.model_dump() for a in data]
         await writefile(alias_file, alias_data)
-    except asyncio.exceptions.TimeoutError:
-        log.error("获取别名超时，已切换至本地暂存文件")
-        alias_data = await openfile(alias_file)
-        if not alias_data:
-            log.error(alias_error)
-            raise ValueError
-    except ServerError as e:
-        log.error(str(e) + "。已切换至本地暂存文件")
-        alias_data = await openfile(alias_file)
     except Exception:
         log.error("获取所有曲目别名信息错误，请检查网络环境。已切换至本地暂存文件")
         alias_data = await openfile(alias_file)
@@ -50,15 +39,6 @@ async def get_plate_data() -> dict[str, list[int]]:
     try:
         plate_data = await api.get_plate_json()
         await writefile(plate_file, plate_data)
-    except asyncio.exceptions.TimeoutError:
-        log.error("获取牌子数据超时，已切换至本地暂存文件")
-        plate_data = await openfile(plate_file)
-        if not plate_data:
-            log.error(plate_error)
-            raise ValueError
-    except ServerError as e:
-        log.error(str(e) + "。已切换至本地暂存文件")
-        plate_data = await openfile(plate_file)
     except Exception:
         log.error("获取牌子数据错误，请检查网络环境。已切换至本地暂存文件")
         plate_data = await openfile(plate_file)

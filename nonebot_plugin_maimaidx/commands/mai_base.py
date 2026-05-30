@@ -174,7 +174,7 @@ async def _(user: User = Depends(GetOrCreateUser)):
             + f"{maiconfig.bot_name} Bot提醒您：打机时不要大力拍打或滑动哦\n今日推荐歌曲："
             + f"ID.{song.song_id} - {song.song_name}"
         )
-        + MessageSegment.image(song_chart(song.song_id))
+        + MessageSegment.image(image_to_base64(Image.open(song_chart(song.song_id))))
         + MessageSegment.text(ds)
     )
     await portune.send(result, reply_message=True)

@@ -1,5 +1,3 @@
-from typing import Literal
-
 from loguru import logger as log  # noqa: F401
 from nonebot import get_driver, get_plugin_config
 from pydantic import BaseModel
@@ -8,7 +6,6 @@ driver = get_driver()
 
 
 class BaseConfig(BaseModel):
-    priority_data_source: Literal["Lxns-Network", "Diving-Fish"]
     maimaidx_path: str
     maimaidx_alias_proxy: bool = False
     maimaidx_alias_push: bool = True

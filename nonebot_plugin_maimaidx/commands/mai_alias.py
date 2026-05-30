@@ -18,7 +18,6 @@ from nonebot.permission import SUPERUSER
 
 from ..config import log
 from ..constants import SONGS_PER_PAGE
-from ..core.clients.exceptions import ServerError
 from ..core.clients.yuzuchan.client import YuzuChaNAPI
 from ..core.clients.yuzuchan.models import Alias
 from ..core.image.tools import text_to_bytes_io
@@ -63,14 +62,17 @@ async def _(event: GroupMessageEvent, message: Message = CommandArg()):
             await alias_apply.finish(f"未找到ID「{song_id}」的曲目", reply_message=True)
 
         api = YuzuChaNAPI()
-        isexist = await api.get_songs_alias(song_id)
-        if isinstance(isexist, Alias) and alias_name.lower() in isexist.Alias:
+        isexist = await api.get_aliases(song_id=song_id)
+        if isinstance(isexist, Alias) and alias_name.lower() in isexist.alias:
             await alias_apply.finish(
                 f"该曲目的别名「{alias_name}」已存在别名服务器", reply_message=True
             )
 
-        msg = await api.post_alias(song_id, alias_name, event.user_id, event.group_id)
-    except (ServerError, ValueError) as e:
+        result = await api.post_alias(
+            song_id, alias_name, event.user_id, event.group_id
+        )
+        msg = result.message
+    except Exception as e:
         log.error(traceback.format_exc())
         msg = str(e)
     await alias_apply.finish(msg, reply_message=True)
@@ -82,7 +84,7 @@ async def _(event: GroupMessageEvent, message: Message = CommandArg()):
         tag = message.extract_plain_text().strip().upper()
         api = YuzuChaNAPI()
         status = await api.post_agree_user(tag, event.user_id)
-        await alias_agree.finish(status, reply_message=True)
+        await alias_agree.finish(status.message, reply_message=True)
     except ValueError as e:
         await alias_agree.finish(str(e), reply_message=True)
 
@@ -92,7 +94,7 @@ async def _(message: Message = CommandArg()):
     try:
         args = message.extract_plain_text().strip()
         api = YuzuChaNAPI()
-        status = await api.get_alias_status()
+        status = await api.get_status()
         if not status:
             await alias_status.finish("未查询到正在进行的别名投票", reply_message=True)
 
@@ -100,20 +102,20 @@ async def _(message: Message = CommandArg()):
         result = []
         for num, _s in enumerate(status):
             if (page - 1) * SONGS_PER_PAGE <= num < page * SONGS_PER_PAGE:
-                apply_alias = _s.ApplyAlias
-                if len(_s.ApplyAlias) > 15:
-                    apply_alias = _s.ApplyAlias[:15] + "..."
+                apply_alias = _s.apply_alias
+                if len(_s.apply_alias) > 15:
+                    apply_alias = _s.apply_alias[:15] + "..."
                 result.append(
                     dedent(f"""\
-                        - {_s.Tag}：
-                        - ID：{_s.SongID}
+                        - {_s.tag}：
+                        - ID：{_s.song_id}
                         - 别名：{apply_alias}
-                        - 票数：{_s.AgreeVotes}/{_s.Votes}
+                        - 票数：{_s.agree_votes}/{_s.votes}
                     """)
                 )
         result.append(f"第「{page}」页，共「{len(status) // SONGS_PER_PAGE + 1}」页")
         msg = MessageSegment.image(text_to_bytes_io("\n".join(result)))
-    except (ServerError, ValueError) as e:
+    except Exception as e:
         log.error(traceback.format_exc())
         msg = str(e)
     await alias_status.finish(msg, reply_message=True)

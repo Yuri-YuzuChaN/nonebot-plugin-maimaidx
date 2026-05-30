@@ -3,10 +3,11 @@ from re import Match
 
 from nonebot import on_regex
 from nonebot.adapters.onebot.v11 import MessageSegment
+from nonebot.exception import FinishedException
 from nonebot.params import Depends, RegexMatched
 
 from ..core.clients.yuzuchan.client import YuzuChaNAPI
-from ..core.clients.yuzuchan.models import AliasStatus
+from ..core.clients.yuzuchan.models import StatusEnum
 from ..core.database.qq import User
 from ..core.handler import draw_chart_info, draw_song_list
 from ..core.merge.alias import yuzu_alias_to_alias
@@ -51,24 +52,29 @@ async def _(
     name = match.group(1).strip()
     page = match.group(2) or 1
     error_msg = (
-        f"未找到别名为「{name}」的歌曲, "
-        "※ 可以使用「添加别名」指令给该乐曲添加别名"
+        f"未找到别名为「{name}」的歌曲\n"
+        "※ 可以使用「添加别名」指令给该乐曲添加别名\n"
         "※ 如果是歌名的一部分，请使用「查歌」指令查询哦。"
     )
     # 别名
     alias_data = mai.total_alias_list.by_alias(name)
-    api = YuzuChaNAPI()
     if not alias_data:
-        obj = await api.get_songs(name)
-        if obj:
-            if isinstance(obj[0], AliasStatus):
+        try:
+            api = YuzuChaNAPI()
+            obj = await api.get_songs(name)
+            if obj.type == StatusEnum.ONGOING:
                 msg = f"未找到别名为「{name}」的歌曲，但找到与此相同别名的投票：\n"
-                for _s in obj:
-                    msg += f"- {_s.Tag}\n    ID {_s.SongID}: {_s.Name}\n"
+                for _s in obj.data:
+                    msg += f"- {_s.tag}\n    ID {_s.song_id}: {_s.name}\n"
                 msg += "※ 可以使用指令「同意别名 XXXXX」进行投票"
                 await search_alias_song.finish(msg.strip(), reply_message=True)
             else:
-                alias_data = yuzu_alias_to_alias(obj)
+                alias_data = yuzu_alias_to_alias(obj.data)
+        except FinishedException:
+            raise
+        except Exception:
+            pass
+
     if alias_data:
         if len(alias_data) != 1:
             msg = f"找到{len(alias_data)}个相同别名的曲目：\n"

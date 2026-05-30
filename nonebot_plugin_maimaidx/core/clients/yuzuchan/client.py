@@ -1,115 +1,138 @@
+from typing import Any, overload
+
 from httpx import Response
 
 from ....config import maiconfig
 from ....constants import UUID
 from ..exceptions import ServerError, UnknownError
 from ..http import ApiClient
-from .models import Alias, AliasStatus, APIResult
+from .exceptions import RequestError
+from .models import Alias, AliasStatus, MessageResult, Songs, StatusEnum
 
 DOMAIN_NAME = "cn" if maiconfig.maimaidx_alias_proxy else "moe"
-BASE_URL = f"https://www.yuzuchan.{DOMAIN_NAME}/api/maimaidx"
+BASE_URL = f"https://www.yuzuchan.{DOMAIN_NAME}/api/v2"
+JSONData = dict[str, Any] | list[Any]
 
 
 class YuzuChaNAPI(ApiClient):
     def __init__(self):
         super().__init__(base_url=BASE_URL)
+        self.music_endpoint = "/maimaidx/music"
+        self.aliases_endpoint = "/aliases/maimaidx"
 
     def _handle_error(self, resp: Response) -> None:
-        if resp.status_code == 200:
+        if 200 <= resp.status_code < 300:
             return
-        elif resp.status_code == 500:
-            raise ServerError
-        else:
-            raise UnknownError
+        if 400 <= resp.status_code < 500:
+            raise RequestError(resp)
+        if 500 <= resp.status_code < 600:
+            raise ServerError()
 
-    async def _request_data(self, method: str, endpoint: str, **kwargs) -> APIResult:
-        data = await self._request(method, endpoint, **kwargs)
-        return APIResult.model_validate(data)
+        raise UnknownError()
+
+    async def _request_data(
+        self, method: str, endpoint: str, *, accept_message: bool = False, **kwargs
+    ) -> JSONData:
+        try:
+            return await self._request(method, endpoint, **kwargs)
+        except RequestError as e:
+            if accept_message:
+                return e.data
+            raise
+
+    @staticmethod
+    def _is_message_result(data: JSONData) -> bool:
+        return isinstance(data, dict) and "message" in data
 
     async def get_plate_json(self) -> dict[str, list[int]]:
         """获取所有版本牌子完成需求"""
-        result = await self._request_data("GET", "/maimaidxplate")
-        return result.content
+        return await self._request_data("GET", self.music_endpoint + "/get_plate")
 
-    async def get_alias(self) -> dict[str, str | int | list[str]]:
-        """获取所有别名"""
-        result = await self._request_data("GET", "/maimaidxalias")
-        return result.content
+    @overload
+    async def get_aliases(self) -> list[Alias]: ...
+    @overload
+    async def get_aliases(self, *, name: str) -> Alias | MessageResult: ...
+    @overload
+    async def get_aliases(self, *, song_id: int) -> Alias | MessageResult: ...
 
-    async def get_songs(self, name: str) -> list[Alias] | list[AliasStatus]:
-        """
-        使用别名查询曲目。
-        `code` 为 `0` 时返回值为 `List[Alias]`。
-        `code` 为 `3006` 时返回值为 `List[AliasStatus]`。
-
-        Params:
-            `name`: 别名
-        Returns:
-            `Union[List[AliasStatus], List[Alias]]`
-        """
-        result = await self._request_data("GET", "/getsongs", params={"name": name})
-        if result.code == 3006:
-            return [AliasStatus.model_validate(s) for s in result.content]
-        elif result.code == 1004:
-            return []
-        elif result.code == 0:
-            return [Alias.model_validate(s) for s in result.content]
+    async def get_aliases(
+        self, *, name: str | None = None, song_id: int | None = None
+    ) -> list[Alias] | Alias | MessageResult:
+        if name is not None:
+            result = await self._request_data(
+                "GET",
+                self.aliases_endpoint + "/aliases",
+                accept_message=True,
+                params={"name": name},
+            )
+        elif song_id is not None:
+            result = await self._request_data(
+                "GET",
+                self.aliases_endpoint + "/aliases",
+                accept_message=True,
+                params={"song_id": song_id},
+            )
         else:
-            raise UnknownError
+            result = await self._request_data("GET", self.aliases_endpoint + "/aliases")
 
-    async def get_songs_alias(self, song_id: int) -> Alias | str:
-        """
-        使用曲目 `id` 查询别名
+        if self._is_message_result(result):
+            return MessageResult.model_validate(result)
 
-        Params:
-            `song_id`: 曲目 `ID`
-        Returns:
-            `Alias` | `str`
-        """
-        result = await self._request_data(
-            "GET", "/getsongsalias", params={"song_id": song_id}
+        return (
+            [Alias.model_validate(r) for r in result]
+            if isinstance(result, list)
+            else Alias.model_validate(result)
         )
-        if result.code == 0:
-            return Alias.model_validate(result.content)
-        elif result.code == 1004:
-            return result.content
-        else:
-            raise UnknownError
 
-    async def get_alias_status(self) -> list[AliasStatus]:
-        """获取当前正在进行的别名投票"""
-        result = await self._request_data("GET", "/getaliasstatus")
-        if result.code == 0:
-            return [AliasStatus.model_validate(s) for s in result.content]
-        elif result.code == 1004:
-            return []
-        else:
-            raise UnknownError
+    async def get_songs(self, name: str) -> Songs | MessageResult:
+        result = await self._request_data(
+            "GET",
+            self.aliases_endpoint + "/songs",
+            accept_message=True,
+            params={"name": name},
+        )
+        if self._is_message_result(result):
+            return MessageResult.model_validate(result)
+
+        return Songs.model_validate(result)
+
+    async def get_status(self) -> list[AliasStatus]:
+        result = await self._request_data(
+            "GET",
+            self.aliases_endpoint + "/votes",
+            params={"status": StatusEnum.ONGOING.value},
+        )
+        return [AliasStatus.model_validate(r) for r in result]
 
     async def post_alias(
-        self, song_id: int, aliasname: str, user_id: int, group_id: int
-    ) -> str:
+        self, song_id: int, alias_name: str, user_id: int, group_id: int
+    ) -> MessageResult:
         """
         提交别名申请
 
         Params:
             `id`: 曲目 `id`
-            `aliasname`: 别名
+            `alias_name`: 别名
             `user_id`: 提交的用户
         Returns:
-            `AliasStatus`
+            `MessageResult`
         """
         json = {
-            "SongID": song_id,
-            "ApplyAlias": aliasname,
-            "ApplyUID": user_id,
-            "GroupID": group_id,
-            "WSUUID": str(UUID),
+            "song_id": song_id,
+            "apply_alias": alias_name,
+            "apply_uid": user_id,
+            "group_id": group_id,
+            "ws_uuid": str(UUID),
         }
-        result = await self._request_data("POST", "/applyalias", json=json)
-        return result.content
+        result = await self._request_data(
+            "POST",
+            self.aliases_endpoint + "/apply",
+            accept_message=True,
+            json=json,
+        )
+        return MessageResult.model_validate(result)
 
-    async def post_agree_user(self, tag: str, user_id: int) -> str:
+    async def post_agree_user(self, tag: str, user_id: int) -> MessageResult:
         """
         提交同意投票
 
@@ -117,8 +140,14 @@ class YuzuChaNAPI(ApiClient):
             `tag`: 标签
             `user_id`: 同意投票的用户
         Returns:
-            `str`
+            `MessageResult`
         """
-        json = {"Tag": tag, "AgreeUser": user_id}
-        result = await self._request_data("POST", "/agreeuser", json=json)
-        return result.content
+        json = {"tag": tag, "agree_user": user_id}
+        result = await self._request_data(
+            "POST",
+            self.aliases_endpoint + "/votes",
+            accept_message=True,
+            params={"action": "agree"},
+            json=json,
+        )
+        return MessageResult.model_validate(result)
