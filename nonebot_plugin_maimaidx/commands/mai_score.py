@@ -29,7 +29,7 @@ async def _(
 ):
     username = message.extract_plain_text().strip()
     result = await draw_best50(
-        user, username=username, all_perfect=type(matcher) is ap50
+        user, username=username, all_perfect=isinstance(matcher, ap50)
     )
     await matcher.send(result, reply_message=True)
 

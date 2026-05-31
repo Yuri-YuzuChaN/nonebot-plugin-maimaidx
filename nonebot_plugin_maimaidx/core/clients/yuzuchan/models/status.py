@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class StatusBase(BaseModel):
     song_id: int
-    apply_uid: int | str
+    apply_uid: int
     apply_alias: str
 
 

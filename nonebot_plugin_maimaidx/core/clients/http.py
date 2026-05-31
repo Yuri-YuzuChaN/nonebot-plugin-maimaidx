@@ -56,7 +56,7 @@ async def qqlogo(qqid: int | None = None, icon: str | None = None) -> bytes | No
 
 
 async def online_assets(endpoint: str) -> BytesIO | None:
-    """获取 LXNS 资源文件"""
+    """获取资源文件"""
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.get(
