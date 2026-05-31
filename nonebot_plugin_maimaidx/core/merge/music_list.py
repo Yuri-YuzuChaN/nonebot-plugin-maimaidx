@@ -145,7 +145,6 @@ class MusicList(RootModel):
                 new_diffs.append(diff)
 
             if new_diffs:
-                new_song.difficulties = new_diffs
                 new_list.root.append(new_song)
 
         return new_list.root

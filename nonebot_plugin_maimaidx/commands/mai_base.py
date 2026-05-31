@@ -186,8 +186,10 @@ async def _(
     user: User | None = Depends(GetUserAndAuthOrNone),
 ):
     song = mai.total_list.random()
-    if (point := match.group(1)) and (
-        "推分" in point or "上分" in point or "加分" in point
+    if (
+        (point := match.group(1))
+        and ("推分" in point or "上分" in point or "加分" in point)
+        and user
     ):
         _song = await get_mai_what(user)
         if _song is not None:

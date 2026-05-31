@@ -392,7 +392,7 @@ async def get_mai_what(user: User) -> Song | None:
         for _m in music_list:
             if int(_m.song_id) in ignore:
                 music_list.remove(_m)
-        return random.choices(music_list)
+        return random.choice(music_list)
     return None
 
 
