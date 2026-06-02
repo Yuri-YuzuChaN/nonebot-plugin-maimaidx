@@ -437,7 +437,7 @@ async def draw_chart_info(song: Song, user: User | None = None) -> MessageSegmen
             except Exception:
                 calc = False
         else:
-            theme = Theme.CIRCLE
+            theme = Theme.PRISM_PLUS
 
         image = song_chart_info(song, calc, is_full, best_list, theme)
     else:

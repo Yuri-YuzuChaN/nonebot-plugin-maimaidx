@@ -487,6 +487,11 @@ class DrawPlateTable(PlateTable):
 
 
 class DrawPlateProgress(PlateTable):
+    def _get_display_row_count(self, count: int) -> int:
+        if count <= 0:
+            return 1
+        return min((count - 1) // 13 + 1, 4)
+
     def _generate_bg(self, height: int, separator_height: int) -> Image.Image:
         """
         生成背景
@@ -516,20 +521,16 @@ class DrawPlateProgress(PlateTable):
             ]
             for index in reversed(data.difficulty_results)
         }
-        unfinished_counts = [
+        total_counts = [
             len(charts) for charts in reversed(data.difficulty_results.values())
         ]
+        display_counts = [len(charts) for charts in results.values()]
 
         current_y = 395
-        for count in unfinished_counts:
-            rows, cols = divmod(count, 13)
-            if rows > 4:
-                row = 4
-            elif cols == 1:
-                row = rows + cols
-            else:
-                row = rows
-            current_y += row * PlateGridConfig.gap + 100
+        for count in display_counts:
+            current_y += (
+                self._get_display_row_count(count) * PlateGridConfig.gap + 100
+            )
 
         height = current_y + 180
         _im = self._generate_bg(height, 305)
@@ -555,14 +556,14 @@ class DrawPlateProgress(PlateTable):
 
             # 进度条
             complete_sum_group = new_slot_counts[n]
-            plate_count = unfinished_counts[n]
+            plate_count = total_counts[n]
             progress_group = complete_sum_group / plate_count
             if progress_group != 0:
                 _bar = self._plate_progress_big.crop(
                     (0, 0, int(993 * progress_group), 92)
                 )
                 im.alpha_composite(_bar, (204, START_Y - 79))
-            if complete_sum == plate_count:
+            if complete_sum_group == plate_count:
                 fot.draw(
                     700,
                     START_Y - 57,

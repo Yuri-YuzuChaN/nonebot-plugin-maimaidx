@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class StatusBase(BaseModel):
     song_id: int
-    apply_uid: int
+    apply_uid: int | str
     apply_alias: str
 
 
@@ -29,4 +29,4 @@ class Reviewed(StatusBase):
 
 class PushAliasStatus(BaseModel):
     type: str
-    status: AliasStatus | Approved | Reviewed
+    status: list[AliasStatus] | list[Approved] | list[Reviewed]
