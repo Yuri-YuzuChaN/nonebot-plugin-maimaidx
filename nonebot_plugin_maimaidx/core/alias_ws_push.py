@@ -115,13 +115,13 @@ async def push_alias(push: PushAliasStatus):
 async def ws_alias_server():
     log.info("正在连接别名推送服务器")
     if maiconfig.maimaidx_alias_proxy:
-        wsapi = "www.yuzuchan.site/api/maimaidx"
+        wsapi = "www.yuzuchan.cn/api/v2/aliases"
     else:
-        wsapi = "www.yuzuchan.moe/api/maimaidx"
+        wsapi = "www.yuzuchan.moe/api/v2/aliases"
     while True:
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(60)) as session:
-                async with aconnect_ws(f"ws://{wsapi}/ws/{UUID}", session) as ws:
+                async with aconnect_ws(f"wss://{wsapi}/ws/{UUID}", session) as ws:
                     log.success("别名推送服务器连接成功")
                     while True:
                         data = await ws.receive_text()
