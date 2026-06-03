@@ -440,18 +440,6 @@ class DrawPlateTable(PlateTable):
                 )
                 im.alpha_composite(bar_group_rounded, (x - _progress_x, 326))
 
-            if complete_sum_group == plate_count:
-                fot.draw(
-                    x,
-                    stats_start_y,
-                    24,
-                    "COMPLETED!!!",
-                    self._id_text_color[_l],
-                    "mm",
-                    4,
-                    (255, 255, 255, 255),
-                )
-
             fot.draw(
                 x,
                 stats_start_y,
@@ -528,9 +516,7 @@ class DrawPlateProgress(PlateTable):
 
         current_y = 395
         for count in display_counts:
-            current_y += (
-                self._get_display_row_count(count) * PlateGridConfig.gap + 100
-            )
+            current_y += self._get_display_row_count(count) * PlateGridConfig.gap + 100
 
         height = current_y + 180
         _im = self._generate_bg(height, 305)
