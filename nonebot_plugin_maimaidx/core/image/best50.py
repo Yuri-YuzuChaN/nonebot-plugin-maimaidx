@@ -83,9 +83,10 @@ class PlayerBest50(ScoreBaseImage):
         return f"UI_CMN_DXRating_Star_0{num_map[idx]}.png"
 
     async def _fetch_image(self, type: str, file_name: str) -> BytesIO | Path | None:
+        file = f"UI_{type.capitalize()}_{file_name}.png"
         if not maiconfig.assets_online:
-            return static / "mai" / type / f"UI_{type.capitalize()}_{file_name}.png"
-        return await online_assets(f"/{type}/{file_name}.png")
+            return static / "mai" / type / file
+        return await online_assets(f"/{type}/{file}")
 
     async def draw(self) -> str:
         """

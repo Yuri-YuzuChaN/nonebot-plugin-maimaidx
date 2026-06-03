@@ -21,12 +21,12 @@ from ..core.image.update_table import UpdateTable
 from ..core.merge.models import Category
 from .depend import GetUserAndAuth
 
-RATING_PATTERN = r"^([0-9]+\+?)(ap|app|fc|fcp|fs|fsp|fdx|fdxp)?\s?完成表$"
+RATING_PATTERN = r"^([0-9]+\+?)((s+|ap|fc|fs|fdx)\+?)?\s?完成表$"
 TABLE_PATTERN = (
     r"^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉舞霸熊華华爽煌星宙祭祝双宴镜彩])"
     r"([極极将舞神者]舞?){}表?\s?([0-9]+)?$"
 )
-LEVEL_PATTERN = r"^([0-9]+\+?)\s?(a+|b+|c|d|s+\+?|ap|app|fc|fcp|fs|fsp|fdx|fdxp)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?$"
+LEVEL_PATTERN = r"^([0-9]+\+?)\s?((a+|b+|c|d|s+|ap|fc|fs|fdx)\+?)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?$"
 LEVEL_LIST_PATTERN = r"([0-9]+\.?[0-9]?\+?)\s?分数列表\s?([0-9]+)?$"
 CATEGORY_ALIAS = {
     "已完成": Category.COMPLETED,
