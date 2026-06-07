@@ -21,7 +21,7 @@ from ..constants import SONGS_PER_PAGE
 from ..core.clients.yuzuchan.client import YuzuChaNAPI
 from ..core.clients.yuzuchan.models import Alias
 from ..core.image.tools import text_to_bytes_io
-from ..core.service import alias, mai
+from ..core.service import alias, mai, update_local_alias
 
 update_alias = on_command("更新别名库", permission=SUPERUSER)
 alias_local_apply = on_command("添加本地别名", aliases={"添加本地别称"})
@@ -46,6 +46,39 @@ async def _(event: PrivateMessageEvent):
     except Exception:
         log.error("手动更新别名库失败")
         await update_alias.send("手动更新别名库失败")
+
+
+@alias_local_apply.handle()
+async def _(message: Message = CommandArg()):
+    args = message.extract_plain_text().strip().split()
+    if len(args) != 2:
+        await alias_local_apply.finish("参数错误", reply_message=True)
+    song_id, alias_name = args
+    if song_id.isdigit():
+        song_id = int(song_id)
+    else:
+        await alias_local_apply.finish("请输入正确的ID", reply_message=True)
+    if not mai.total_list.by_id(song_id):
+        await alias_local_apply.finish(
+            f"未找到ID「{song_id}」的曲目", reply_message=True
+        )
+    api = YuzuChaNAPI()
+    server_exist = await api.get_aliases(song_id=song_id)
+    if isinstance(server_exist, Alias) and alias_name.lower() in server_exist.alias:
+        await alias_local_apply.finish(
+            f"该曲目的别名「{alias_name}」已存在别名服务器", reply_message=True
+        )
+
+    local_exist = mai.total_alias_list.by_id(song_id)
+    if local_exist and alias_name.lower() in local_exist[0].alias:
+        await alias_local_apply.finish("本地别名库已存在该别名", reply_message=True)
+
+    issave = await update_local_alias(song_id, alias_name)
+    if not issave:
+        msg = "添加本地别名失败"
+    else:
+        msg = f"已成功为ID「{song_id}」添加别名「{alias_name}」到本地别名库"
+    await alias_local_apply.send(msg, reply_message=True)
 
 
 @alias_apply.handle()
@@ -127,7 +160,7 @@ async def _(match: Match[str] = RegexMatched()):
     name = match.group(2)
     aliases = None
     if findid and name.isdigit():
-        alias_id = mai.total_alias_list.by_id(name)
+        alias_id = mai.total_alias_list.by_id(int(name))
         if not alias_id:
             await alias_song.finish(
                 "未找到此歌曲\n可以使用「添加别名」指令给该乐曲添加别名",
@@ -139,7 +172,7 @@ async def _(match: Match[str] = RegexMatched()):
         aliases = mai.total_alias_list.by_alias(name)
         if not aliases:
             if name.isdigit():
-                alias_id = mai.total_alias_list.by_id(name)
+                alias_id = mai.total_alias_list.by_id(int(name))
                 if not alias_id:
                     await alias_song.finish(
                         "未找到此歌曲\n可以使用「添加别名」指令给该乐曲添加别名",

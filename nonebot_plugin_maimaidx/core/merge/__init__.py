@@ -148,7 +148,9 @@ async def merge_music_data(
 
 
 async def merge_alias_data(
-    yuzu_aliases: list[YuzuAlias], lxns_aliases: Aliases | None
+    yuzu_aliases: list[YuzuAlias],
+    lxns_aliases: Aliases | None,
+    local_alias_data: dict[str, list[str]] | None,
 ) -> AliasList:
     """
     合并 `lxns` 和 `yuzuchan` 别名数据
@@ -167,6 +169,10 @@ async def merge_alias_data(
             if song_id > 1000:
                 song_id += 10000
             alias_map.setdefault(song_id, set()).update(item.aliases)
+
+    if local_alias_data is not None:
+        for _a, aliases in local_alias_data.items():
+            alias_map.setdefault(int(_a), set()).update(aliases)
 
     result = AliasList(
         root=sorted(

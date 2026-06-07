@@ -6,10 +6,10 @@ from .models.alias import Alias
 class AliasList(RootModel):
     root: list[Alias]
 
-    def by_id(self, music_id: str | int) -> list[Alias]:
+    def by_id(self, song_id: int) -> list[Alias]:
         alias_music = []
         for music in self.root:
-            if music.song_id == int(music_id):
+            if music.song_id == song_id:
                 alias_music.append(music)
         return alias_music
 
