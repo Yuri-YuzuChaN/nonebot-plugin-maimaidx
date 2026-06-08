@@ -4,7 +4,7 @@ from pathlib import Path
 import nonebot
 from nonebot.plugin import PluginMetadata, require
 
-from .commands import *  # noqa: F403
+from . import commands as commands
 from .config import BaseConfig, dfconfig, driver, log, lxnsconfig, maiconfig
 from .core.alias_ws_push import ws_alias_server
 from .core.clients.divingfish.client import DivingFishAPI
