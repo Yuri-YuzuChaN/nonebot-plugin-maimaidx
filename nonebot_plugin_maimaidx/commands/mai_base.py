@@ -154,8 +154,10 @@ async def _(message: Message = CommandArg(), user: User = Depends(GetOrCreateUse
 
 @portune.handle()
 async def _(user: User = Depends(GetOrCreateUser)):
-    h = qqhash(user.qqid)
-    rp = h % 100
+    fortune_hash = qqhash(user.qqid)
+    daily_random = random.Random(fortune_hash)
+    rp = fortune_hash % 100
+    h = fortune_hash
     wm_value = []
     for i in range(11):
         wm_value.append(h & 3)
@@ -166,7 +168,7 @@ async def _(user: User = Depends(GetOrCreateUser)):
             msg += f"宜 {FORTUNE[i]}\n"
         elif wm_value[i] == 0:
             msg += f"忌 {FORTUNE[i]}\n"
-    song = mai.total_list.root[h % len(mai.total_list.root)]
+    song = daily_random.choice(mai.total_list.root)
     ds = "/".join([str(d.level_value) for d in song.difficulties])
     result = (
         MessageSegment.text(
