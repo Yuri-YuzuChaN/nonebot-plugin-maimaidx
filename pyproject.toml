@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-maimaidx"
-version = "3.0.0"
+version = "3.0.1"
 authors = [
   { name="Yuri-YuzuChaN", email="806235364@qq.com" },
 ]
@@ -23,7 +23,9 @@ dependencies = [
     "playwright>=1.52.0",
     "httpx-ws>=0.7.2,<1.0.0",
     "numpy>=2.0.0,<3.0.0",
-    "pillow>=10.0.0,<12.0.0"
+    "pillow>=10.0.0,<12.0.0",
+    "sqlmodel>=0.0.38",
+    "aiosqlite>=0.22.1"
 ]
 
 [project.urls]

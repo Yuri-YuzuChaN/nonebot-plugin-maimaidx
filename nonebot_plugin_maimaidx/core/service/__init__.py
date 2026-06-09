@@ -72,7 +72,10 @@ class MaiMusic:
             log.opt(colors=True).warning(
                 "<r>未配置落雪开发者Token，跳过获取「落雪」别名数据源</r>"
             )
-        local_alias_data = await openfile(local_alias_file)
+
+        local_alias_data = {}
+        if local_alias_file.exists():
+            local_alias_data = await openfile(local_alias_file)
         if not local_alias_data:
             local_alias_data = None
 

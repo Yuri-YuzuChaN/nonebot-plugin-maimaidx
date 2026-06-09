@@ -10,6 +10,7 @@ from ..config import log
 from ..core.database.qq import User
 from ..core.handler import draw_best50, draw_play_data, draw_song_galobal_data
 from ..core.image.tools import text_to_bytes_io
+from ..core.merge.models import ServiceName
 from ..core.service import mai
 from .depend import GetUserAndAuth
 
@@ -28,9 +29,9 @@ async def _(
     user: User = Depends(GetUserAndAuth),
 ):
     username = message.extract_plain_text().strip()
-    result = await draw_best50(
-        user, username=username, all_perfect=isinstance(matcher, ap50)
-    )
+    if (is_ap := isinstance(matcher, ap50)) and user.service == ServiceName.DIVINGFISH:
+        await matcher.finish("AP50仅支持落雪查分器", reply_message=True)
+    result = await draw_best50(user, username=username, all_perfect=is_ap)
     await matcher.send(result, reply_message=True)
 
 

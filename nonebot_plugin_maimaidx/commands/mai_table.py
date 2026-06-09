@@ -2,10 +2,11 @@ import re
 from re import Match
 
 from nonebot import on_fullmatch, on_regex
-from nonebot.adapters.onebot.v11 import PrivateMessageEvent
+from nonebot.adapters.onebot.v11 import MessageSegment, PrivateMessageEvent
 from nonebot.matcher import Matcher
 from nonebot.params import Depends, RegexMatched
 from nonebot.permission import SUPERUSER
+from PIL import Image
 
 from ..constants import COMBO_PLUS, LEVEL_LIST, PLATE_CN, RANK_PLUS, SYNC_PLUS
 from ..core.database.qq import User
@@ -17,8 +18,10 @@ from ..core.handler import (
     draw_rating_table,
     draw_rating_table_text,
 )
+from ..core.image.tools import image_to_base64
 from ..core.image.update_table import UpdateTable
 from ..core.merge.models import Category
+from ..resources import pic_dir
 from .depend import GetUserAndAuth
 
 RATING_PATTERN = r"^([0-9]+\+?)((s+|ap|fc|fs|fdx)\+?)?\s?完成表$"
@@ -40,6 +43,7 @@ update_table = on_fullmatch("更新定数表", permission=SUPERUSER)
 update_plate = on_fullmatch("更新完成表", permission=SUPERUSER)
 rating_table = on_regex(r"([0-9]+\+?)定数表")
 rating_table_pfm = on_regex(RATING_PATTERN, re.IGNORECASE)
+plate_table_condition = on_fullmatch("牌子条件")
 plate_table_pfm = on_regex(TABLE_PATTERN.format("完成"))
 plate_progress = on_regex(TABLE_PATTERN.format("进度"))
 level_progress = on_regex(LEVEL_PATTERN, re.IGNORECASE)
@@ -89,6 +93,15 @@ async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndA
         await rating_table_pfm.finish(pic, reply_message=True)
     else:
         await rating_table_pfm.finish("无法识别的定数。", reply_message=True)
+
+
+@plate_table_condition.handle()
+async def _():
+    await plate_table_condition.send(
+        MessageSegment.image(
+            image_to_base64(Image.open(pic_dir / "table_condition.jpg"))
+        )
+    )
 
 
 @plate_table_pfm.handle()

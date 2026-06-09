@@ -10,7 +10,7 @@ class BaseConfig(BaseModel):
     maimaidx_alias_proxy: bool = False
     maimaidx_alias_push: bool = True
     save_in_memory: bool | None = True
-    assets_online: bool | None = False
+    assets_online: bool | None = True
     bot_name: str = (
         list(driver.config.nickname)[0] if driver.config.nickname else "Sakura"
     )
