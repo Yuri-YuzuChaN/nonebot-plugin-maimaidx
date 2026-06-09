@@ -39,7 +39,8 @@ class GetUserModel:
         self, matcher: Matcher, event: GroupMessageEvent | PrivateMessageEvent
     ) -> User | None:
         user_id = event.user_id
-
+        user = None
+        is_exist = False
         try:
             user = await get_user(user_id)
         except UserNotBindError:
@@ -55,9 +56,11 @@ class GetUserModel:
                 if self.check_skip:
                     return None
                 await matcher.finish(AUTHORIZE_ERROR, reply_message=True)
+            is_exist = True
 
         if self.check_skip:
-            return None
+            if not is_exist:
+                return None
 
         return user
 

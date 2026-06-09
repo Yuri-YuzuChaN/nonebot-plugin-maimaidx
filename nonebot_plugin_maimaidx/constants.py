@@ -112,6 +112,7 @@ LEVEL_LIST = [
     "14+",
     "15",
 ]
+LEVEL_INDEX_MAP = {level: index for index, level in enumerate(LEVEL_LIST)}
 ACHIEVEMENT_LIST = [
     50.0,
     60.0,

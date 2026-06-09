@@ -83,6 +83,7 @@ class MusicList(RootModel):
         bpm: float | tuple[float, float] | None = None,
         version_int: int | list[int] | None = None,
         version_str: str | list[str] | None = None,
+        all_diff: bool = True,
     ) -> list[Song]:
         def _list(v):
             if v is None:
@@ -145,6 +146,8 @@ class MusicList(RootModel):
                 new_diffs.append(diff)
 
             if new_diffs:
+                if not all_diff:
+                    new_song.difficulties = new_diffs
                 new_list.root.append(new_song)
 
         return new_list.root
