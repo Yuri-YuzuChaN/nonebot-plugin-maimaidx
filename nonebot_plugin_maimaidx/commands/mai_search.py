@@ -95,7 +95,7 @@ async def _(
         await search_alias_song.finish(
             "您要找的是不是：" + await draw_chart_info(song, user), reply_message=True
         )
-    if search_id := re.search(r"^id([0-9]*)$", name, re.IGNORECASE):
+    if search_id := re.search(r"^id([0-9]+)$", name, re.IGNORECASE):
         song = mai.total_list.by_id(int(search_id.group(1)))
         if not song:
             await search_alias_song.finish(

@@ -31,10 +31,10 @@ alias_apply = on_command(
 alias_agree = on_command("同意别名", aliases={"同意别称"})
 alias_status = on_command("当前投票", aliases={"当前别名投票", "当前别称投票"})
 alias_switch = on_regex(
-    r"^([开启关闭]+)别名推送$", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
+    r"^(开启|关闭)别名推送$", permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN
 )
-alias_global_switch = on_regex(r"^全局([开启关闭]+)别名推送$", permission=SUPERUSER)
-alias_song = on_regex(r"^(id)?\s?(.+)\s?有什么别[名称]$", re.IGNORECASE)
+alias_global_switch = on_regex(r"^全局(开启|关闭)别名推送$", permission=SUPERUSER)
+alias_song = on_regex(r"^(id(?=[\s0-9]))?\s?(.+)\s?有什么别[名称]$", re.IGNORECASE)
 
 
 @update_alias.handle()
@@ -117,9 +117,11 @@ async def _(event: GroupMessageEvent, message: Message = CommandArg()):
         tag = message.extract_plain_text().strip().upper()
         api = YuzuChaNAPI()
         status = await api.post_agree_user(tag, event.user_id)
-        await alias_agree.finish(status.message, reply_message=True)
-    except ValueError as e:
-        await alias_agree.finish(str(e), reply_message=True)
+        msg = status.message
+    except Exception as e:
+        log.error(traceback.format_exc())
+        msg = str(e)
+    await alias_agree.finish(msg, reply_message=True)
 
 
 @alias_status.handle()
@@ -131,7 +133,8 @@ async def _(message: Message = CommandArg()):
         if not status:
             await alias_status.finish("未查询到正在进行的别名投票", reply_message=True)
 
-        page = max(min(int(args), len(status) // SONGS_PER_PAGE + 1), 1) if args else 1
+        total_pages = (len(status) + SONGS_PER_PAGE - 1) // SONGS_PER_PAGE
+        page = max(min(int(args), total_pages), 1) if args.isdigit() else 1
         result = []
         for num, _s in enumerate(status):
             if (page - 1) * SONGS_PER_PAGE <= num < page * SONGS_PER_PAGE:
@@ -146,7 +149,7 @@ async def _(message: Message = CommandArg()):
                         - 票数：{_s.agree_votes}/{_s.votes}
                     """)
                 )
-        result.append(f"第「{page}」页，共「{len(status) // SONGS_PER_PAGE + 1}」页")
+        result.append(f"第「{page}」页，共「{total_pages}」页")
         msg = MessageSegment.image(text_to_bytes_io("\n".join(result)))
     except Exception as e:
         log.error(traceback.format_exc())
@@ -157,7 +160,7 @@ async def _(message: Message = CommandArg()):
 @alias_song.handle()
 async def _(match: Match[str] = RegexMatched()):
     findid = bool(match.group(1))
-    name = match.group(2).lower()
+    name = match.group(2)
     aliases = None
     if findid and name.isdigit():
         alias_id = mai.total_alias_list.by_id(int(name))
@@ -195,11 +198,14 @@ async def _(match: Match[str] = RegexMatched()):
             reply_message=True,
         )
 
-    if len(aliases[0].alias) == 1:
+    real_aliases = [
+        a for a in aliases[0].alias if a.lower() != aliases[0].song_name.lower()
+    ]
+    if not real_aliases:
         await alias_song.finish("该曲目没有别名", reply_message=True)
 
     msg = f"该曲目有以下别名：\nID：{aliases[0].song_id}\n"
-    msg += "\n".join(aliases[0].alias)
+    msg += "\n".join(real_aliases)
     await alias_song.send(msg, reply_message=True)
 
 

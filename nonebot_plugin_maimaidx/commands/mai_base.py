@@ -206,7 +206,7 @@ async def _(
 ):
     if not match:
         await random_song.finish("参数错误，请重新发送随机谱面", reply_message=True)
-    diff = match.group(1)
+    diff = (match.group(1) or "").lower()
     if diff == "dx":
         type_ = ["DX"]
     elif diff == "sd" or diff == "标准":
@@ -214,10 +214,15 @@ async def _(
     else:
         type_ = ["SD", "DX"]
     level = match.group(3)
-    if match.group(2) == "":
-        songs = mai.total_list.filter(level=level, type=type_)
-    else:
-        songs = mai.total_list.filter(level=level, type=type_)
+    color = match.group(2)
+    songs = mai.total_list.filter(level=level, type=type_)
+    if color:
+        ci = "绿黄红紫白".index(color)
+        songs = [
+            s
+            for s in songs
+            if len(s.difficulties) > ci and s.difficulties[ci].level == level
+        ]
     if len(songs) == 0:
         result = "没有这样的乐曲哦。"
     else:
@@ -265,3 +270,6 @@ async def _(user: User = Depends(GetOrCreateUser)):
         if rank.username == info.username:
             result = f"您的Rating为「{rank.ra}」，排名第「{num + 1}」名"
             await my_rating_ranking.finish(result, reply_message=True)
+    await my_rating_ranking.finish(
+        "未在查分器排行榜中找到您的记录。", reply_message=True
+    )
