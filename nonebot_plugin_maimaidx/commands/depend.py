@@ -75,6 +75,14 @@ GetUserAndAuthOrNone = GetUserModel(auto_create=True, check_auth=True, check_ski
 """获取用户数据，若不存在则创建，并检查是否授权，未授权则返回`None`"""
 
 
+def _isfloat(value: str) -> bool:
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
 async def process_regex(
     matcher: Matcher, match: Match[str] = RegexMatched()
 ) -> tuple[list[Song], int]:
@@ -91,24 +99,26 @@ async def process_regex(
     page = 1
     match cmd:
         case None:
-            match a_list:
-                case [name]:
-                    title = name
-                case [name, p_raw]:
-                    title, page = name, int(p_raw)
-                case _:
-                    await matcher.finish(
-                        "没有找到这样的乐曲。\n※ 如果是别名请使用「XXX是什么歌」指令进行查询哦。",
-                        reply_message=True,
-                    )
+            if not a_list:
+                await matcher.finish(
+                    "没有找到这样的乐曲。\n※ 如果是别名请使用「XXX是什么歌」指令进行查询哦。",
+                    reply_message=True,
+                )
+            # 末尾为纯数字时视为页数，其余整体作为标题（支持含空格的标题）
+            if len(a_list) >= 2 and a_list[-1].isdigit():
+                title, page = " ".join(a_list[:-1]), int(a_list[-1])
+            else:
+                title = " ".join(a_list)
             result = mai.total_list.filter(title=title)
         case "定数":
             match a_list:
-                case [ds]:
+                case [ds] if _isfloat(ds):
                     ds1 = ds2 = float(ds)
-                case [ds1_raw, ds2_raw]:
+                case [ds1_raw, ds2_raw] if _isfloat(ds1_raw) and _isfloat(ds2_raw):
                     ds1, ds2 = float(ds1_raw), float(ds2_raw)
-                case [ds1_raw, ds2_raw, p_raw]:
+                case [ds1_raw, ds2_raw, p_raw] if (
+                    _isfloat(ds1_raw) and _isfloat(ds2_raw) and p_raw.isdigit()
+                ):
                     ds1, ds2, page = float(ds1_raw), float(ds2_raw), int(p_raw)
                 case _:
                     await matcher.finish(
@@ -122,15 +132,17 @@ async def process_regex(
             result = mai.total_list.filter(level_value=(ds1, ds2))
         case "bpm":
             match a_list:
-                case [bpm_raw]:
+                case [bpm_raw] if _isfloat(bpm_raw):
                     result = mai.total_list.filter(bpm=float(bpm_raw))
-                case [b1, b2]:
+                case [b1, b2] if _isfloat(b1) and _isfloat(b2):
                     if float(b1) > float(b2):
-                        page = int(b2)
+                        page = int(float(b2))
                         result = mai.total_list.filter(bpm=float(b1))
                     else:
                         result = mai.total_list.filter(bpm=(float(b1), float(b2)))
-                case [b1, b2, p_raw]:
+                case [b1, b2, p_raw] if (
+                    _isfloat(b1) and _isfloat(b2) and p_raw.isdigit()
+                ):
                     result = mai.total_list.filter(bpm=(float(b1), float(b2)))
                     page = int(p_raw)
                 case _:
@@ -143,19 +155,19 @@ async def process_regex(
                         reply_message=True,
                     )
         case "曲师" | "谱师":
-            match a_list:
-                case [name]:
-                    pass
-                case [name, p_raw] if p_raw.isdigit():
-                    page = int(p_raw)
-                case _:
-                    await matcher.finish(
-                        (
-                            f"{cmd}查歌参数错误，请输入正确格式，页数为可选：\n"
-                            f"{cmd}查歌「{cmd}」「页数」"
-                        ),
-                        reply_message=True,
-                    )
+            if not a_list:
+                await matcher.finish(
+                    (
+                        f"{cmd}查歌参数错误，请输入正确格式，页数为可选：\n"
+                        f"{cmd}查歌「{cmd}」「页数」"
+                    ),
+                    reply_message=True,
+                )
+            # 末尾为纯数字时视为页数，其余整体作为曲师/谱师名（支持含空格的名字）
+            if len(a_list) >= 2 and a_list[-1].isdigit():
+                name, page = " ".join(a_list[:-1]), int(a_list[-1])
+            else:
+                name = " ".join(a_list)
             if cmd == "曲师":
                 result = mai.total_list.filter(artist=name)
             else:

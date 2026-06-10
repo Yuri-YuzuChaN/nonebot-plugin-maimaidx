@@ -30,7 +30,7 @@ TABLE_PATTERN = (
     r"([極极将舞神者]舞?){}表?\s?([0-9]+)?$"
 )
 LEVEL_PATTERN = r"^([0-9]+\+?)\s?((?:a+|b+|c|d|s+|ap|fc|fs|fdx)\+?)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?$"
-LEVEL_LIST_PATTERN = r"([0-9]+\.?[0-9]?\+?)\s?分数列表\s?([0-9]+)?$"
+LEVEL_LIST_PATTERN = r"^([0-9]+(?:\.[0-9]+)?\+?)\s?分数列表\s?([0-9]+)?$"
 CATEGORY_ALIAS = {
     "已完成": Category.COMPLETED,
     "未完成": Category.UNFINISHED,
@@ -87,6 +87,11 @@ async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndA
     if ra in LEVEL_LIST[:6]:
         await rating_table_pfm.finish("只支持查询lv7-15的完成表。", reply_message=True)
     elif ra in LEVEL_LIST[6:]:
+        if plan and plan.lower() not in COMBO_PLUS:
+            await rating_table_pfm.finish(
+                "完成表目前仅支持「fc」「ap」计划，例如「13fc完成表」「13ap完成表」。",
+                reply_message=True,
+            )
         pic = await draw_rating_table(
             user, ra, True if plan and plan.lower() in COMBO_PLUS else False
         )
@@ -167,14 +172,15 @@ async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndA
         )
     rating = match.group(1)
     page = match.group(2) or 1
-    try:
-        if "." in rating:
-            rating = round(float(rating), 1)
-        elif rating not in LEVEL_LIST:
-            await level_score_list.finish("无此等级。", reply_message=True)
-    except ValueError:
-        if rating not in LEVEL_LIST:
-            await level_score_list.finish("无此等级。", reply_message=True)
+    if "." in rating:
+        # 定数仅有一位小数，多位小数视为输入有误
+        if not re.fullmatch(r"[0-9]+\.[0-9]", rating):
+            await level_score_list.finish(
+                "输入有误，定数仅有一位小数。", reply_message=True
+            )
+        rating = round(float(rating), 1)
+    elif rating not in LEVEL_LIST:
+        await level_score_list.finish("无此等级。", reply_message=True)
 
     result = await draw_level_score_list(user, rating, int(page))
     await level_score_list.send(result, reply_message=True)
