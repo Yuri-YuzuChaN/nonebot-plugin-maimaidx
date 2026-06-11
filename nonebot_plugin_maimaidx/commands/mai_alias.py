@@ -232,4 +232,4 @@ async def _(bot: Bot, match: Match[str] = RegexMatched()):
         await alias.alias_global_change(False, group_id)
         await alias_global_switch.finish("已全局关闭maimai别名推送")
     else:
-        await alias_global_switch.finish()
+        return

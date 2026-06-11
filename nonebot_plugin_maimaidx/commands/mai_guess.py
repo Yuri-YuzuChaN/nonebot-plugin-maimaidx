@@ -71,9 +71,9 @@ async def _(event: GroupMessageEvent):
                         event.group_id not in guess.switch.enable
                         or guess._group[gid].end
                     ):
-                        await guess_music_start.finish()
+                        return
                 else:
-                    await guess_music_start.finish()
+                    return
             guess._group[gid].end = True
             answer = MessageSegment.text("答案是：\n") + await draw_chart_info(
                 guess._group[gid].song
@@ -103,9 +103,9 @@ async def _(event: GroupMessageEvent):
         await asyncio.sleep(1)
         if gid in guess._group:
             if gid not in guess.switch.enable or guess._group[gid].end:
-                await guess_music_pic.finish()
+                return
         else:
-            await guess_music_pic.finish()
+            return
     guess._group[gid].end = True
     answer = MessageSegment.text("答案是：\n") + await draw_chart_info(
         guess._group[gid].song
@@ -118,7 +118,7 @@ async def _(event: GroupMessageEvent):
 async def _(event: GroupMessageEvent):
     gid = event.group_id
     if gid not in guess._group:
-        await guess_music_solve.finish()
+        return
     ans = event.get_plaintext().strip()
     if ans.lower() in guess._group[gid].answer:
         guess._group[gid].end = True
