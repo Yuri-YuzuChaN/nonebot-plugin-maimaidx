@@ -11,6 +11,7 @@ from .core.clients.divingfish.client import DivingFishAPI
 from .core.database.qq import create_database
 from .core.image import AssetsImage
 from .core.service import guess, mai
+from .core.service.arcade import arcade
 from .resources import plate_table_dir, rating_table_dir
 
 scheduler = require("nonebot_plugin_apscheduler")
@@ -56,6 +57,9 @@ async def get_music():
     await mai.get_music_alias()
     log.info("正在获取maimai牌子数据")
     await mai.get_plate_json()
+    log.info("正在获取maimai机厅数据")
+    await arcade.get_arcades()
+    log.success("maimai机厅数据获取完成")
     guess.guess()
     log.success("猜歌数据初始化完成")
     log.success("maimai数据获取完成")
@@ -89,3 +93,11 @@ async def get_music():
 
 
 scheduler.add_job(mai.update, "cron", hour=4)
+scheduler.add_job(
+    commands.mai_arcade.update_arcade_daily,
+    "cron",
+    hour=4,
+    minute=0,
+    id="maimaidx_arcade_daily_update",
+    replace_existing=True,
+)

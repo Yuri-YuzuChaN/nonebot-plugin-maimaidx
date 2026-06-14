@@ -42,6 +42,7 @@ chart_file = data_dir / "music_chart.json"  # 谱面数据暂存文件
 plate_file = data_dir / "plate_data.json"  # 牌子数据暂存文件
 merge_music_file = data_dir / "merge_music_data.json"  # 合并曲目数据文件
 merge_alias_file = data_dir / "merge_music_alias.json"  # 合并曲目别名数据文件
+arcades_file = data_dir / "arcades.json"  # 机厅/排卡数据文件
 
 
 # 字体路径
