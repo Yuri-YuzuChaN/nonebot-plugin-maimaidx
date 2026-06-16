@@ -123,7 +123,7 @@ async def _(
         msg = (
             f"未找到别名为「{name}」的歌曲，但找到「{len(result)}」个相似标题的曲目：\n"
         )
-        msg += await draw_song_list(result, int(page))
+        msg += draw_song_list(result, int(page))
     await search_alias_song.finish(msg, reply_message=True)
 
 

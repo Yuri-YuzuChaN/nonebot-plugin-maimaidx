@@ -171,7 +171,7 @@ async def process_regex(
             if cmd == "曲师":
                 result = mai.total_list.filter(artist=name)
             else:
-                result = mai.total_list.filter(charter=name)
+                result = mai.total_list.filter(charter=name, all_diff=False)
         case _:
             await matcher.finish("指令错误", reply_message=True)
 
