@@ -40,7 +40,7 @@ async def _(
             r += f"{f'「{song.song_id}」':<7} {song.song_name}\n"
         image = MessageSegment.text(r)
     else:
-        image = await draw_song_list(songs, page)
+        image = draw_song_list(songs, page)
     await search.send(image, reply_message=True)
 
 
