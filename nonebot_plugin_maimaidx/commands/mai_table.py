@@ -21,7 +21,7 @@ from ..core.handler import (
 from ..core.image.tools import image_to_base64
 from ..core.image.update_table import UpdateTable
 from ..core.merge.models import Category
-from ..resources import pic_dir
+from ..resources import pic_dir, rating_table_dir
 from .depend import GetUserAndAuth
 
 RATING_PATTERN = r"^([0-9]+\+?)((s+|ap|fc|fs|fdx)\+?)?\s?完成表$"
@@ -74,7 +74,12 @@ async def _(match: Match[str] = RegexMatched()):
     if rating in LEVEL_LIST[:6]:
         result = "只支持查询lv7-15的定数表。"
     elif rating in LEVEL_LIST[6:]:
-        result = draw_rating_table_text(rating)
+        if rating == "15":
+            result = MessageSegment.image(
+                image_to_base64(Image.open(rating_table_dir / "15.png"))
+            )
+        else:
+            result = draw_rating_table_text(rating)
     else:
         result = "无法识别的定数。"
     await rating_table.send(result, reply_message=True)
