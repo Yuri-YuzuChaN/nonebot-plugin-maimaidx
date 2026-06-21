@@ -98,10 +98,10 @@ class PlayerBest50(ScoreBaseImage):
         logo = Image.open(self.logo).resize((249, 120))
         name = Image.open(pic_dir / "Name.png")
         _cr = self.player.course_rank
-        _num = f'{_cr if _cr <= 10 else _cr + 1:02d}'
-        matchlevel = Image.open(
-            pic_dir / f'UI_DNM_DaniPlate_{_num}.png'
-        ).resize((80, 32))
+        _num = f"{_cr if _cr <= 10 else _cr + 1:02d}"
+        matchlevel = Image.open(pic_dir / f"UI_DNM_DaniPlate_{_num}.png").resize(
+            (80, 32)
+        )
         classlevel = Image.open(
             pic_dir / f"UI_FBR_Class_{self.player.class_rank:02d}.png"
         ).resize((90, 54))
