@@ -30,7 +30,7 @@ async def _(
 ):
     username = message.extract_plain_text().strip()
     if (is_ap := isinstance(matcher, ap50)) and user.service == ServiceName.DIVINGFISH:
-        await matcher.finish("AP50仅支持落雪查分器", reply_message=True)
+        await matcher.finish("仅落雪查分器支持AP50指令", reply_message=True)
     result = await draw_best50(user, username=username, all_perfect=is_ap)
     await matcher.send(result, reply_message=True)
 

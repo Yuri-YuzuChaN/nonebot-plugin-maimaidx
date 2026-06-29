@@ -133,8 +133,7 @@ async def get_best50(
     Returns:
         `tuple[Player, Best50]`
     """
-
-    if user.service == ServiceName.DIVINGFISH:
+    if username or user.service == ServiceName.DIVINGFISH:
         api = DivingFishAPI(user.qqid, username)
         userinfo = await api.query_user_b50()
         player = df_to_player(userinfo)
@@ -167,7 +166,7 @@ async def get_player_result(
         `list[PlayedResult]`
     """
     if user.service == ServiceName.DIVINGFISH:
-        api = DivingFishAPI(qqid=user.qqid)
+        api = DivingFishAPI(user.qqid)
         if version is not None:
             data = await api.query_user_plate(version)
         else:
@@ -338,7 +337,6 @@ async def draw_best50(
     user: User,
     *,
     username: str | None = None,
-    icon: str | None = None,
     all_perfect: bool = False,
 ) -> MessageSegment:
     """
@@ -353,7 +351,7 @@ async def draw_best50(
         `MessageSegment`
     """
     player, best50 = await get_best50(user, username=username, all_perfect=all_perfect)
-    b50 = PlayerBest50(user, player=player, best50=best50, icon=icon)
+    b50 = PlayerBest50(user, player=player, best50=best50, is_username=bool(username))
     return MessageSegment.image(await b50.draw()) + MessageSegment.text(MESSAGE)
 
 
@@ -669,14 +667,20 @@ async def draw_level_progress(
     unfinished.sort(key=_sort_value, reverse=True)
     notplayed.sort(key=lambda x: x.level_value, reverse=True)
 
+    def get_played_rows(count: int) -> int:
+        return max(4, get_rows(count, 5))
+
+    def get_notplayed_rows(count: int) -> int:
+        return max(4, get_rows(count, 20))
+
     if category == Category.DEFAULT:
         comp_limit = 60 if not unfinished and not notplayed else 30
         c_row = len(completed[:comp_limit])
-        c_y = get_rows(c_row, 5) * 109 + 140
+        c_y = get_played_rows(c_row) * 109 + 140
         u_row = len(unfinished[:30])
-        u_y = get_rows(u_row, 5) * 109 + 140
+        u_y = get_played_rows(u_row) * 109 + 140
         n_row = len(notplayed[:100])
-        n_y = get_rows(n_row, 20) * 65 + 140
+        n_y = get_notplayed_rows(n_row) * 65 + 140
 
         background_bg = tricolor_gradient_prism_plus(1400, 150 + c_y + u_y + n_y)
         ds = DrawScore(user.service, background_bg)
@@ -690,13 +694,13 @@ async def draw_level_progress(
         page = max(1, min(page, total_page))
 
         display_data = data[(page - 1) * per_page : page * per_page]
-        y_size = get_rows(len(display_data), 5) * 109
+        y_size = get_played_rows(len(display_data)) * 109
         background_bg = tricolor_gradient_prism_plus(1400, 240 + y_size + 120)
         ds = DrawScore(user.service, background_bg)
         image = ds.draw_category(category, data, page, total_page)
 
     else:
-        y_size = get_rows(len(notplayed), 20) * 65
+        y_size = get_notplayed_rows(len(notplayed)) * 65
         height = 240 + y_size + 120
         if height < 600:
             height = 600

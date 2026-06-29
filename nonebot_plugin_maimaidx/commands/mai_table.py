@@ -2,7 +2,7 @@ import re
 from re import Match
 
 from nonebot import on_fullmatch, on_regex
-from nonebot.adapters.onebot.v11 import MessageSegment, PrivateMessageEvent
+from nonebot.adapters.onebot.v11 import MessageSegment
 from nonebot.matcher import Matcher
 from nonebot.params import Depends, RegexMatched
 from nonebot.permission import SUPERUSER
@@ -21,7 +21,7 @@ from ..core.handler import (
 from ..core.image.tools import image_to_base64
 from ..core.image.update_table import UpdateTable
 from ..core.merge.models import Category
-from ..resources import pic_dir, rating_table_dir
+from ..resources import pic_dir
 from .depend import GetUserAndAuth
 
 RATING_PATTERN = r"^([0-9]+\+?)((s+|ap|fc|fs|fdx)\+?)?\s?完成表$"
@@ -51,7 +51,7 @@ level_score_list = on_regex(LEVEL_LIST_PATTERN)
 
 
 @update_table.handle()
-async def _(event: PrivateMessageEvent):
+async def _():
     await update_table.send("正在更新定数表...")
     update = UpdateTable()
     await update.update_rating_table()
@@ -60,7 +60,7 @@ async def _(event: PrivateMessageEvent):
 
 
 @update_plate.handle()
-async def _(event: PrivateMessageEvent):
+async def _():
     await update_plate.send("正在更新完成表...")
     update = UpdateTable()
     await update.update_plate_table()
@@ -74,12 +74,7 @@ async def _(match: Match[str] = RegexMatched()):
     if rating in LEVEL_LIST[:6]:
         result = "只支持查询lv7-15的定数表。"
     elif rating in LEVEL_LIST[6:]:
-        if rating == "15":
-            result = MessageSegment.image(
-                image_to_base64(Image.open(rating_table_dir / "15.png"))
-            )
-        else:
-            result = draw_rating_table_text(rating)
+        result = draw_rating_table_text(rating)
     else:
         result = "无法识别的定数。"
     await rating_table.send(result, reply_message=True)

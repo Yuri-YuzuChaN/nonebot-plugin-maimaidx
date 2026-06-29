@@ -1,6 +1,10 @@
 from re import Match
 
-from nonebot.adapters.onebot.v11 import GroupMessageEvent, PrivateMessageEvent
+from nonebot.adapters.onebot.v11 import (
+    GroupMessageEvent,
+    MessageSegment,
+    PrivateMessageEvent,
+)
 from nonebot.matcher import Matcher
 from nonebot.params import RegexMatched
 
@@ -41,6 +45,15 @@ class GetUserModel:
         user_id = event.user_id
         user = None
         is_exist = False
+
+        for item in event.message:
+            if (
+                isinstance(item, MessageSegment)
+                and item.type == "at"
+                and item.data["qq"] != "all"
+            ):
+                user_id = int(item.data["qq"])
+
         try:
             user = await get_user(user_id)
         except UserNotBindError:
