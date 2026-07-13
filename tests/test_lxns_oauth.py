@@ -23,6 +23,26 @@ class AuthorizationCodeTest(unittest.TestCase):
         code = "ticc0aGpJz61vpUuXYuW7x6UIgt3rrrh"
         self.assertEqual(lxns_oauth.extract_authorization_code(code), code)
 
+    def test_accepts_opaque_url_safe_codes(self) -> None:
+        for code in ("abcdefghijklmnop", "1234567890123456", "_-_-_-_-_-_-_-_-"):
+            with self.subTest(code=code):
+                self.assertEqual(
+                    lxns_oauth.extract_authorization_code(code), code
+                )
+
+    def test_accepts_long_code_length_boundaries(self) -> None:
+        for code in ("a" * 16, "a" * 256):
+            with self.subTest(length=len(code)):
+                self.assertEqual(
+                    lxns_oauth.extract_authorization_code(code), code
+                )
+
+        for code in ("a" * 15, "a" * 257):
+            with self.subTest(length=len(code)):
+                self.assertIsNone(
+                    lxns_oauth.extract_authorization_code(code)
+                )
+
     def test_extracts_prefixed_code(self) -> None:
         code = "ticc0aGpJz61vpUuXYuW7x6UIgt3rrrh"
         self.assertEqual(
@@ -43,7 +63,7 @@ class AuthorizationCodeTest(unittest.TestCase):
         invalid_values = (
             "",
             "今天天气不错",
-            "abcdefghijklmnopqrstuvwx",
+            "authorization code with spaces",
             "https://example.com/lxns/callback?state=example",
             "short-code",
         )
@@ -70,38 +90,71 @@ class AuthorizationCodeTest(unittest.TestCase):
         )
 
 
+class BindingChannelPolicyTest(unittest.TestCase):
+    def test_default_mode_allows_group_and_private_binding(self) -> None:
+        self.assertTrue(
+            lxns_oauth.is_binding_channel_allowed(
+                private_only=False, is_private=False
+            )
+        )
+        self.assertTrue(
+            lxns_oauth.is_binding_channel_allowed(
+                private_only=False, is_private=True
+            )
+        )
+
+    def test_private_only_mode_rejects_group_binding(self) -> None:
+        self.assertFalse(
+            lxns_oauth.is_binding_channel_allowed(
+                private_only=True, is_private=False
+            )
+        )
+        self.assertTrue(
+            lxns_oauth.is_binding_channel_allowed(
+                private_only=True, is_private=True
+            )
+        )
+
+
 class PendingBindingStoreTest(unittest.TestCase):
     def setUp(self) -> None:
         self.now = 100.0
+        self.self_id = 90001
         self.store = lxns_oauth.PendingBindingStore(
             ttl=10,
             clock=lambda: self.now,
         )
 
     def test_keeps_users_isolated(self) -> None:
-        self.store.start(10001)
+        self.store.start(self.self_id, 10001)
 
-        self.assertTrue(self.store.is_active(10001))
-        self.assertFalse(self.store.is_active(10002))
+        self.assertTrue(self.store.is_active(self.self_id, 10001))
+        self.assertFalse(self.store.is_active(self.self_id, 10002))
+
+    def test_keeps_bots_isolated(self) -> None:
+        self.store.start(self.self_id, 10001)
+
+        self.assertTrue(self.store.is_active(self.self_id, 10001))
+        self.assertFalse(self.store.is_active(90002, 10001))
 
     def test_consumes_binding_once(self) -> None:
-        self.store.start(10001)
+        self.store.start(self.self_id, 10001)
 
-        self.assertTrue(self.store.consume(10001))
-        self.assertFalse(self.store.consume(10001))
+        self.assertTrue(self.store.consume(self.self_id, 10001))
+        self.assertFalse(self.store.consume(self.self_id, 10001))
 
     def test_expires_binding_at_deadline(self) -> None:
-        self.store.start(10001)
+        self.store.start(self.self_id, 10001)
         self.now += 10
 
-        self.assertFalse(self.store.is_active(10001))
-        self.assertFalse(self.store.consume(10001))
+        self.assertFalse(self.store.is_active(self.self_id, 10001))
+        self.assertFalse(self.store.consume(self.self_id, 10001))
 
     def test_discard_removes_binding(self) -> None:
-        self.store.start(10001)
-        self.store.discard(10001)
+        self.store.start(self.self_id, 10001)
+        self.store.discard(self.self_id, 10001)
 
-        self.assertFalse(self.store.is_active(10001))
+        self.assertFalse(self.store.is_active(self.self_id, 10001))
 
 
 if __name__ == "__main__":

@@ -5,8 +5,7 @@ from urllib.parse import parse_qs, urlencode, urlparse
 
 AUTHORIZATION_CODE_PATTERN = re.compile(
     r"^(?:[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}"
-    r"|(?=[A-Za-z0-9_-]{24,128}$)(?=[A-Za-z0-9_-]*[A-Za-z])"
-    r"(?=[A-Za-z0-9_-]*\d)[A-Za-z0-9_-]+)$"
+    r"|[A-Za-z0-9_-]{16,256})$"
 )
 
 
@@ -20,6 +19,10 @@ def build_authorize_url(client_id: str, redirect_uri: str) -> str:
         }
     )
     return f"https://maimai.lxns.net/oauth/authorize?{query}"
+
+
+def is_binding_channel_allowed(*, private_only: bool, is_private: bool) -> bool:
+    return is_private or not private_only
 
 
 def extract_authorization_code(text: str) -> str | None:
@@ -51,31 +54,31 @@ class PendingBindingStore:
     ) -> None:
         self.ttl = ttl
         self._clock = clock
-        self._expires_at: dict[int, float] = {}
+        self._expires_at: dict[tuple[int, int], float] = {}
 
-    def start(self, user_id: int) -> None:
+    def start(self, self_id: int, user_id: int) -> None:
         now = self._clock()
         self._clear_expired(now)
-        self._expires_at[user_id] = now + self.ttl
+        self._expires_at[(self_id, user_id)] = now + self.ttl
 
-    def is_active(self, user_id: int) -> bool:
+    def is_active(self, self_id: int, user_id: int) -> bool:
         now = self._clock()
         self._clear_expired(now)
-        return user_id in self._expires_at
+        return (self_id, user_id) in self._expires_at
 
-    def consume(self, user_id: int) -> bool:
+    def consume(self, self_id: int, user_id: int) -> bool:
         now = self._clock()
         self._clear_expired(now)
-        return self._expires_at.pop(user_id, None) is not None
+        return self._expires_at.pop((self_id, user_id), None) is not None
 
-    def discard(self, user_id: int) -> None:
-        self._expires_at.pop(user_id, None)
+    def discard(self, self_id: int, user_id: int) -> None:
+        self._expires_at.pop((self_id, user_id), None)
 
     def _clear_expired(self, now: float) -> None:
         expired = [
-            user_id
-            for user_id, expires_at in self._expires_at.items()
+            key
+            for key, expires_at in self._expires_at.items()
             if expires_at <= now
         ]
-        for user_id in expired:
-            del self._expires_at[user_id]
+        for key in expired:
+            del self._expires_at[key]

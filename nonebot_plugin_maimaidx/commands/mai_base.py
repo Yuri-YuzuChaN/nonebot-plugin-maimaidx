@@ -3,6 +3,7 @@ import re
 from re import Match
 from textwrap import dedent
 
+from httpx import HTTPError as HTTPXError
 from nonebot import on_command, on_message, on_regex
 from nonebot.adapters.onebot.v11 import (
     GroupMessageEvent,
@@ -14,10 +15,12 @@ from nonebot.params import CommandArg, Depends, RegexMatched
 from nonebot.permission import SUPERUSER
 from nonebot.rule import Rule, is_type
 from PIL import Image
+from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 from ..config import log, lxnsconfig, maiconfig
 from ..constants import FORTUNE, LEVEL_LIST
-from ..core.clients.exceptions import HTTPError
+from ..core.clients.exceptions import HTTPError, UnknownError
 from ..core.clients.divingfish.client import DivingFishAPI
 from ..core.database.qq import User, update_user
 from ..core.handler import (
@@ -35,6 +38,7 @@ from ..lxns_oauth import (
     PendingBindingStore,
     build_authorize_url,
     extract_authorization_code,
+    is_binding_channel_allowed,
 )
 from ..resources import Root
 from .depend import GetOrCreateUser, GetUserAndAuth, GetUserAndAuthOrNone
@@ -43,14 +47,14 @@ AUTHORIZE_URL = build_authorize_url(
     lxnsconfig.lx_client_id or "", lxnsconfig.redirect_uri or ""
 )
 AUTHORIZE_MSG = dedent(f"""
-    请在当前私聊中完成落雪账号绑定：
+    请完成落雪账号绑定：
 
     1. 打开以下链接并允许「{maiconfig.bot_name} BOT」访问您的落雪查分器数据
     =======================
     {AUTHORIZE_URL}
     =======================
     2. 授权完成后，复制页面显示的授权码
-    3. 回到本私聊，直接发送授权码或完整回调链接
+    3. 回到 QQ，直接发送授权码或完整回调链接
 
     本次绑定有效期为 10 分钟，授权码只能使用一次；
     超时或失效后请重新发送「lxbind」获取授权链接
@@ -62,9 +66,9 @@ AUTHORIZE_MSG = dedent(f"""
 """).strip()
 LXNS_ERROR = "BOT管理员尚未配置落雪查分器相关信息"
 GROUP_BIND_GUIDE = (
-    "为保护您的落雪授权码，绑定流程仅支持私聊。"
-    "\n请点击 Bot 头像进入私聊，发送「lxbind」开始绑定。"
-    "\n请勿在群内发送授权码。"
+    "BOT 管理员已将落雪绑定设置为仅私聊。"
+    "\n请添加 Bot 为好友后，在私聊中发送「lxbind」开始绑定。"
+    "\n部分 OneBot 实现无法接收陌生人的私聊消息；若没有响应，请先确认好友关系。"
 )
 INVALID_CODE_MSG = (
     "未识别到有效的落雪授权码。"
@@ -72,23 +76,40 @@ INVALID_CODE_MSG = (
 )
 OAUTH_FAILED_MSG = (
     "落雪绑定失败：授权码可能已使用、已过期，或授权未成功。"
-    "\n请重新发送「lxbind」获取新的授权链接。"
+    "\n当前绑定会话仍有效，您可以发送新的授权码；"
+    "如需重新授权，请再次发送「lxbind」。"
+)
+BINDING_TEMPORARY_FAILED_MSG = (
+    "落雪绑定暂时失败：网络、响应数据或本地数据库出现异常。"
+    "\n当前绑定会话仍有效，您可以稍后重新发送授权码；"
+    "如果授权码已经使用，请再次发送「lxbind」重新授权。"
 )
 pending_bindings = PendingBindingStore()
 
 
-async def is_pending_authorization_code(event: PrivateMessageEvent) -> bool:
-    return pending_bindings.is_active(event.user_id) and bool(
+async def is_pending_authorization_code(
+    event: GroupMessageEvent | PrivateMessageEvent,
+) -> bool:
+    if not is_binding_channel_allowed(
+        private_only=lxnsconfig.lxns_bind_private_only,
+        is_private=isinstance(event, PrivateMessageEvent),
+    ):
+        return False
+    return pending_bindings.is_active(event.self_id, event.user_id) and bool(
         extract_authorization_code(event.get_plaintext())
     )
 
 
-async def complete_lxns_binding(user: User, code: str) -> str:
+async def complete_lxns_binding(user: User, code: str) -> tuple[str, bool]:
     try:
-        return await bind_lxns(user, code)
+        result = await bind_lxns(user, code)
     except HTTPError as error:
         log.warning(f"落雪 OAuth 绑定失败：{type(error).__name__}")
-        return OAUTH_FAILED_MSG
+        return OAUTH_FAILED_MSG, False
+    except (HTTPXError, UnknownError, ValidationError, SQLAlchemyError) as error:
+        log.warning(f"落雪 OAuth 绑定暂时失败：{type(error).__name__}")
+        return BINDING_TEMPORARY_FAILED_MSG, False
+    return result, result == "授权完成。"
 
 
 update_data = on_command("更新maimai数据", permission=SUPERUSER)
@@ -96,7 +117,9 @@ help = on_command("帮助maimaiDX", aliases={"帮助maimaidx"})
 maimaidxrepo = on_command("项目地址maimaiDX", aliases={"项目地址maimaidx"})
 bind = on_command("lxbind", aliases={"绑定落雪", "绑定lx"}, block=True)
 bind_code = on_message(
-    rule=is_type(PrivateMessageEvent) & Rule(is_pending_authorization_code),
+    rule=is_type(GroupMessageEvent, PrivateMessageEvent)
+    & Rule(is_pending_authorization_code),
+    priority=0,
     block=True,
 )
 source = on_command("数据源")
@@ -142,7 +165,11 @@ async def _(
     message: Message = CommandArg(),
     user: User = Depends(GetOrCreateUser),
 ):
-    if not isinstance(event, PrivateMessageEvent):
+    is_private = isinstance(event, PrivateMessageEvent)
+    if not is_binding_channel_allowed(
+        private_only=lxnsconfig.lxns_bind_private_only,
+        is_private=is_private,
+    ):
         await bind.finish(GROUP_BIND_GUIDE, reply_message=True)
 
     if not all(
@@ -156,25 +183,45 @@ async def _(
 
     text = message.extract_plain_text().strip()
     if not text:
-        pending_bindings.start(event.user_id)
-        await bind.finish(AUTHORIZE_MSG, reply_message=True)
+        pending_bindings.start(event.self_id, event.user_id)
+        channel_guide = (
+            "请在当前私聊发送授权码或完整回调链接。"
+            if is_private
+            else (
+                "建议在 Bot 私聊中发送授权码或完整回调链接；"
+                "若 Bot 无法接收陌生人私聊，也可在当前群聊发送。"
+            )
+        )
+        await bind.finish(
+            f"{AUTHORIZE_MSG}\n\n{channel_guide}", reply_message=True
+        )
 
     code = extract_authorization_code(text)
     if code is None:
         await bind.finish(INVALID_CODE_MSG, reply_message=True)
 
-    pending_bindings.discard(event.user_id)
-    await bind.finish(await complete_lxns_binding(user, code), reply_message=True)
+    result, succeeded = await complete_lxns_binding(user, code)
+    if succeeded:
+        pending_bindings.discard(event.self_id, event.user_id)
+    else:
+        pending_bindings.start(event.self_id, event.user_id)
+    await bind.finish(result, reply_message=True)
 
 
 @bind_code.handle()
-async def _(event: PrivateMessageEvent, user: User = Depends(GetOrCreateUser)):
+async def _(
+    event: GroupMessageEvent | PrivateMessageEvent,
+    user: User = Depends(GetOrCreateUser),
+):
     code = extract_authorization_code(event.get_plaintext())
-    if code is None or not pending_bindings.consume(event.user_id):
+    if code is None or not pending_bindings.is_active(
+        event.self_id, event.user_id
+    ):
         return
-    await bind_code.finish(
-        await complete_lxns_binding(user, code), reply_message=True
-    )
+    result, succeeded = await complete_lxns_binding(user, code)
+    if succeeded:
+        pending_bindings.consume(event.self_id, event.user_id)
+    await bind_code.finish(result, reply_message=True)
 
 
 @source.handle()

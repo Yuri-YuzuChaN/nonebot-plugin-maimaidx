@@ -26,6 +26,7 @@ class LxnsConfig(BaseModel):
     lx_client_id: str | None = None
     lx_client_secret: str | None = None
     redirect_uri: str | None = None
+    lxns_bind_private_only: bool = False
 
 
 maiconfig = get_plugin_config(BaseConfig)
