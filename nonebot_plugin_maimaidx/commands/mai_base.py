@@ -20,8 +20,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from ..config import log, lxnsconfig, maiconfig
 from ..constants import FORTUNE, LEVEL_LIST
-from ..core.clients.exceptions import HTTPError, UnknownError
 from ..core.clients.divingfish.client import DivingFishAPI
+from ..core.clients.exceptions import HTTPError, UnknownError
 from ..core.database.qq import User, update_user
 from ..core.handler import (
     bind_lxns,
@@ -31,15 +31,15 @@ from ..core.handler import (
     get_mai_what,
 )
 from ..core.image.tools import image_to_base64, song_chart
-from ..core.merge.models import ServiceName, Theme
-from ..core.service import mai
-from ..core.tool import qqhash
-from ..lxns_oauth import (
+from ..core.lxns_oauth import (
     PendingBindingStore,
     build_authorize_url,
     extract_authorization_code,
     is_binding_channel_allowed,
 )
+from ..core.merge.models import ServiceName, Theme
+from ..core.service import mai
+from ..core.tool import qqhash
 from ..resources import Root
 from .depend import GetOrCreateUser, GetUserAndAuth, GetUserAndAuthOrNone
 
@@ -66,22 +66,22 @@ AUTHORIZE_MSG = dedent(f"""
 """).strip()
 LXNS_ERROR = "BOT管理员尚未配置落雪查分器相关信息"
 GROUP_BIND_GUIDE = (
-    "BOT 管理员已将落雪绑定设置为仅私聊。"
-    "\n请添加 Bot 为好友后，在私聊中发送「lxbind」开始绑定。"
-    "\n部分 OneBot 实现无法接收陌生人的私聊消息；若没有响应，请先确认好友关系。"
+    "BOT 管理员已将落雪绑定设置为仅私聊。\n"
+    "请添加 Bot 为好友后，在私聊中发送「lxbind」开始绑定。\n"
+    "部分 OneBot 实现无法接收陌生人的私聊消息；若没有响应，请先确认好友关系。"
 )
 INVALID_CODE_MSG = (
-    "未识别到有效的落雪授权码。"
-    "\n请发送授权页面显示的完整授权码，或直接粘贴完整回调链接。"
+    "未识别到有效的落雪授权码。\n"
+    "请发送授权页面显示的完整授权码，或直接粘贴完整回调链接。"
 )
 OAUTH_FAILED_MSG = (
-    "落雪绑定失败：授权码可能已使用、已过期，或授权未成功。"
-    "\n当前绑定会话仍有效，您可以发送新的授权码；"
+    "落雪绑定失败：授权码可能已使用、已过期，或授权未成功。\n"
+    "当前绑定会话仍有效，您可以发送新的授权码；"
     "如需重新授权，请再次发送「lxbind」。"
 )
 BINDING_TEMPORARY_FAILED_MSG = (
-    "落雪绑定暂时失败：网络、响应数据或本地数据库出现异常。"
-    "\n当前绑定会话仍有效，您可以稍后重新发送授权码；"
+    "落雪绑定暂时失败：网络、响应数据或本地数据库出现异常。\n"
+    "当前绑定会话仍有效，您可以稍后重新发送授权码；"
     "如果授权码已经使用，请再次发送「lxbind」重新授权。"
 )
 pending_bindings = PendingBindingStore()
@@ -192,9 +192,7 @@ async def _(
                 "若 Bot 无法接收陌生人私聊，也可在当前群聊发送。"
             )
         )
-        await bind.finish(
-            f"{AUTHORIZE_MSG}\n\n{channel_guide}", reply_message=True
-        )
+        await bind.finish(f"{AUTHORIZE_MSG}\n\n{channel_guide}", reply_message=True)
 
     code = extract_authorization_code(text)
     if code is None:
@@ -214,9 +212,7 @@ async def _(
     user: User = Depends(GetOrCreateUser),
 ):
     code = extract_authorization_code(event.get_plaintext())
-    if code is None or not pending_bindings.is_active(
-        event.self_id, event.user_id
-    ):
+    if code is None or not pending_bindings.is_active(event.self_id, event.user_id):
         return
     result, succeeded = await complete_lxns_binding(user, code)
     if succeeded:
