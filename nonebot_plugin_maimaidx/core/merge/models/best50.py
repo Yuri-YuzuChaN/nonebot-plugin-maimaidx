@@ -8,3 +8,6 @@ class Best50(BaseModel):
     dx_total: int
     sd: list[PlayedResult] = []
     dx: list[PlayedResult] = []
+    # only lxns，官方候选谱面
+    standard_selections: list[PlayedResult] = []
+    dx_selections: list[PlayedResult] = []

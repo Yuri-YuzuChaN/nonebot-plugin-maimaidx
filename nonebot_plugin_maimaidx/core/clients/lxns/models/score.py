@@ -43,6 +43,8 @@ class Best50(BaseModel):
     dx_total: int
     standard: list[Score]
     dx: list[Score]
+    standard_selections: list[Score]
+    dx_selections: list[Score]
 
 
 class AllPerfect50(Best50): ...

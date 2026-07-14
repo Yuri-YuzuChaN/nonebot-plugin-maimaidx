@@ -139,11 +139,12 @@ async def get_best50(
     elif user.service == ServiceName.LXNS:
         token = get_token(user)
         api = LxnsAPI(user.qqid, token)
-        player = await api.player()
+        lxplayer = await api.player()
         if all_perfect:
-            obj = await api.ap50(player.friend_code)
+            obj = await api.ap50(lxplayer.friend_code)
         else:
             obj = await api.best50()
+        player = Player.model_validate(lxplayer.model_dump())
         best50 = lxns_to_best50(obj)
     else:
         raise ValueError
