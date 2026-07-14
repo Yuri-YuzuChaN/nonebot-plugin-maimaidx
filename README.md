@@ -106,7 +106,11 @@
    LX_CLIENT_ID=                        # OAuth 应用ID，OAuth权限范围请选择前三项，不包括「读取个人API秘钥」
    LX_CLIENT_SECRET=                    # OAuth 应用秘钥
    REDIRECT_URI=                        # OAuth 回调地址
+   LXNS_BIND_PRIVATE_ONLY=false         # 是否仅允许私聊完成 OAuth 绑定，默认允许群聊和私聊
    ```
+
+> [!NOTE]
+> 使用落雪 OAuth 绑定时，可在群聊或私聊发送 `lxbind`，按提示完成授权后发送授权码或完整回调链接；群聊发起的绑定也可以转到同一 Bot 的私聊完成。若设置 `LXNS_BIND_PRIVATE_ONLY=true`，群聊只会提示用户添加 Bot 好友后前往私聊。部分 OneBot 实现无法接收陌生人的私聊消息，因此该选项默认关闭。
 
 > [!NOTE]
 > 安装完插件需要使用定数表或完成表指令时，需私聊Bot使用 `更新定数表` 和 `更新完成表` 进行生成
