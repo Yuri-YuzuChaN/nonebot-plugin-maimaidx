@@ -83,32 +83,30 @@ async def _(message: Message = CommandArg()):
 
 @alias_apply.handle()
 async def _(event: GroupMessageEvent, message: Message = CommandArg()):
-    try:
-        args = message.extract_plain_text().strip().split()
-        if len(args) < 2:
-            await alias_apply.finish("参数错误", reply_message=True)
-        song_id = args[0]
-        if not song_id.isdigit():
-            await alias_apply.finish("请输入正确的ID", reply_message=True)
-        alias_name = " ".join(args[1:])
-        if not mai.total_list.by_id(int(song_id)):
-            await alias_apply.finish(f"未找到ID「{song_id}」的曲目", reply_message=True)
+    args = message.extract_plain_text().strip().split()
+    if len(args) < 2:
+        await alias_apply.finish("参数错误", reply_message=True)
+    song_id = args[0]
+    if not song_id.isdigit():
+        await alias_apply.finish("请输入正确的ID", reply_message=True)
+    alias_name = " ".join(args[1:])
+    if not mai.total_list.by_id(int(song_id)):
+        await alias_apply.finish(f"未找到ID「{song_id}」的曲目", reply_message=True)
 
+    try:
         api = YuzuChaNAPI()
         isexist = await api.get_aliases(song_id=song_id)
-        if isinstance(isexist, Alias) and alias_name.lower() in isexist.alias:
-            await alias_apply.finish(
-                f"该曲目的别名「{alias_name}」已存在别名服务器", reply_message=True
-            )
-
-        result = await api.post_alias(
-            song_id, alias_name, event.user_id, event.group_id
-        )
-        msg = result.message
     except Exception as e:
         log.error(traceback.format_exc())
-        msg = str(e)
-    await alias_apply.finish(msg, reply_message=True)
+        await alias_apply.finish(str(e), reply_message=True)
+
+    if isinstance(isexist, Alias) and alias_name.lower() in isexist.alias:
+        await alias_apply.finish(
+            f"该曲目的别名「{alias_name}」已存在别名服务器", reply_message=True
+        )
+
+    result = await api.post_alias(song_id, alias_name, event.user_id, event.group_id)
+    await alias_apply.finish(result.message, reply_message=True)
 
 
 @alias_agree.handle()
