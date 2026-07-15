@@ -61,19 +61,17 @@ async def _(
         api = YuzuChaNAPI()
         try:
             obj = await api.get_songs(name)
-            if isinstance(obj, Songs):
-                if obj.type == StatusEnum.ONGOING and isinstance(
-                    obj.data[0], AliasStatus
-                ):
-                    msg = f"未找到别名为「{name}」的歌曲，但找到与此相同别名的投票：\n"
-                    for _s in obj.data:
-                        msg += f"- {_s.tag}\n    ID {_s.song_id}: {_s.name}\n"
-                    msg += "※ 可以使用指令「同意别名 XXXXX」进行投票"
-                    await search_alias_song.finish(msg.strip(), reply_message=True)
-                else:
-                    alias_data = yuzu_alias_to_alias(obj.data)
         except Exception:
-            pass
+            obj = None
+        if isinstance(obj, Songs):
+            if obj.type == StatusEnum.ONGOING and isinstance(obj.data[0], AliasStatus):
+                msg = f"未找到别名为「{name}」的歌曲，但找到与此相同别名的投票：\n"
+                for _s in obj.data:
+                    msg += f"- {_s.tag}\n    ID {_s.song_id}: {_s.name}\n"
+                msg += "※ 可以使用指令「同意别名 XXXXX」进行投票"
+                await search_alias_song.finish(msg.strip(), reply_message=True)
+            else:
+                alias_data = yuzu_alias_to_alias(obj.data)
 
     if alias_data:
         if len(alias_data) != 1:
