@@ -4,12 +4,12 @@ from pydantic import BaseModel
 
 
 class DivingFishScope(IntFlag):
-    PROFILE = 1
-    PROBER_PROFILE_READ = 2
-    PROBER_RECORDS_READ = 4
-    PROBER_RECORDS_WRITE = 8
-    CHUNITHM_RECORDS_READ = 16
-    CHUNITHM_RECORDS_WRITE = 32
+    PROFILE = 1 << 0
+    PROBER_PROFILE_READ = 1 << 1
+    PROBER_RECORDS_READ = 1 << 2
+    PROBER_RECORDS_WRITE = 1 << 3
+    CHUNITHM_RECORDS_READ = 1 << 4
+    CHUNITHM_RECORDS_WRITE = 1 << 5
 
 
 DIVINGFISH_SCOPE_NAMES = {
@@ -20,7 +20,10 @@ DIVINGFISH_SCOPE_NAMES = {
     DivingFishScope.CHUNITHM_RECORDS_READ: "chunithm.records.read",
     DivingFishScope.CHUNITHM_RECORDS_WRITE: "chunithm.records.write",
 }
-DIVINGFISH_SCOPE_MASK = sum(scope.value for scope in DivingFishScope)
+
+DIVINGFISH_SCOPE_VALUES = {
+    name: scope for scope, name in DIVINGFISH_SCOPE_NAMES.items()
+}
 
 
 class DeviceAuthorization(BaseModel):
@@ -32,9 +35,6 @@ class DeviceAuthorization(BaseModel):
     verification_uri_complete: str
     expires_in: int
     interval: int = 5
-    #: 收尾方式。请求里带了 `handoff=code` 时水鱼会原样回显，
-    #: 借此确认本次绑定确实要等用户回填确认码
-    handoff: str = "poll"
 
 
 class AccessToken(BaseModel):
@@ -44,5 +44,4 @@ class AccessToken(BaseModel):
     token_type: str
     expires_in: int
     scope: str
-    #: 该用户的水鱼用户 ID。只有兑换确认码的响应里有，换票的响应里没有
     sub: str | None = None

@@ -3,8 +3,8 @@ from nonebot import get_driver, get_plugin_config
 from pydantic import BaseModel, field_validator
 
 from .core.clients.divingfish.models.oauth import (
-    DIVINGFISH_SCOPE_MASK,
     DIVINGFISH_SCOPE_NAMES,
+    DIVINGFISH_SCOPE_VALUES,
     DivingFishScope,
 )
 
@@ -25,8 +25,6 @@ class BaseConfig(BaseModel):
 class DivingFishConfig(BaseModel):
     divingfish_prober_proxy: bool = False
     divingfish_token: str | None = None
-    """开发者 token，已弃用，水鱼查分器将停止签发并在过渡期后关闭该鉴权方式，
-    请改用 `divingfish_client_id` 与 `divingfish_client_secret`"""
     divingfish_client_id: str | None = None
     divingfish_client_secret: str | None = None
     divingfish_auth_url: str = "https://auth.diving-fish.com"
@@ -34,16 +32,32 @@ class DivingFishConfig(BaseModel):
 
     @field_validator("divingfish_scope", mode="before")
     @classmethod
-    def validate_divingfish_scope(cls, value: object) -> DivingFishScope:
-        if isinstance(value, bool) or not isinstance(value, (str, int)):
-            raise ValueError("divingfish_scope 必须是 scope 权重之和")  # noqa: TRY004
-        try:
-            weight = int(value)
-        except ValueError as e:
-            raise ValueError("divingfish_scope 必须是 scope 权重之和") from e
-        if weight <= 0 or weight & ~DIVINGFISH_SCOPE_MASK:
-            raise ValueError("divingfish_scope 包含无效的 scope 权重")
-        return DivingFishScope(weight)
+    def validate_divingfish_scope(cls, value: str) -> DivingFishScope:
+        if isinstance(value, DivingFishScope):
+            return value
+
+        if isinstance(value, int):
+            return DivingFishScope(value)
+
+        if not isinstance(value, str):
+            raise TypeError("divingfish_scope 必须是字符串或整数")
+
+        value = value.strip()
+        if not value:
+            raise ValueError("divingfish_scope 不能为空")
+
+        result = DivingFishScope(0)
+
+        for name in value.split():
+            scope = DIVINGFISH_SCOPE_VALUES.get(name)
+            if scope is None:
+                valid_names = ", ".join(DIVINGFISH_SCOPE_VALUES)
+                raise ValueError(
+                    f"未知的 DivingFish scope: {name!r}；可选值：{valid_names}"
+                )
+            result |= scope
+
+        return result
 
     @property
     def divingfish_oauth_scope(self) -> str:

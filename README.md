@@ -90,17 +90,7 @@
    # diving-fish                        # 水鱼查分器配置
    DIVINGFISH_CLIENT_ID=                # OAuth 应用ID，向水鱼申请应用后获得
    DIVINGFISH_CLIENT_SECRET=            # OAuth 应用秘钥
-   DIVINGFISH_SCOPE=4                   # OAuth 权限权重，多个权限之和，默认值为 `4`
-
-        # 以下是各个scope权重，请开发者按自身申请的OAuth权限，根据以下权限权重之和填写，例如：
-        # 「读取你在查分器的资料」的权重为 `2`，「读取你的舞萌 DX 成绩的权重」为 `4`，所以 `SCOPE` 填写 `6`。
-        profile = 1
-        prober.profile.read = 2
-        prober.records.read = 4
-        prober.records.write = 8
-        chunithm.records.read = 16
-        chunithm.records.write = 32
-
+   DIVINGFISH_SCOPE=""                  # OAuth 权限，根据应用权限进行填写，多个权限用空格隔开，默认值为 `"prober.profile.read"`
    DIVINGFISH_AUTH_URL=                 # 水鱼账号地址，一般不需要填写，默认为 `https://auth.diving-fish.com`
    DIVINGFISH_TOKEN=                    # 开发者 token，已弃用，见下方说明
    DIVINGFISH_PROBER_PROXY=false        # 是否使用中转访问水鱼查分器，适用于境外服务器

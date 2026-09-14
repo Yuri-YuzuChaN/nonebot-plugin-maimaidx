@@ -88,15 +88,13 @@ async def push_alias(push: PushAliasStatus):
     group_list = await bot.get_group_list()
     group_ids: set[int] = set({g["group_id"] for g in group_list})
     message = []
-    if push.type == "Apply":
-        message.append(f"浏览「{VOTE_URL}」查看详情")
     for num, item in enumerate(push.status):
         song_id = item.song_id
         alias_name = item.apply_alias
         song = mai.total_list.by_id(song_id)
         if num == 0 and push.type == "Apply":
             message.append(
-                "检测到新的别名申请，可使用同意别名指令进行投票，点击下方链接查看详情：\n"
+                "检测到新的别名申请，可使用同意别名指令进行投票，点击下方链接查看详情："
                 f"「{VOTE_URL}」\n如果不需要接收推送消息，请使用「关闭别名推送」指令关闭推送"
             )
         if push.type == "Apply":
@@ -166,7 +164,7 @@ async def sse_alias_server():
                             continue
                         try:
                             payload = json.loads(message.data)
-                            if payload.get("type") == "Apply":
+                            if payload.get("type") != "Apply":
                                 continue
                             push = PushAliasStatus.model_validate(payload)
                             await push_alias(push)

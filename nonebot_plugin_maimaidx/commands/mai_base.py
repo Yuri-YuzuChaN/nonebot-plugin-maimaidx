@@ -1,7 +1,6 @@
 import random
 import re
 from re import Match
-from textwrap import dedent
 
 from httpx import HTTPError as HTTPXError
 from nonebot import on_command, on_message, on_regex
@@ -40,12 +39,11 @@ from ..core.handler import (
 )
 from ..core.image.tools import image_to_base64, song_chart
 from ..core.lxns_oauth import (
-    build_authorize_url,
     extract_authorization_code,
     is_binding_channel_allowed,
 )
-from ..core.pending_binding import PendingBindingStore
 from ..core.merge.models import ServiceName, Theme
+from ..core.pending_binding import PendingBindingStore
 from ..core.service import mai
 from ..core.tool import qqhash
 from ..resources import Root
@@ -55,113 +53,8 @@ from .depend import (
     GetUserAndAuth,
     GetUserAndAuthOrNone,
 )
+from .oauth_message import *
 
-AUTHORIZE_URL = build_authorize_url(
-    lxnsconfig.lx_client_id or "", lxnsconfig.redirect_uri or ""
-)
-AUTHORIZE_MSG = dedent(f"""
-    请完成落雪账号绑定：
-
-    1. 打开以下链接并允许「{maiconfig.bot_name} BOT」访问您的落雪查分器数据
-    =======================
-    {AUTHORIZE_URL}
-    =======================
-    2. 授权完成后，复制页面显示的授权码
-    3. 回到 QQ，直接发送授权码或完整回调链接
-
-    本次绑定有效期为 10 分钟，授权码只能使用一次；
-    超时或失效后请重新发送「lxbind」获取授权链接
-    =======================
-    请注意！！您必须在落雪查分器的
-    「账号设置 -> 常规设置」中的
-    「隐私设置」开启允许读取成绩，否
-    则BOT将无法查询您的成绩
-""").strip()
-DIVINGFISH_AUTHORIZE_MSG = dedent("""
-    请完成水鱼查分器授权：
-
-    1. 打开以下链接并登录水鱼账号，授权「{bot_name} BOT」访问您的水鱼查分器数据
-    =======================
-    {url}
-    =======================
-    2. 确认页面显示的绑定身份为「{label}」后点击「同意授权」
-    3. 复制页面给出的确认码，回到 QQ 发送给 BOT
-
-    本次绑定 {minutes} 分钟内有效，确认码只能使用一次；
-    超时或失效后请重新发送「绑定水鱼」。
-    =======================
-    请注意！！链接与确认码都仅供您本人使用，请勿转发他人。
-    确认码建议在与 BOT 的私聊中发送，避免被他人看到。
-    如需取消授权，请前往 {revoke}
-""").strip()
-#: 水鱼那侧还不认 handoff=code 时用的说明（旧版本会忽略这个参数）。
-#: 那种情况下页面不发确认码，但绑定本身照常成立：用户点完同意，
-#: 映射就建好了，下一条查询指令自然会成功
-DIVINGFISH_AUTHORIZE_LEGACY_MSG = dedent("""
-    请完成水鱼查分器授权：
-
-    1. 打开以下链接并登录水鱼账号，授权「{bot_name} BOT」访问您的水鱼查分器数据
-    =======================
-    {url}
-    =======================
-    2. 确认页面显示的绑定身份为「{label}」后点击「同意授权」
-
-    链接 {minutes} 分钟内有效，授权完成后直接使用查询指令即可，无需回复确认码。
-    =======================
-    请注意！！这条链接仅供您本人使用，请勿转发他人。
-    如需取消授权，请前往 {revoke}
-""").strip()
-DIVINGFISH_OAUTH_ERROR = "BOT管理员尚未配置水鱼查分器 OAuth 应用，无法进行绑定授权。"
-DIVINGFISH_BIND_FAILED_MSG = (
-    "发起水鱼授权失败：水鱼账号服务可能暂时不可用，请稍后再试。"
-)
-DIVINGFISH_NO_SESSION_MSG = (
-    "请先发送「绑定水鱼」获取授权链接，完成授权后再发送确认码。"
-)
-DIVINGFISH_INVALID_CODE_MSG = (
-    "未识别到有效的水鱼确认码。\n"
-    "请发送授权完成页面显示的完整确认码，形如 BCDF-GHJK-LMNP。"
-)
-DIVINGFISH_CODE_FAILED_MSG = (
-    "水鱼绑定失败：确认码可能已使用、已过期，或不是本次绑定的确认码。\n"
-    "当前绑定会话仍有效，您可以发送新的确认码；"
-    "如需重新授权，请再次发送「绑定水鱼」。"
-)
-DIVINGFISH_MISMATCH_MSG = (
-    "水鱼绑定失败：这串确认码对应的授权不属于您的账号。\n"
-    "确认码只能由发起绑定的本人使用，请勿使用他人转发给您的确认码。\n"
-    "如需绑定自己的账号，请发送「绑定水鱼」重新走一遍授权。"
-)
-DIVINGFISH_BIND_SUCCESS_MSG = "水鱼查分器授权完成，现在可以直接使用查询指令了。"
-#: 水鱼的绑定会话要盖住两段窗口：授权链接的 10 分钟，加上用户点完同意之后
-#: 确认码自己的 10 分钟。只按前一段算的话，拖到最后一刻才点同意的人，
-#: 拿着一串仍然有效的码发回来会石沉大海——匹配器不认，BOT 一声不吭
-DIVINGFISH_SESSION_TTL = 20 * 60
-DIVINGFISH_CODE_TEMPORARY_FAILED_MSG = (
-    "水鱼绑定暂时失败：水鱼账号服务或网络出现异常。\n"
-    "当前绑定会话仍有效，您可以稍后重新发送确认码；"
-    "如果确认码已经使用，请再次发送「绑定水鱼」重新授权。"
-)
-LXNS_ERROR = "BOT管理员尚未配置落雪查分器相关信息"
-GROUP_BIND_GUIDE = (
-    "BOT 管理员已将落雪绑定设置为仅私聊。\n"
-    "请添加 Bot 为好友后，在私聊中发送「lxbind」开始绑定。\n"
-    "部分 OneBot 实现无法接收陌生人的私聊消息；若没有响应，请先确认好友关系。"
-)
-INVALID_CODE_MSG = (
-    "未识别到有效的落雪授权码。\n"
-    "请发送授权页面显示的完整授权码，或直接粘贴完整回调链接。"
-)
-OAUTH_FAILED_MSG = (
-    "落雪绑定失败：授权码可能已使用、已过期，或授权未成功。\n"
-    "当前绑定会话仍有效，您可以发送新的授权码；"
-    "如需重新授权，请再次发送「lxbind」。"
-)
-BINDING_TEMPORARY_FAILED_MSG = (
-    "落雪绑定暂时失败：网络、响应数据或本地数据库出现异常。\n"
-    "当前绑定会话仍有效，您可以稍后重新发送授权码；"
-    "如果授权码已经使用，请再次发送「lxbind」重新授权。"
-)
 pending_bindings = PendingBindingStore()
 
 
@@ -292,7 +185,9 @@ async def _(
                 "若 Bot 无法接收陌生人私聊，也可在当前群聊发送。"
             )
         )
-        await bind.finish(f"{AUTHORIZE_MSG}\n\n{channel_guide}", reply_message=True)
+        await bind.finish(
+            f"{LXNS_AUTHORIZE_MSG}\n\n{channel_guide}", reply_message=True
+        )
 
     code = extract_authorization_code(text)
     if code is None:
@@ -347,14 +242,11 @@ async def _(
     if not dfconfig.oauth_enabled:
         await df_bind.finish(DIVINGFISH_OAUTH_ERROR, reply_message=True)
 
-    # 「绑定水鱼 BCDF-GHJK-LMNP」：把码直接跟在指令后面
     text = message.extract_plain_text().strip()
     if text:
         if not pending_bindings.is_active(
             event.self_id, event.user_id, ServiceName.DIVINGFISH
         ):
-            # 没发起过就送来一串码，只能是别处转发来的。这时候不该去兑换：
-            # 兑换会烧掉那串码，而它本来是另一个人的
             await df_bind.finish(DIVINGFISH_NO_SESSION_MSG, reply_message=True)
         code = extract_confirmation_code(text)
         if code is None:
@@ -370,22 +262,6 @@ async def _(
         log.warning(f"水鱼授权发起失败：{type(error).__name__}")
         await df_bind.finish(DIVINGFISH_BIND_FAILED_MSG, reply_message=True)
 
-    if authorization.handoff != "code":
-        # 水鱼那侧没按确认码受理（还没上这条路），页面不会发码。等下去等不到，
-        # 但绑定本身仍然成立，所以退回老流程的说明，也不开等码的会话
-        log.warning("水鱼账号服务未以确认码方式受理本次绑定，退回原流程")
-        await df_bind.finish(
-            DIVINGFISH_AUTHORIZE_LEGACY_MSG.format(
-                bot_name=maiconfig.bot_name,
-                url=authorization.verification_uri_complete,
-                label=binding_label(user.qqid),
-                minutes=max(authorization.expires_in // 60, 1),
-                revoke=dfconfig.divingfish_auth_url.rstrip("/") + REVOKE_URL,
-            ),
-            reply_message=True,
-        )
-
-    # 会话记在这里：此后只有这个 QQ 发回来的码会被受理
     pending_bindings.start(
         event.self_id,
         event.user_id,
