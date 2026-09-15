@@ -7,7 +7,7 @@ import httpx
 from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import (
     Bot,
-    Message,
+    MessageSegment,
 )
 
 from ..config import log, maiconfig
@@ -68,17 +68,6 @@ async def iter_sse(lines: AsyncIterator[str]) -> AsyncIterator[SSEMessage]:
         )
 
 
-def forward_msg(info: list[Message], self_id: int) -> list:
-    forward_msg_list = []
-    for msg in info:
-        data = {
-            "type": "node",
-            "data": {"name": "Bot", "uin": str(self_id), "content": msg},
-        }
-        forward_msg_list.append(data)
-    return forward_msg_list
-
-
 async def push_alias(push: PushAliasStatus):
     bot: Bot = get_bot()
 
@@ -109,7 +98,7 @@ async def push_alias(push: PushAliasStatus):
             )
     if not message:
         return
-    forward = forward_msg(message, bot.self_id)
+    forward = [MessageSegment.node_custom(bot.self_id, "Bot", msg) for msg in message]
     for gid in group_ids:
         if gid in alias.push.disable:
             continue

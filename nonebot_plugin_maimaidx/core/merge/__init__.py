@@ -248,7 +248,7 @@ async def merge_alias_data(
     if lxns_aliases is not None:
         for item in lxns_aliases.aliases:
             song_id = item.song_id
-            if song_id > 1000:
+            if song_id > 1000 and song_id < 100000:
                 song_id += 10000
             add_aliases(song_id, item.aliases)
 

@@ -15,7 +15,7 @@ from .resources import plate_table_dir, rating_table_dir
 
 scheduler = require("nonebot_plugin_apscheduler")
 
-from nonebot_plugin_apscheduler import scheduler  # noqa: F811
+from nonebot_plugin_apscheduler import scheduler
 
 __plugin_meta__ = PluginMetadata(
     name="nonebot-plugin-maimaidx",
