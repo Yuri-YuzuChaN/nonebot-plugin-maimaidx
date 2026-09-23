@@ -25,7 +25,7 @@ def calc_ds(rating: float, achievements: float) -> float:
     return round(rating / (a * get_base_ra(achievements)), 1)
 
 
-def dx_score(dx: int) -> int:
+def dx_score(dx: float) -> int:
     """
     获取DX评分星星数量
 
@@ -34,15 +34,15 @@ def dx_score(dx: int) -> int:
     Returns:
         `int` 返回星星数量
     """
-    if dx <= 85:
+    if dx < 85:
         result = 0
-    elif dx <= 90:
+    elif dx < 90:
         result = 1
-    elif dx <= 93:
+    elif dx < 93:
         result = 2
-    elif dx <= 95:
+    elif dx < 95:
         result = 3
-    elif dx <= 97:
+    elif dx < 97:
         result = 4
     else:
         result = 5
