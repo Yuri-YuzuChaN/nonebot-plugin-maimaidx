@@ -1,4 +1,3 @@
-import traceback
 from functools import wraps
 from textwrap import dedent
 
@@ -53,7 +52,7 @@ def handle_errors(func):
         except DivingFishTooManyRequestsError:
             return MessageSegment.text("水鱼查分器请求次数已达上限，请稍后再试。")
         except DivingFishOAuthError:
-            log.error("水鱼账号服务请求失败。")
+            log.exception("水鱼账号服务请求失败。")
             return MessageSegment.text("水鱼账号服务暂时不可用，请稍后再试。")
         except DivingFishUserNotFoundError:
             return MessageSegment.text(NOTFOUNDUSER)
@@ -66,15 +65,17 @@ def handle_errors(func):
             DivingFishTokenNotFoundError,
             DivingFishTokenError,
         ):
-            log.error("水鱼开发者Token异常，请自行检查。")
+            log.exception("水鱼开发者Token异常，请自行检查。")
             return MessageSegment.text(
                 "请联系BOT管理员检查水鱼查分器相关信息，暂时无法查询。"
             )
 
         ### LXNS
         except LXNSTokenError:
+            log.exception("落雪查分器授权错误。")
             return MessageSegment.text("落雪查分器授权错误，请尝试重新绑定授权。")
         except LXNSPermissionDeniedError:
+            log.exception("使用落雪查分器请求权限不足。")
             return MessageSegment.text(
                 "使用落雪查分器的权限不足，请联系BOT管理员检查相关信息。"
             )
@@ -85,11 +86,12 @@ def handle_errors(func):
         except LXNSTooManyRequestsError:
             return MessageSegment.text("使用落雪查分器的请求次数过多，请稍后再试。")
         except LXNSParamsError:
-            log.error(f"请求参数错误。\n{traceback.format_exc()}")
+            log.exception("请求参数错误。")
             return MessageSegment.text(
                 "使用落雪查分器请求时发生错误，请联系BOT管理员检查相关信息。"
             )
         except LXNSOAuthError:
+            log.exception("落雪查分器授权错误。")
             return MessageSegment.text(
                 "落雪查分器授权错误，请重试，依旧错误请重新绑定授权。"
             )
@@ -100,7 +102,7 @@ def handle_errors(func):
         except NotMusicRecommendationError:
             return MessageSegment.text("没有乐曲推荐呢。可能是您太强了。")
         except Exception as e:
-            log.error(f"发生错误: {traceback.format_exc()}")
+            log.exception("发生未知错误。")
             return MessageSegment.text(
                 f"发生未知错误：{type(e).__name__}\n请联系BOT管理员。"
             )
