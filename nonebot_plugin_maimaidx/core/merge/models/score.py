@@ -65,7 +65,7 @@ class PlayedResult(Result):
 class RiseResult(Result):
     old_rating: int = 0
     old_achievements: float = 0
-    old_rate: str = "D"
+    old_rate: str = "d"
 
 
 class RatingTableResult(BaseModel):
