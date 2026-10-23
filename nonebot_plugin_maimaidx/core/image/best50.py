@@ -4,13 +4,14 @@ from pathlib import Path
 
 from PIL import Image
 
-from ...config import maiconfig
+from ...config import log, maiconfig
 from ...resources import pic_dir, plate_version_dir, shougou_dir, static
 from ..clients.http import online_assets, qqlogo
 from ..clients.lxns.models.collection import Collection
 from ..database.qq import User
 from ..merge.models import Best50, Player, ServiceName, Theme
 from .base import ScoreBaseImage
+from .plate import resolve_plate_path
 from .tools import image_to_base64
 
 
@@ -120,12 +121,20 @@ class PlayerBest50(ScoreBaseImage):
         self._im.alpha_composite(logo, (14, 60))
 
         # plate
+        default_plate = pic_dir / "UI_Plate_550101.png"
         if not self.player.name_plate:
-            plate_path = pic_dir / "UI_Plate_550101.png"
+            plate_path = default_plate
         elif isinstance(self.player.name_plate, Collection):
             plate_path = await self._fetch_image("plate", self.player.name_plate.id)
         else:
-            plate_path = plate_version_dir / f"{self.player.name_plate}.png"
+            plate_path = resolve_plate_path(
+                self.player.name_plate, plate_version_dir, default_plate
+            )
+            if plate_path == default_plate:
+                log.warning(
+                    f"Name plate asset not found for {self.player.name_plate!r}; "
+                    "using the default plate"
+                )
         self._im.alpha_composite(Image.open(plate_path).resize((800, 130)), (300, 60))
 
         # icon
