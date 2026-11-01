@@ -12,6 +12,17 @@
 
 ## 重要更新
 
+**2026-11-02**
+
+1. 新版本已完全废弃水鱼开发者Token，请前往水鱼 [开发者控制台](https://auth.diving-fish.com/console) 申请新应用，使用OAuth认证，未配置或者未授权仅可使用 `b50` 指令
+2. 修改了水鱼查分器的请求方式，移除废弃API端点
+3. 修复使用水鱼查分器查询b50无法显示 `镜` 牌的问题，牌子可自行修改 `plate_version` 文件夹内的所有 `镜` 牌为繁体字的 `鏡`。以下压缩包包含新的曲目 `魔法仕掛けのファンタジア` 曲绘，新的 `鏡` 牌和 `廻` 牌文件
+   - [cloudreve](https://cloud.yuzuchan.moe/f/x3f3/Resource%203.1.5%20UPDATE.7z)
+   - [onedrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzu_yuzuchan_moe/IQBfiyOSmOXEQ6BU4NFfZdxmATlmua1cd1zGUlW3txCwTy8?e=uwrb3h)
+   - [openlist](https://share.yuzuchan.moe/d/downloads/Resource%203.1.5%20UPDATE.7z?sign=lpaSBMx8zCkfIYcyWWVVPu5ozDfs45_1-RMLVeAynH4=:0)
+4. 修复 `我要上分` 指令计算问题
+5. 修复合并别名的时，出现不存在的曲目ID
+
 **2026-08-20**
 
 1. 水鱼查分器新增 `OAuth` 认证，请根据 [配置](#配置) 示例填入相关 后续开发者Token将被废弃
@@ -19,26 +30,6 @@
 3. 使用 `SSE` 替代 `websocket` 推送
 4. 移除了申请别名通过和拒绝的推送
 5. 修改部分绘图
-
-**2026-06-09**
-
-### 现仅支持 `Python 3.10+` ！！！
-
-#### 最好在更新 `舞萌DX 2026` 后再使用该版本
-
-1. 更新支持 `舞萌DX2026`，应该是最后一次大改了
-2. 新支持了 `落雪查分器`
-3. 新功能：
-   - 新增 `舞`，`霸者` 牌子绘图
-   - 新增进度绘图
-   - 新增查询曲目过多时的绘图
-   - 新增切换主题功能
-   - 新增切换查分器功能
-   - 新增 `ap50` 指令（仅限落雪查分器）
-   - 新增 `lxbind`，`主题`，`数据源` 指令
-   - 新增 `牌子条件` 指令
-4. 修改了别名推送的发送方式，防止刷屏
-5. 修复了非常多的 BUG
 
 ## 温馨提示
 
@@ -92,8 +83,8 @@
    DIVINGFISH_CLIENT_SECRET=            # OAuth 应用秘钥
    DIVINGFISH_SCOPE=""                  # OAuth 权限，根据应用权限进行填写，多个权限用空格隔开，默认值为 `"prober.profile.read"`
    DIVINGFISH_AUTH_URL=                 # 水鱼账号地址，一般不需要填写，默认为 `https://auth.diving-fish.com`
-   DIVINGFISH_TOKEN=                    # 开发者 token，已弃用，见下方说明
    DIVINGFISH_PROBER_PROXY=false        # 是否使用中转访问水鱼查分器，适用于境外服务器
+   DIVINGFISH_TOKEN=                    # 开发者 token，已弃用，见下方说明
 
    # lxns                               # 落雪查分器配置，均未填写将无法使用落雪查分器
    LXNS_DEV_TOKEN=                      # 开发者 token
@@ -102,9 +93,6 @@
    REDIRECT_URI=                        # OAuth 回调地址
    LXNS_BIND_PRIVATE_ONLY=false         # 是否仅允许私聊完成 OAuth 绑定，默认允许群聊和私聊
    ```
-
-> [!NOTE]
-> 使用水鱼 OAuth 绑定时，用户发送 `dfbind`（或「绑定水鱼」），BOT 会返回一条授权链接，用户打开并确认页面上显示的绑定身份后点击「同意授权」即可，**不需要把授权码回贴给 BOT**。绑定关系与授权范围保存在水鱼服务端，BOT 只保管应用凭据，不保存任何用户令牌；用户可随时在 https://auth.diving-fish.com/apps 撤销授权。未绑定的用户仍可使用 `b50` 指令。
 
 > [!WARNING]
 > `DIVINGFISH_TOKEN`（开发者 token）已被水鱼查分器弃用：它能按 QQ 号读取任意用户的成绩，用户从未对 BOT 做过授权，也无法撤销。水鱼已停止签发新的开发者 token，并将在过渡期后关闭该鉴权方式。请改为申请 OAuth 应用并配置 `DIVINGFISH_CLIENT_ID` 与 `DIVINGFISH_CLIENT_SECRET`。两者同时配置时优先使用 OAuth 授权。

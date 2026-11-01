@@ -14,7 +14,7 @@
 from collections.abc import Callable
 from time import monotonic
 
-from .merge.models import ServiceName
+from ..merge.models import ServiceName
 
 
 class PendingBindingStore:

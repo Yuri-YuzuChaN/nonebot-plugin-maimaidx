@@ -83,6 +83,17 @@ SYNC_MAP = {
     "sync": "Sync",
 }
 
+CB_SYNC_MAP: dict[str, tuple[str, ...]] = {
+    "fc": ("fc", "fcp", "ap", "app"),
+    "fc+": ("fcp", "ap", "app"),
+    "ap": ("ap", "app"),
+    "ap+": ("app",),
+    "fs": ("fs", "fsp", "fsd", "fsdp"),
+    "fs+": ("fsp", "fsd", "fsdp"),
+    "fdx": ("fsd", "fsdp"),
+    "fdx+": ("fsdp",),
+}
+
 DIFFS = ["Basic", "Advanced", "Expert", "Master", "Re:Master"]
 LEVEL_LIST = [
     "1",
@@ -174,6 +185,7 @@ DX_VERSION = {
     "双": "maimai でらっくす BUDDiES",
     "宴": "maimai でらっくす BUDDiES PLUS",
     "镜": "maimai でらっくす PRiSM",
+    "鏡": "maimai でらっくす PRiSM",
     "彩": "maimai でらっくす PRiSM PLUS",
     # "丸": "maimai でらっくす CiRCLE"
     # "": "maimai でらっくす CiRCLE PLUS"
@@ -215,11 +227,12 @@ VERSION_MAP = {
     "双": ([DX_VERSION["双"]], "双&宴"),
     "宴": ([DX_VERSION["双"]], "双&宴"),
     "镜": ([DX_VERSION["镜"]], "镜"),
+    "鏡": ([DX_VERSION["鏡"]], "鏡"),
     "彩": ([DX_VERSION["彩"]], "彩"),
     # "丸": ([DX_VERSION["丸"]], "丸"),
     # "": ([DX_VERSION["丸"]], "丸")
 }
-PLATE_CN = {"晓": "暁", "樱": "櫻", "堇": "菫", "辉": "輝", "华": "華"}
+PLATE_CN = {"晓": "暁", "樱": "櫻", "堇": "菫", "辉": "輝", "华": "華", "镜": "鏡"}
 CATEGORY = {
     "流行&动漫": "anime",
     "舞萌": "maimai",

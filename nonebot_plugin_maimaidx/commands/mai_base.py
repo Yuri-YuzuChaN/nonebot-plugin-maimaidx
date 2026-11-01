@@ -27,7 +27,6 @@ from ..core.clients.divingfish.exceptions import (
 from ..core.clients.divingfish.oauth import REVOKE_URL, binding_label
 from ..core.clients.exceptions import HTTPError, UnknownError
 from ..core.database.qq import User, update_user
-from ..core.divingfish_oauth import extract_confirmation_code
 from ..core.handler import (
     bind_divingfish,
     bind_lxns,
@@ -38,22 +37,8 @@ from ..core.handler import (
     get_mai_what,
 )
 from ..core.image.tools import image_to_base64, song_chart
-from ..core.lxns_oauth import (
-    extract_authorization_code,
-    is_binding_channel_allowed,
-)
 from ..core.merge.models import ServiceName, Theme
-from ..core.pending_binding import PendingBindingStore
-from ..core.service import mai
-from ..core.tool import qqhash
-from ..resources import Root
-from .depend import (
-    GetOrCreateSender,
-    GetOrCreateUser,
-    GetUserAndAuth,
-    GetUserAndAuthOrNone,
-)
-from .oauth_message import (
+from ..core.oauth import (
     BINDING_TEMPORARY_FAILED_MSG,
     DIVINGFISH_AUTHORIZE_MSG,
     DIVINGFISH_BIND_FAILED_MSG,
@@ -70,6 +55,19 @@ from .oauth_message import (
     LXNS_AUTHORIZE_MSG,
     LXNS_ERROR,
     OAUTH_FAILED_MSG,
+    PendingBindingStore,
+    extract_authorization_code,
+    extract_confirmation_code,
+    is_binding_channel_allowed,
+)
+from ..core.service import mai
+from ..core.tool import qqhash
+from ..resources import Root
+from .depend import (
+    GetOrCreateSender,
+    GetOrCreateUser,
+    GetUserAndAuth,
+    GetUserAndAuthOrNone,
 )
 
 pending_bindings = PendingBindingStore()
@@ -113,6 +111,22 @@ async def complete_lxns_binding(user: User, code: str) -> tuple[str, bool]:
         log.warning(f"落雪 OAuth 绑定暂时失败：{type(error).__name__}")
         return BINDING_TEMPORARY_FAILED_MSG, False
     return result, result == "授权完成。"
+
+
+async def complete_divingfish(qqid: int, code: str) -> tuple[str, bool]:
+    try:
+        await complete_divingfish_binding(qqid, code)
+    except DivingFishBindingMismatchError:
+        # 码有效，但兑出来的授权不是这个 QQ 的。多半是把别人转发来的码
+        # 当成自己的用了——照实说清楚，别让他以为是自己操作错了
+        log.warning("水鱼确认码与发起绑定的用户不一致")
+        return DIVINGFISH_MISMATCH_MSG, False
+    except DivingFishConfirmationCodeError:
+        return DIVINGFISH_CODE_FAILED_MSG, False
+    except (HTTPError, HTTPXError, UnknownError, ValidationError) as error:
+        log.warning(f"水鱼绑定暂时失败：{type(error).__name__}")
+        return DIVINGFISH_CODE_TEMPORARY_FAILED_MSG, False
+    return DIVINGFISH_BIND_SUCCESS_MSG, True
 
 
 update_data = on_command("更新maimai数据", permission=SUPERUSER)
@@ -232,22 +246,6 @@ async def _(
     if succeeded:
         pending_bindings.consume(event.self_id, event.user_id)
     await bind_code.finish(result, reply_message=True)
-
-
-async def complete_divingfish(qqid: int, code: str) -> tuple[str, bool]:
-    try:
-        await complete_divingfish_binding(qqid, code)
-    except DivingFishBindingMismatchError:
-        # 码有效，但兑出来的授权不是这个 QQ 的。多半是把别人转发来的码
-        # 当成自己的用了——照实说清楚，别让他以为是自己操作错了
-        log.warning("水鱼确认码与发起绑定的用户不一致")
-        return DIVINGFISH_MISMATCH_MSG, False
-    except DivingFishConfirmationCodeError:
-        return DIVINGFISH_CODE_FAILED_MSG, False
-    except (HTTPError, HTTPXError, UnknownError, ValidationError) as error:
-        log.warning(f"水鱼绑定暂时失败：{type(error).__name__}")
-        return DIVINGFISH_CODE_TEMPORARY_FAILED_MSG, False
-    return DIVINGFISH_BIND_SUCCESS_MSG, True
 
 
 @df_bind.handle()

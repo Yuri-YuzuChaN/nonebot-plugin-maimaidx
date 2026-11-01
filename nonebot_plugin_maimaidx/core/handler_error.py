@@ -3,8 +3,9 @@ from textwrap import dedent
 
 from nonebot.adapters.onebot.v11 import MessageSegment
 
-from ..config import log
+from ..config import log, maiconfig
 from .clients.divingfish.exceptions import (
+    DivingFishBindingMismatchError,
     DivingFishNotAuthorizedError,
     DivingFishOAuthError,
     DivingFishTokenDisableError,
@@ -28,8 +29,8 @@ from .clients.lxns.exceptions import (
     LXNSTooManyRequestsError,
 )
 
-NOTAUTHORIZED = dedent("""
-    您尚未授权本 BOT 访问您的水鱼查分器成绩，或已取消授权。
+NOTAUTHORIZED = dedent(f"""
+    您尚未授权「{maiconfig.bot_name} BOT」访问您的水鱼查分器成绩，或已取消授权。
     请发送「绑定水鱼」，按提示完成授权后再试。
 """).strip()
 
@@ -60,6 +61,8 @@ def handle_errors(func):
             return MessageSegment.text("查询的用户不存在。")
         except DivingFishUserDisabledQueryError:
             return MessageSegment.text("该用户禁止了其他人获取数据或未同意用户协议。")
+        except DivingFishBindingMismatchError:
+            return MessageSegment.text("您发送的授权码不属于您。")
         except (
             DivingFishTokenDisableError,
             DivingFishTokenNotFoundError,

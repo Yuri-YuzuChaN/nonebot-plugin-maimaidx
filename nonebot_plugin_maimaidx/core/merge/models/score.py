@@ -72,8 +72,9 @@ class RatingTableResult(BaseModel):
     achievements: float
     level: str
     fc: FCType | None = None
+    fs: FSType | None = None
 
-    @field_validator("fc", mode="before")
+    @field_validator("fc", "fs", mode="before")
     @classmethod
     def fc_to_none(cls, v: str):
         if v == "":

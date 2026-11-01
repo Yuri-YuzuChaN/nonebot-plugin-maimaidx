@@ -8,7 +8,14 @@ from nonebot.params import Depends, RegexMatched
 from nonebot.permission import SUPERUSER
 from PIL import Image
 
-from ..constants import COMBO_PLUS, LEVEL_LIST, PLATE_CN, RANK_PLUS, SYNC_PLUS
+from ..constants import (
+    CB_SYNC_MAP,
+    COMBO_PLUS,
+    LEVEL_LIST,
+    PLATE_CN,
+    RANK_PLUS,
+    SYNC_PLUS,
+)
 from ..core.database.qq import User
 from ..core.handler import (
     draw_level_progress,
@@ -26,7 +33,7 @@ from .depend import GetUserAndAuth
 
 RATING_PATTERN = r"^([0-9]+\+?)((s+|ap|fc|fs|fdx)\+?)?\s?完成表$"
 TABLE_PATTERN = (
-    r"^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉舞霸熊華华爽煌星宙祭祝双宴镜彩])"
+    r"^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉舞霸熊華华爽煌星宙祭祝双宴镜鏡彩])"
     r"([極极将舞神者]舞?){}表?\s?([0-9]+)?$"
 )
 LEVEL_PATTERN = r"^([0-9]+\+?)\s?((?:a+|b+|c|d|s+|ap|fc|fs|fdx)\+?)\s?([\u4e00-\u9fa5]+)?\s?进度\s?([0-9]+)?$"
@@ -70,11 +77,11 @@ async def _():
 
 @rating_table.handle()
 async def _(match: Match[str] = RegexMatched()):
-    rating = match.group(1).strip()
-    if rating in LEVEL_LIST[:6]:
+    level = match.group(1).strip()
+    if level in LEVEL_LIST[:6]:
         result = "只支持查询lv7-15的定数表。"
-    elif rating in LEVEL_LIST[6:]:
-        result = draw_rating_table_text(rating)
+    elif level in LEVEL_LIST[6:]:
+        result = draw_rating_table_text(level)
     else:
         result = "无法识别的定数。"
     await rating_table.send(result, reply_message=True)
@@ -82,19 +89,12 @@ async def _(match: Match[str] = RegexMatched()):
 
 @rating_table_pfm.handle()
 async def _(match: Match[str] = RegexMatched(), user: User = Depends(GetUserAndAuth)):
-    ra = match.group(1)
-    plan = match.group(2)
-    if ra in LEVEL_LIST[:6]:
+    level = match.group(1)
+    plan = (match.group(2) or "").lower()
+    if level in LEVEL_LIST[:6]:
         await rating_table_pfm.finish("只支持查询lv7-15的完成表。", reply_message=True)
-    elif ra in LEVEL_LIST[6:]:
-        if plan and plan.lower() not in COMBO_PLUS:
-            await rating_table_pfm.finish(
-                "完成表目前仅支持「fc」「ap」计划，例如「13fc完成表」「13ap完成表」。",
-                reply_message=True,
-            )
-        pic = await draw_rating_table(
-            user, ra, bool(plan and plan.lower() in COMBO_PLUS)
-        )
+    elif level in LEVEL_LIST[6:]:
+        pic = await draw_rating_table(user, level, CB_SYNC_MAP.get(plan))
         await rating_table_pfm.finish(pic, reply_message=True)
     else:
         await rating_table_pfm.finish("无法识别的定数。", reply_message=True)
