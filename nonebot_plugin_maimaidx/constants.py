@@ -196,7 +196,7 @@ DX_CN_VERSION = {
     "舞萌DX 2022": ("宙&星", "maimai でらっくす UNiVERSE"),
     "舞萌DX 2023": ("祭&祝", "maimai でらっくす FESTiVAL"),
     "舞萌DX 2024": ("双&宴", "maimai でらっくす BUDDiES"),
-    "舞萌DX 2025": ("镜", "maimai でらっくす PRiSM"),
+    "舞萌DX 2025": ("鏡", "maimai でらっくす PRiSM"),
     "舞萌DX 2026": ("彩", "maimai でらっくす PRiSM PLUS"),
 }
 ALL_VERSION = list(dict.fromkeys(DX_VERSION.values()))
